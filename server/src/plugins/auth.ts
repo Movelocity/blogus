@@ -2,6 +2,7 @@ import cookie from "@fastify/cookie";
 import jwt from "@fastify/jwt";
 import fp from "fastify-plugin";
 import { config } from "../config.js";
+import { sendApiError } from "../http/errors.js";
 
 export const accessTokenCookieName = "blogus_access_token";
 export const refreshTokenCookieName = "blogus_refresh_token";
@@ -25,7 +26,7 @@ export const authPlugin = fp(async (app) => {
         tokenUse?: string;
       }>();
       if (payload.tokenUse && payload.tokenUse !== "access") {
-        reply.code(401).send({ error: "Invalid token type" });
+        sendApiError(reply, 401, "invalid_token_type", "Invalid token type");
         return;
       }
 
@@ -35,7 +36,7 @@ export const authPlugin = fp(async (app) => {
         name: payload.name
       };
     } catch {
-      reply.code(401).send({ error: "Unauthorized" });
+      sendApiError(reply, 401, "unauthorized", "Unauthorized");
     }
   });
 });

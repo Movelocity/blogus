@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import Fastify from "fastify";
 import { config } from "./config.js";
+import { apiErrorHandler } from "./http/errors.js";
 import { authPlugin } from "./plugins/auth.js";
 import { dbPlugin } from "./plugins/db.js";
 import { storagePlugin } from "./plugins/storage.js";
@@ -15,6 +16,7 @@ export async function buildApp() {
       level: process.env.LOG_LEVEL ?? "info"
     }
   });
+  app.setErrorHandler(apiErrorHandler);
 
   await app.register(cors, {
     credentials: true,

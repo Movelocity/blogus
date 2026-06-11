@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from "fastify";
 import { config, parseDurationSeconds } from "../config.js";
+import { sendApiError } from "../http/errors.js";
 import { accessTokenCookieName, refreshTokenCookieName } from "../plugins/auth.js";
 
 interface AuthTokenPayload {
@@ -63,15 +64,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post("/refresh", async (request, reply) => {
     const token = request.cookies[refreshTokenCookieName];
     if (!token) {
-      reply.code(401);
-      return { error: "Missing refresh token" };
+      return sendApiError(reply, 401, "missing_refresh_token", "Missing refresh token");
     }
 
     try {
       const payload = app.jwt.verify<AuthTokenPayload>(token);
       if (payload.tokenUse !== "refresh") {
-        reply.code(401);
-        return { error: "Invalid token type" };
+        return sendApiError(reply, 401, "invalid_token_type", "Invalid token type");
       }
 
       const user = {
@@ -84,8 +83,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
       return { user, ...tokens };
     } catch {
-      reply.code(401);
-      return { error: "Invalid refresh token" };
+      return sendApiError(reply, 401, "invalid_refresh_token", "Invalid refresh token");
     }
   });
 

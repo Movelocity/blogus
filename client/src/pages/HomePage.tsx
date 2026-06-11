@@ -7,7 +7,7 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listPosts()
+    listPosts({ visibility: "published" })
       .then((result) => setPosts(result.posts))
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : "加载失败");
@@ -28,7 +28,9 @@ export function HomePage() {
           <article className="post-card" key={post.id}>
             <h2>{post.title}</h2>
             <p>{post.excerpt ?? post.content.slice(0, 120)}</p>
-            <div className="post-meta">{post.status}</div>
+            <div className="post-meta">
+              {post.publishedAt ? new Date(post.publishedAt).toLocaleString() : "已发布"}
+            </div>
           </article>
         ))}
       </section>

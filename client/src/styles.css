@@ -95,6 +95,54 @@ main {
   font-size: 14px;
 }
 
+.admin-list {
+  margin-top: 32px;
+}
+
+.admin-list h2 {
+  font-size: 22px;
+  margin: 0 0 16px;
+}
+
+.admin-post-card {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.admin-post-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.admin-post-card p {
+  margin: 0 0 12px;
+}
+
+.post-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.post-actions button {
+  background: #ffffff;
+  border: 1px solid #bcccdc;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.post-actions button:disabled {
+  color: #9aa5b1;
+  cursor: not-allowed;
+}
+
+.error-text {
+  color: #b42318;
+}
+
 .form-panel {
   background: #ffffff;
   border: 1px solid #d9e1e8;
@@ -148,5 +196,9 @@ main {
 
   main {
     padding: 28px 16px;
+  }
+
+  .admin-post-card {
+    display: grid;
   }
 }

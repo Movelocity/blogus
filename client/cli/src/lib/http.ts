@@ -19,7 +19,16 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Request failed: ${response.status} ${body}`);
+    let message = body;
+
+    try {
+      const parsed = JSON.parse(body) as { error?: { message?: string } };
+      message = parsed.error?.message ?? body;
+    } catch {
+      message = body;
+    }
+
+    throw new Error(`Request failed: ${response.status} ${message}`);
   }
 
   return response.json() as Promise<T>;

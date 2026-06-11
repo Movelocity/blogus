@@ -6,5 +6,6 @@ dist/
 coverage/
 uploads/
 .data/
+*.tsbuildinfo
 *.log
 .DS_Store

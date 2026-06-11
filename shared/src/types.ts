@@ -12,6 +12,14 @@ export interface BlogPost {
   publishedAt?: string;
 }
 
+export interface ApiErrorResponse {
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
 export interface CreatePostInput {
   title: string;
   content?: string;

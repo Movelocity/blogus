@@ -1,4 +1,4 @@
-import type { BlogPost, CreatePostInput } from "@blogus/shared";
+import type { ApiErrorResponse, BlogPost, CreatePostInput, UpdatePostInput } from "@blogus/shared";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetchApi(path, init);
@@ -27,19 +27,41 @@ function fetchApi(path: string, init?: RequestInit) {
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    const message = await response
+      .json()
+      .then((body: ApiErrorResponse) => body.error.message)
+      .catch(() => `Request failed: ${response.status}`);
+    throw new Error(message);
   }
 
   return response.json() as Promise<T>;
 }
 
-export function listPosts() {
-  return request<{ posts: BlogPost[] }>("/posts");
+export function listPosts(options: { visibility?: "published" | "all" } = {}) {
+  const params = new URLSearchParams();
+  if (options.visibility) {
+    params.set("visibility", options.visibility);
+  }
+
+  return request<{ posts: BlogPost[] }>(`/posts${params.size ? `?${params.toString()}` : ""}`);
 }
 
 export function createPost(input: CreatePostInput) {
   return request<{ post: BlogPost }>("/posts", {
     method: "POST",
     body: JSON.stringify(input)
+  });
+}
+
+export function updatePost(id: string, input: UpdatePostInput) {
+  return request<{ post: BlogPost }>(`/posts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function deletePost(id: string) {
+  return request<{ ok: true }>(`/posts/${id}`, {
+    method: "DELETE"
   });
 }
