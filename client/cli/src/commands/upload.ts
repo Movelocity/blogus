@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { Command } from "commander";
 import { apiRequest } from "../lib/http.js";
@@ -8,10 +9,14 @@ export function registerUploadCommands(program: Command) {
     .description("Upload an image and print its URL")
     .argument("<path>", "File path")
     .action(async (path: string) => {
-      const result = await apiRequest<{ url: string | null; message?: string }>("/api/upload", {
+      const form = new FormData();
+      const buffer = await readFile(path);
+      form.append("file", new Blob([new Uint8Array(buffer)]), basename(path));
+
+      const result = await apiRequest<{ file: { url: string } }>("/api/upload", {
         method: "POST",
-        body: JSON.stringify({ filename: basename(path) })
+        body: form
       });
-      console.log(result.url ?? result.message ?? "Upload placeholder");
+      console.log(result.file.url);
     });
 }

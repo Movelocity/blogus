@@ -1,4 +1,44 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from "fastify";
+import { config, parseDurationSeconds } from "../config.js";
+import { accessTokenCookieName, refreshTokenCookieName } from "../plugins/auth.js";
+
+interface AuthTokenPayload {
+  sub: string;
+  email: string;
+  name?: string;
+  tokenUse?: "access" | "refresh";
+}
+
+function createAuthTokens(app: FastifyInstance, user: { id: string; email: string; name?: string }) {
+  const accessToken = app.jwt.sign(
+    { email: user.email, name: user.name, tokenUse: "access" },
+    { subject: user.id, expiresIn: config.jwt.expiry }
+  );
+  const refreshToken = app.jwt.sign(
+    { email: user.email, name: user.name, tokenUse: "refresh" },
+    { subject: user.id, expiresIn: config.jwt.refreshExpiry }
+  );
+
+  return { accessToken, refreshToken };
+}
+
+function setAuthCookies(reply: FastifyReply, tokens: {
+  accessToken: string;
+  refreshToken: string;
+}) {
+  reply.setCookie(accessTokenCookieName, tokens.accessToken, {
+    httpOnly: true,
+    maxAge: parseDurationSeconds(config.jwt.expiry),
+    path: "/",
+    sameSite: "lax"
+  });
+  reply.setCookie(refreshTokenCookieName, tokens.refreshToken, {
+    httpOnly: true,
+    maxAge: parseDurationSeconds(config.jwt.refreshExpiry),
+    path: "/api/auth",
+    sameSite: "lax"
+  });
+}
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post<{
@@ -9,20 +49,45 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       email: request.body.email,
       name: request.body.name
     };
-    const token = app.jwt.sign({ email: user.email, name: user.name }, { subject: user.id });
+    const tokens = createAuthTokens(app, user);
 
-    reply.setCookie("blogus_token", token, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax"
-    });
+    setAuthCookies(reply, tokens);
 
-    return { user, token };
+    return { user, ...tokens };
   });
 
   app.get("/whoami", { preHandler: app.authenticate }, async (request) => ({
     user: request.currentUser
   }));
+
+  app.post("/refresh", async (request, reply) => {
+    const token = request.cookies[refreshTokenCookieName];
+    if (!token) {
+      reply.code(401);
+      return { error: "Missing refresh token" };
+    }
+
+    try {
+      const payload = app.jwt.verify<AuthTokenPayload>(token);
+      if (payload.tokenUse !== "refresh") {
+        reply.code(401);
+        return { error: "Invalid token type" };
+      }
+
+      const user = {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name
+      };
+      const tokens = createAuthTokens(app, user);
+      setAuthCookies(reply, tokens);
+
+      return { user, ...tokens };
+    } catch {
+      reply.code(401);
+      return { error: "Invalid refresh token" };
+    }
+  });
 
   app.get<{
     Querystring: { port?: string; token?: string };
@@ -33,6 +98,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   }));
 
   app.post("/logout", async (_request, reply) => {
+    reply.clearCookie(accessTokenCookieName, { path: "/" });
+    reply.clearCookie(refreshTokenCookieName, { path: "/api/auth" });
     reply.clearCookie("blogus_token", { path: "/" });
     return { ok: true };
   });

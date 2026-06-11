@@ -15,7 +15,7 @@ export async function readConfig(): Promise<CliConfig> {
     return JSON.parse(content) as CliConfig;
   } catch {
     return {
-      apiBaseUrl: process.env.BLOGUS_API_URL ?? "http://127.0.0.1:3001"
+      apiBaseUrl: process.env.BLOGUS_API_URL ?? "http://127.0.0.1:3009"
     };
   }
 }

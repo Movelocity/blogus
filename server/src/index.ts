@@ -1,7 +1,7 @@
 import { buildApp } from "./app.js";
+import { config } from "./config.js";
 
-const port = Number(process.env.PORT ?? 3001);
-const host = process.env.HOST ?? "127.0.0.1";
+const { host, port } = config.server;
 
 const app = await buildApp();
 

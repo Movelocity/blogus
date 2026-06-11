@@ -1,15 +1,19 @@
 import cookie from "@fastify/cookie";
 import jwt from "@fastify/jwt";
 import fp from "fastify-plugin";
+import { config } from "../config.js";
+
+export const accessTokenCookieName = "blogus_access_token";
+export const refreshTokenCookieName = "blogus_refresh_token";
 
 export const authPlugin = fp(async (app) => {
   await app.register(cookie);
   await app.register(jwt, {
     cookie: {
-      cookieName: "blogus_token",
+      cookieName: accessTokenCookieName,
       signed: false
     },
-    secret: process.env.JWT_SECRET ?? "blogus-development-secret"
+    secret: config.jwt.secret
   });
 
   app.decorate("authenticate", async (request, reply) => {
@@ -18,7 +22,13 @@ export const authPlugin = fp(async (app) => {
         sub: string;
         email: string;
         name?: string;
+        tokenUse?: string;
       }>();
+      if (payload.tokenUse && payload.tokenUse !== "access") {
+        reply.code(401).send({ error: "Invalid token type" });
+        return;
+      }
+
       request.currentUser = {
         id: payload.sub,
         email: payload.email,
