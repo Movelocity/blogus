@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import type { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import {
   CreateBucketCommand,
@@ -17,7 +18,7 @@ import { config, getMinioEndpointUrl } from "../config.js";
 export interface PutFileInput {
   filename: string;
   contentType?: string;
-  stream: NodeJS.ReadableStream;
+  stream: Readable;
 }
 
 export interface StoredFile {

@@ -26,7 +26,7 @@ export function parseDurationSeconds(value: string) {
   }
 
   const amount = Number(match[1]);
-  const unit = match[2] ?? "s";
+  const unit = (match[2] ?? "s") as "s" | "m" | "h" | "d";
   const multiplier = {
     s: 1,
     m: 60,

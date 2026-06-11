@@ -12,11 +12,11 @@ interface AuthTokenPayload {
 function createAuthTokens(app: FastifyInstance, user: { id: string; email: string; name?: string }) {
   const accessToken = app.jwt.sign(
     { email: user.email, name: user.name, tokenUse: "access" },
-    { subject: user.id, expiresIn: config.jwt.expiry }
+    { sub: user.id, expiresIn: config.jwt.expiry }
   );
   const refreshToken = app.jwt.sign(
     { email: user.email, name: user.name, tokenUse: "refresh" },
-    { subject: user.id, expiresIn: config.jwt.refreshExpiry }
+    { sub: user.id, expiresIn: config.jwt.refreshExpiry }
   );
 
   return { accessToken, refreshToken };
