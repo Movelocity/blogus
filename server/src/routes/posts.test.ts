@@ -4,6 +4,7 @@ import test from "node:test";
 import type { BlogPost, CreatePostInput, PostStatus, UpdatePostInput } from "@blogus/shared";
 import Fastify from "fastify";
 import { apiErrorHandler } from "../http/errors.js";
+import { sendApiError } from "../http/errors.js";
 import type { PostRepository, PostVisibility } from "../repositories/posts.js";
 import { slugify } from "../repositories/posts.js";
 import { createPostRoutes } from "./posts.js";
@@ -82,14 +83,37 @@ class InMemoryPostRepository implements PostRepository {
   }
 }
 
-async function buildTestApp() {
+async function buildTestApp(options: { authenticated?: boolean } = { authenticated: true }) {
   const repository = new InMemoryPostRepository();
   const app = Fastify({ logger: false });
   app.setErrorHandler(apiErrorHandler);
+  app.decorate("authenticate", async (_request, reply) => {
+    if (options.authenticated === false) {
+      return sendApiError(reply, 401, "unauthorized", "Unauthorized");
+    }
+  });
   await app.register(createPostRoutes(() => repository), { prefix: "/api/posts" });
 
   return { app, repository };
 }
+
+test("requires authentication for management list and write operations", async (t) => {
+  const { app } = await buildTestApp({ authenticated: false });
+  t.after(async () => app.close());
+
+  const publicList = await app.inject({ method: "GET", url: "/api/posts" });
+  assert.equal(publicList.statusCode, 200);
+
+  const adminList = await app.inject({ method: "GET", url: "/api/posts?visibility=all" });
+  assert.equal(adminList.statusCode, 401);
+
+  const createResponse = await app.inject({
+    method: "POST",
+    url: "/api/posts",
+    payload: { title: "Blocked" }
+  });
+  assert.equal(createResponse.statusCode, 401);
+});
 
 test("creates drafts, lists only published posts by default, and lists all posts for management", async (t) => {
   const { app } = await buildTestApp();

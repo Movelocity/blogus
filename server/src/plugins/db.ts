@@ -1,6 +1,7 @@
 import fp from "fastify-plugin";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { hashPassword } from "../auth/password.js";
 import { config } from "../config.js";
 import * as schema from "../db/schema.js";
 
@@ -14,6 +15,20 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
       password_hash text NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now()
     )
+  `;
+  await client`
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      refresh_token_hash text NOT NULL,
+      expires_at timestamptz NOT NULL,
+      revoked_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS auth_sessions_user_id_idx ON auth_sessions(user_id)
   `;
   await client`
     CREATE TABLE IF NOT EXISTS posts (
@@ -30,6 +45,21 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
   `;
 }
 
+async function seedAdminUser(client: postgres.Sql) {
+  if (!config.auth.adminEmail || !config.auth.adminPassword) {
+    return;
+  }
+
+  const passwordHash = await hashPassword(config.auth.adminPassword);
+  await client`
+    INSERT INTO users (email, name, password_hash)
+    VALUES (${config.auth.adminEmail.toLowerCase()}, ${config.auth.adminName}, ${passwordHash})
+    ON CONFLICT (email) DO UPDATE SET
+      name = EXCLUDED.name,
+      password_hash = EXCLUDED.password_hash
+  `;
+}
+
 export const dbPlugin = fp(async (app) => {
   const client = postgres(config.database.url, {
     max: 10,
@@ -37,6 +67,7 @@ export const dbPlugin = fp(async (app) => {
   });
 
   await ensureDatabaseSchema(client);
+  await seedAdminUser(client);
 
   app.decorate("db", drizzle(client, { schema }));
   app.addHook("onClose", async () => {

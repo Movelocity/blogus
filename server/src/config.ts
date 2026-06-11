@@ -19,6 +19,25 @@ function readStorageDriver() {
   return value;
 }
 
+function readOptionalPair(firstName: string, secondName: string) {
+  const first = process.env[firstName];
+  const second = process.env[secondName];
+  if ((first && !second) || (!first && second)) {
+    throw new Error(`${firstName} and ${secondName} must be provided together`);
+  }
+
+  return { first, second };
+}
+
+function readJwtSecret() {
+  const value = process.env.JWT_SECRET ?? "dev-secret";
+  if (process.env.NODE_ENV === "production" && value === "dev-secret") {
+    throw new Error("JWT_SECRET must be set to a secure value in production");
+  }
+
+  return value;
+}
+
 export function parseDurationSeconds(value: string) {
   const match = /^(\d+)([smhd])?$/.exec(value);
   if (!match) {
@@ -37,7 +56,10 @@ export function parseDurationSeconds(value: string) {
   return amount * multiplier;
 }
 
+const adminCredentials = readOptionalPair("BLOGUS_ADMIN_EMAIL", "BLOGUS_ADMIN_PASSWORD");
+
 export const config = {
+  nodeEnv: process.env.NODE_ENV ?? "development",
   server: {
     host: process.env.HOST ?? "127.0.0.1",
     port: readNumber("PORT", 3009),
@@ -52,9 +74,15 @@ export const config = {
     url: process.env.REDIS_URL ?? "redis://localhost:6379"
   },
   jwt: {
-    secret: process.env.JWT_SECRET ?? "dev-secret",
+    secret: readJwtSecret(),
     expiry: process.env.JWT_EXPIRY ?? "2h",
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY ?? "720h"
+  },
+  auth: {
+    adminEmail: adminCredentials.first,
+    adminPassword: adminCredentials.second,
+    adminName: process.env.BLOGUS_ADMIN_NAME ?? "Blogus Admin",
+    enableDevLogin: readBoolean("BLOGUS_ENABLE_DEV_LOGIN", process.env.NODE_ENV !== "production")
   },
   minio: {
     endpoint: process.env.MINIO_ENDPOINT ?? "localhost:9010",

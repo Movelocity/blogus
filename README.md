@@ -51,6 +51,8 @@ make services-up
 - `HOST`、`PORT`、`CLIENT_ORIGIN`：API 监听地址和 CORS 来源。
 - `DATABASE_URL`、`REDIS_URL`：后端依赖服务连接地址。
 - `JWT_SECRET`、`JWT_EXPIRY`、`JWT_REFRESH_EXPIRY`：JWT 和 cookie 会话配置。
+- `BLOGUS_ADMIN_EMAIL`、`BLOGUS_ADMIN_PASSWORD`、`BLOGUS_ADMIN_NAME`：可选初始管理员；邮箱和密码必须同时提供。
+- `BLOGUS_ENABLE_DEV_LOGIN`：开发便捷登录开关；生产环境强制关闭。
 - `STORAGE_DRIVER`：上传存储后端，支持 `local` 和 `minio`。
 - `UPLOAD_DIR`、`UPLOAD_PUBLIC_PATH`：本地上传目录和公开访问路径。
 - `MINIO_*`：MinIO/S3 兼容存储配置，仅 MinIO 模式使用。
@@ -63,7 +65,7 @@ make services-up
 pnpm dev
 pnpm build
 pnpm typecheck
-pnpm --filter @blogus/cli dev -- --help
+pnpm --filter @blogus/cli dev --help
 ```
 
 也可以使用 `make` 中封装的常用命令：
@@ -74,7 +76,13 @@ make install
 make dev
 make typecheck
 make services-up
-make dev-cli CLI_ARGS="post list"
+```
+
+CLI 开发命令直接通过 pnpm 传参，例如：
+
+```bash
+pnpm --filter @blogus/cli dev post list
+pnpm --filter @blogus/cli dev login -e dev@example.com -p blogus-dev-password
 ```
 
 ## 配置说明
@@ -85,9 +93,10 @@ make dev-cli CLI_ARGS="post list"
 - Docker Compose 使用 `pull_policy: never` 复用本地镜像；只有在明确拉取过镜像后，才建议修改镜像标签。
 - 服务数据默认保存在 `BLOGUS_DATA_DIR` 指向的目录，默认值为 `./.data`。可以在 `.env` 中改到其它位置，例如 `BLOGUS_DATA_DIR=/Volumes/dev/blogus-data`。
 - 上传文件默认保存在本地目录；也可以切换到 MinIO 的 `vault-files` bucket，通过 S3 兼容 API 存储。
-- 管理端/浏览器鉴权使用 access token cookie 和 refresh token cookie；`/api/auth/refresh` 会轮换这两个 token。
+- 管理端/浏览器鉴权使用 access token cookie 和 refresh token cookie；`/api/auth/refresh` 会验证并轮换 refresh token。
+- API 启动时会确保 `users`、`auth_sessions`、`posts` 表存在。设置 `BLOGUS_ADMIN_EMAIL` 和 `BLOGUS_ADMIN_PASSWORD` 后，会创建或更新初始管理员。
 - CLI token 默认保存在 `~/.blogus-cli/config.json`。
-- 当前认证和 CRUD 路由仍带有开发友好的脚手架行为，生产使用前需要继续加固。
+- 生产环境必须显式设置安全的 `JWT_SECRET`；默认 `dev-secret` 会导致服务启动失败。
 
 ## 当前功能清单
 
@@ -96,36 +105,36 @@ make dev-cli CLI_ARGS="post list"
 | 路由 | 状态 | 说明 |
 | --- | --- | --- |
 | `GET /api/health` | 可用 | 返回 API 存活状态 |
-| `POST /api/auth/dev-login` | dev-only | 直接签发 access/refresh token 和 cookie |
+| `POST /api/auth/login` | 可用 | 邮箱密码登录，签发 access/refresh token 和 cookie |
+| `POST /api/auth/dev-login` | dev-only | 非生产便捷登录；生产环境不可用 |
 | `GET /api/auth/whoami` | 可用 | 读取当前 access token 用户 |
-| `POST /api/auth/refresh` | 可用 | 使用 refresh cookie 轮换 token |
-| `GET /api/auth/device` | placeholder | CLI device auth 占位响应，不是完整授权流程 |
-| `POST /api/auth/logout` | 可用 | 清理鉴权 cookie |
-| `GET /api/posts` | scaffold | 返回内存中的所有文章，包含草稿和发布文章 |
-| `POST /api/posts` | scaffold | 创建内存文章；当前未鉴权 |
-| `PATCH /api/posts/:id` | scaffold | 更新内存文章；当前未鉴权 |
-| `DELETE /api/posts/:id` | scaffold | 删除内存文章；当前未鉴权 |
-| `POST /api/upload` | scaffold | 需要登录；上传到本地目录或 MinIO |
+| `POST /api/auth/refresh` | 可用 | 使用 refresh cookie 验证并轮换 token |
+| `POST /api/auth/logout` | 可用 | 吊销当前会话并清理鉴权 cookie |
+| `GET /api/posts` | 可用 | 默认只返回已发布文章；`visibility=all` 需要登录 |
+| `POST /api/posts` | 可用 | 创建文章；需要登录 |
+| `PATCH /api/posts/:id` | 可用 | 更新文章；需要登录 |
+| `DELETE /api/posts/:id` | 可用 | 删除文章；需要登录 |
+| `POST /api/upload` | scaffold | 需要登录；上传到本地目录或 MinIO，文件安全策略后续加固 |
 
 ### Web
 
 | 页面 | 状态 | 说明 |
 | --- | --- | --- |
-| `/` | scaffold | 展示 `GET /api/posts` 返回的文章列表；当前不会过滤草稿 |
-| `/admin` | scaffold | 可创建草稿；当前没有路由级鉴权保护 |
-| `/login` | placeholder | 登录表单 UI 占位，尚未接入真实邮箱密码登录 |
+| `/` | 可用 | 展示已发布文章列表 |
+| `/admin` | 可用 | 登录后可创建草稿、发布和删除文章 |
+| `/login` | 可用 | 邮箱密码登录并写入 cookie 会话 |
 
 ### CLI
 
 | 命令 | 状态 | 说明 |
 | --- | --- | --- |
-| `blogus-cli login` | placeholder | 打开 `/api/auth/device`，等待回调写入 token；服务端授权未完成 |
-| `blogus-cli logout` | 可用 | 清理本地 token |
+| `blogus-cli login` | 可用 | 使用邮箱密码登录，或通过 `--token` 保存已有 access token |
+| `blogus-cli logout` | 可用 | 尝试吊销服务端会话并清理本地 token |
 | `blogus-cli whoami` | 可用 | 调用 `/api/auth/whoami` |
-| `blogus-cli post list` | scaffold | 列出 API 返回的内存文章 |
-| `blogus-cli post create` | scaffold | 创建草稿，可从 Markdown 文件读取正文 |
-| `blogus-cli post edit` | scaffold | 用 Markdown 文件替换文章正文 |
-| `blogus-cli post publish` | scaffold | 将文章状态改为 `published` |
+| `blogus-cli post list` | 可用 | 登录后列出草稿和发布文章 |
+| `blogus-cli post create` | 可用 | 登录后创建草稿，可从 Markdown 文件读取正文 |
+| `blogus-cli post edit` | 可用 | 登录后用 Markdown 文件替换文章正文 |
+| `blogus-cli post publish` | 可用 | 登录后将文章状态改为 `published` |
 | `blogus-cli upload` | scaffold | 上传文件并打印 URL，需要有效 token |
 
 ## 质量门禁
@@ -142,17 +151,14 @@ pnpm typecheck
 pnpm build
 ```
 
-当前没有自动测试脚本；后续阶段会随核心路由和前端流程补测试。
+服务端核心文章路由有 `pnpm --filter @blogus/server test` 覆盖。
 
 ## 非生产能力
 
 以下能力只适合开发或脚手架阶段，不能直接用于生产：
 
 - `POST /api/auth/dev-login` 允许任意邮箱生成 token。
-- `GET /api/auth/device` 和 `blogus-cli login` 只是 device auth 占位流程。
-- `JWT_SECRET=dev-secret`、MinIO 默认账号密码等 `.env.example` 默认值必须替换。
-- 文章 CRUD 当前使用进程内存 `Map`，服务重启会丢失数据。
-- 文章写操作当前未统一鉴权，首页也未过滤草稿。
+- `JWT_SECRET=dev-secret`、`.env.example` 中的初始管理员密码、MinIO 默认账号密码等默认值必须替换。
 - 上传接口已有鉴权，但文件类型、大小策略和路径安全仍需在后续阶段继续加固。
 - Docker Compose 配置 `pull_policy: never`，依赖本机已有镜像；镜像拉取和构建需人工确认。
 

@@ -4,13 +4,12 @@ SHELL := /bin/sh
 
 PNPM ?= pnpm
 COMPOSE ?= docker compose
-CLI_ARGS ?= --help
 POST_ID ?=
 BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server dev-cli build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs cli
+.PHONY: help install dev dev-client dev-server build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -26,9 +25,6 @@ dev-client: ## Start only the Vite client
 
 dev-server: ## Start only the Fastify server
 	$(PNPM) --filter @blogus/server dev
-
-dev-cli: ## Run the CLI in dev mode, pass args with CLI_ARGS='post list'
-	$(PNPM) --filter @blogus/cli dev -- $(CLI_ARGS)
 
 build: ## Build all workspace packages
 	$(PNPM) build
@@ -67,6 +63,3 @@ db-logs: ## Tail Postgres logs
 
 minio-logs: ## Tail MinIO logs
 	$(COMPOSE) logs -f minio
-
-cli: ## Run the built CLI command through pnpm, pass args with CLI_ARGS='whoami'
-	$(PNPM) --filter @blogus/cli exec blogus-cli $(CLI_ARGS)

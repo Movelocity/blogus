@@ -9,3 +9,4 @@ uploads/
 *.tsbuildinfo
 *.log
 .DS_Store
+.pnpm-store

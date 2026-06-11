@@ -181,6 +181,21 @@ main {
   padding: 10px 16px;
 }
 
+.primary-link {
+  background: #0f766e;
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 700;
+  justify-self: start;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .topbar {
     align-items: flex-start;

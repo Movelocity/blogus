@@ -13,8 +13,15 @@ export function createPostRoutes(
 
     app.get<{
       Querystring: unknown;
-    }>("/", async (request) => {
+    }>("/", async (request, reply) => {
       const query = listPostsQuerySchema.parse(request.query);
+      if (query.visibility === "all") {
+        await app.authenticate(request, reply);
+        if (reply.sent) {
+          return reply;
+        }
+      }
+
       return {
         posts: await repository.listPosts({ visibility: query.visibility as PostVisibility })
       };
@@ -22,7 +29,7 @@ export function createPostRoutes(
 
     app.post<{
       Body: unknown;
-    }>("/", async (request, reply) => {
+    }>("/", { preHandler: app.authenticate }, async (request, reply) => {
       const input = createPostSchema.parse(request.body);
       const post = await repository.createPost(input);
 
@@ -33,7 +40,7 @@ export function createPostRoutes(
     app.patch<{
       Body: unknown;
       Params: { id: string };
-    }>("/:id", async (request, reply) => {
+    }>("/:id", { preHandler: app.authenticate }, async (request, reply) => {
       const input = updatePostSchema.parse(request.body);
       const post = await repository.updatePost(request.params.id, input);
 
@@ -46,7 +53,7 @@ export function createPostRoutes(
 
     app.delete<{
       Params: { id: string };
-    }>("/:id", async (request, reply) => {
+    }>("/:id", { preHandler: app.authenticate }, async (request, reply) => {
       const deleted = await repository.deletePost(request.params.id);
 
       if (!deleted) {

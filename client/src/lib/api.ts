@@ -1,4 +1,10 @@
-import type { ApiErrorResponse, BlogPost, CreatePostInput, UpdatePostInput } from "@blogus/shared";
+import type {
+  ApiErrorResponse,
+  BlogPost,
+  CreatePostInput,
+  CurrentUser,
+  UpdatePostInput
+} from "@blogus/shared";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetchApi(path, init);
@@ -64,4 +70,21 @@ export function deletePost(id: string) {
   return request<{ ok: true }>(`/posts/${id}`, {
     method: "DELETE"
   });
+}
+
+export function login(input: { email: string; password: string }) {
+  return request<{ user: CurrentUser; accessToken: string; refreshToken: string }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function logout() {
+  return request<{ ok: true }>("/auth/logout", {
+    method: "POST"
+  });
+}
+
+export function whoami() {
+  return request<{ user: CurrentUser }>("/auth/whoami");
 }

@@ -1,13 +1,16 @@
+import { Link } from "react-router";
 import { FormEvent, useEffect, useState } from "react";
-import type { BlogPost } from "@blogus/shared";
-import { createPost, deletePost, listPosts, updatePost } from "../lib/api";
+import type { BlogPost, CurrentUser } from "@blogus/shared";
+import { createPost, deletePost, listPosts, logout, updatePost, whoami } from "../lib/api";
 
 export function AdminPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   async function refreshPosts() {
     const result = await listPosts({ visibility: "all" });
@@ -15,10 +18,43 @@ export function AdminPage() {
   }
 
   useEffect(() => {
-    refreshPosts().catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : "加载失败");
-    });
+    Promise.all([whoami(), refreshPosts()])
+      .then(([result]) => setUser(result.user))
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : "加载失败");
+      })
+      .finally(() => setAuthChecked(true));
   }, []);
+
+  async function handleLogout() {
+    setError(null);
+    try {
+      await logout();
+      setUser(null);
+      setPosts([]);
+      setMessage("已退出登录");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "退出失败");
+    }
+  }
+
+  if (authChecked && !user) {
+    return (
+      <>
+        <section className="page-heading">
+          <h1>文章管理</h1>
+          <p>需要登录后才能访问管理操作。</p>
+        </section>
+        <div className="form-panel">
+          {message ? <p>{message}</p> : null}
+          {error ? <p className="error-text">{error}</p> : null}
+          <Link className="primary-link" to="/login">
+            去登录
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -61,10 +97,15 @@ export function AdminPage() {
     <>
       <section className="page-heading">
         <h1>文章管理</h1>
-        <p>创建草稿并通过 API 或 CLI 继续编辑发布。</p>
+        <p>{user ? `${user.email} 已登录，可以创建草稿并通过 API 或 CLI 继续编辑发布。` : "正在检查登录状态..."}</p>
       </section>
 
       <form className="form-panel" onSubmit={handleSubmit}>
+        <div className="form-actions">
+          <button onClick={handleLogout} type="button">
+            退出登录
+          </button>
+        </div>
         <label>
           标题
           <input value={title} onChange={(event) => setTitle(event.target.value)} />
