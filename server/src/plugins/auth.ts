@@ -25,6 +25,7 @@ export const authPlugin = fp(async (app) => {
         sid?: string;
         email: string;
         name?: string;
+        role?: "admin" | "user";
         tokenUse?: string;
       }>();
       if (payload.tokenUse && payload.tokenUse !== "access") {

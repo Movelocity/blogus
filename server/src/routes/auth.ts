@@ -1,29 +1,53 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from "fastify";
 import { z } from "zod";
-import { hashPassword, hashToken, verifyPassword } from "../auth/password.js";
+import { hashToken, verifyPassword } from "../auth/password.js";
 import { config, parseDurationSeconds } from "../config.js";
 import { sendApiError } from "../http/errors.js";
 import { accessTokenCookieName, refreshTokenCookieName } from "../plugins/auth.js";
-import { DrizzleAuthRepository, toCurrentUser } from "../repositories/auth.js";
-import { users } from "../db/schema.js";
+import {
+  AuthRepositoryError,
+  DrizzleAuthRepository,
+  toCurrentUser,
+  type AuthRepository
+} from "../repositories/auth.js";
 
 interface AuthTokenPayload {
   sub: string;
   sid?: string;
   email: string;
   name?: string;
+  role?: "admin" | "user";
   tokenUse?: "access" | "refresh";
 }
+
+type AuthRepositoryFactory = (app: FastifyInstance) => AuthRepository;
 
 const loginSchema = z.object({
   email: z.string().email().max(320),
   password: z.string().min(1)
 });
 
+const registerSchema = z.object({
+  email: z.string().email().max(320),
+  password: z.string().min(8).max(256),
+  name: z.string().trim().max(120).optional(),
+  inviteCode: z.string().trim().min(1).max(120).optional()
+});
+
 const devLoginSchema = z.object({
   email: z.string().email().max(320),
   name: z.string().max(120).optional()
+});
+
+const createInviteSchema = z.object({
+  code: z.string().trim().min(1).max(120).optional(),
+  maxUses: z.number().int().positive().optional(),
+  expiresAt: z.string().datetime().optional()
+});
+
+const inviteParamsSchema = z.object({
+  id: z.string().uuid()
 });
 
 function refreshExpiryDate() {
@@ -33,15 +57,15 @@ function refreshExpiryDate() {
 
 function createAuthTokens(
   app: FastifyInstance,
-  user: { id: string; email: string; name?: string },
+  user: { id: string; email: string; name?: string; role: "admin" | "user" },
   sessionId: string
 ) {
   const accessToken = app.jwt.sign(
-    { email: user.email, name: user.name, sid: sessionId, tokenUse: "access" },
+    { email: user.email, name: user.name, role: user.role, sid: sessionId, tokenUse: "access" },
     { sub: user.id, expiresIn: config.jwt.expiry }
   );
   const refreshToken = app.jwt.sign(
-    { email: user.email, name: user.name, sid: sessionId, tokenUse: "refresh" },
+    { email: user.email, name: user.name, role: user.role, sid: sessionId, tokenUse: "refresh" },
     { sub: user.id, expiresIn: config.jwt.refreshExpiry }
   );
 
@@ -68,13 +92,14 @@ function setAuthCookies(reply: FastifyReply, tokens: {
 
 async function createAuthenticatedSession(
   app: FastifyInstance,
-  repository: DrizzleAuthRepository,
-  user: { id: string; email: string; name?: string | null }
+  repository: AuthRepository,
+  user: { id: string; email: string; name?: string | null; role: "admin" | "user" }
 ) {
   const currentUser = {
     id: user.id,
     email: user.email,
-    name: user.name ?? undefined
+    name: user.name ?? undefined,
+    role: user.role
   };
   const session = await repository.createSession({
     userId: user.id,
@@ -90,8 +115,29 @@ async function createAuthenticatedSession(
   return { user: currentUser, ...tokens };
 }
 
-export const authRoutes: FastifyPluginAsync = async (app) => {
-  const repository = new DrizzleAuthRepository(app.db);
+function sendRepositoryError(reply: FastifyReply, cause: unknown) {
+  if (cause instanceof AuthRepositoryError) {
+    return sendApiError(reply, cause.statusCode, cause.code, cause.message);
+  }
+
+  throw cause;
+}
+
+async function requireAdmin(app: FastifyInstance, request: Parameters<FastifyInstance["authenticate"]>[0], reply: FastifyReply) {
+  await app.authenticate(request, reply);
+  if (reply.sent) {
+    return;
+  }
+  if (request.currentUser?.role !== "admin") {
+    return sendApiError(reply, 403, "admin_required", "Admin permission is required");
+  }
+}
+
+export function createAuthRoutes(
+  createRepository: AuthRepositoryFactory = (app) => new DrizzleAuthRepository(app.db)
+): FastifyPluginAsync {
+  return async (app) => {
+    const repository = createRepository(app);
 
   app.post<{
     Body: unknown;
@@ -112,28 +158,30 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   app.post<{
     Body: unknown;
+  }>("/register", async (request, reply) => {
+    const input = registerSchema.parse(request.body);
+
+    try {
+      const user = await repository.registerUser(input);
+      const result = await createAuthenticatedSession(app, repository, user);
+      setAuthCookies(reply, result);
+
+      reply.code(201);
+      return result;
+    } catch (cause) {
+      return sendRepositoryError(reply, cause);
+    }
+  });
+
+  app.post<{
+    Body: unknown;
   }>("/dev-login", async (request, reply) => {
     if (!config.auth.enableDevLogin || config.nodeEnv === "production") {
       return sendApiError(reply, 404, "not_found", "Not found");
     }
 
     const input = devLoginSchema.parse(request.body);
-    const passwordHash = await hashPassword(randomUUID());
-    const [user] = await app.db
-      .insert(users)
-      .values({
-        email: input.email.toLowerCase(),
-        name: input.name ?? null,
-        passwordHash
-      })
-      .onConflictDoUpdate({
-        target: users.email,
-        set: {
-          name: input.name ?? null,
-          passwordHash
-        }
-      })
-      .returning();
+    const user = await repository.upsertDevUser(input);
     const result = await createAuthenticatedSession(app, repository, user);
 
     setAuthCookies(reply, result);
@@ -193,4 +241,57 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     reply.clearCookie("blogus_token", { path: "/" });
     return { ok: true };
   });
-};
+
+  app.get("/invites", async (request, reply) => {
+    await requireAdmin(app, request, reply);
+    if (reply.sent) {
+      return reply;
+    }
+
+    return { invites: await repository.listInviteCodes() };
+  });
+
+  app.post<{
+    Body: unknown;
+  }>("/invites", async (request, reply) => {
+    await requireAdmin(app, request, reply);
+    if (reply.sent) {
+      return reply;
+    }
+
+    const input = createInviteSchema.parse(request.body);
+    try {
+      const invite = await repository.createInviteCode({
+        code: input.code,
+        createdBy: request.currentUser!.id,
+        maxUses: input.maxUses,
+        expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined
+      });
+
+      reply.code(201);
+      return { invite };
+    } catch (cause) {
+      return sendRepositoryError(reply, cause);
+    }
+  });
+
+  app.post<{
+    Params: unknown;
+  }>("/invites/:id/disable", async (request, reply) => {
+    await requireAdmin(app, request, reply);
+    if (reply.sent) {
+      return reply;
+    }
+
+    const params = inviteParamsSchema.parse(request.params);
+    const invite = await repository.disableInviteCode(params.id);
+    if (!invite) {
+      return sendApiError(reply, 404, "invite_code_not_found", "Invite code not found");
+    }
+
+    return { invite };
+  });
+  };
+}
+
+export const authRoutes = createAuthRoutes();

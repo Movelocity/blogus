@@ -1,7 +1,6 @@
 import fp from "fastify-plugin";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { hashPassword } from "../auth/password.js";
 import { config } from "../config.js";
 import * as schema from "../db/schema.js";
 
@@ -12,9 +11,38 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       email varchar(320) NOT NULL UNIQUE,
       name varchar(120),
+      role varchar(24) NOT NULL DEFAULT 'user',
       password_hash text NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now()
     )
+  `;
+  await client`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(24) NOT NULL DEFAULT 'user'
+  `;
+  await client`
+    UPDATE users
+    SET role = 'admin'
+    WHERE id = (
+      SELECT id FROM users ORDER BY created_at ASC LIMIT 1
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM users WHERE role = 'admin'
+    )
+  `;
+  await client`
+    CREATE TABLE IF NOT EXISTS invite_codes (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      code varchar(120) NOT NULL UNIQUE,
+      created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+      used_count integer NOT NULL DEFAULT 0,
+      max_uses integer,
+      expires_at timestamptz,
+      disabled_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS invite_codes_created_by_idx ON invite_codes(created_by)
   `;
   await client`
     CREATE TABLE IF NOT EXISTS auth_sessions (
@@ -45,18 +73,15 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
   `;
 }
 
-async function seedAdminUser(client: postgres.Sql) {
-  if (!config.auth.adminEmail || !config.auth.adminPassword) {
+async function seedDefaultInviteCode(client: postgres.Sql) {
+  if (!config.auth.defaultInviteCode) {
     return;
   }
 
-  const passwordHash = await hashPassword(config.auth.adminPassword);
   await client`
-    INSERT INTO users (email, name, password_hash)
-    VALUES (${config.auth.adminEmail.toLowerCase()}, ${config.auth.adminName}, ${passwordHash})
-    ON CONFLICT (email) DO UPDATE SET
-      name = EXCLUDED.name,
-      password_hash = EXCLUDED.password_hash
+    INSERT INTO invite_codes (code)
+    VALUES (${config.auth.defaultInviteCode})
+    ON CONFLICT (code) DO NOTHING
   `;
 }
 
@@ -67,7 +92,7 @@ export const dbPlugin = fp(async (app) => {
   });
 
   await ensureDatabaseSchema(client);
-  await seedAdminUser(client);
+  await seedDefaultInviteCode(client);
 
   app.decorate("db", drizzle(client, { schema }));
   app.addHook("onClose", async () => {

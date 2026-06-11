@@ -19,16 +19,6 @@ function readStorageDriver() {
   return value;
 }
 
-function readOptionalPair(firstName: string, secondName: string) {
-  const first = process.env[firstName];
-  const second = process.env[secondName];
-  if ((first && !second) || (!first && second)) {
-    throw new Error(`${firstName} and ${secondName} must be provided together`);
-  }
-
-  return { first, second };
-}
-
 function readJwtSecret() {
   const value = process.env.JWT_SECRET ?? "dev-secret";
   if (process.env.NODE_ENV === "production" && value === "dev-secret") {
@@ -56,10 +46,10 @@ export function parseDurationSeconds(value: string) {
   return amount * multiplier;
 }
 
-const adminCredentials = readOptionalPair("BLOGUS_ADMIN_EMAIL", "BLOGUS_ADMIN_PASSWORD");
+const nodeEnv = process.env.NODE_ENV ?? "development";
 
 export const config = {
-  nodeEnv: process.env.NODE_ENV ?? "development",
+  nodeEnv,
   server: {
     host: process.env.HOST ?? "127.0.0.1",
     port: readNumber("PORT", 3009),
@@ -79,9 +69,8 @@ export const config = {
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY ?? "720h"
   },
   auth: {
-    adminEmail: adminCredentials.first,
-    adminPassword: adminCredentials.second,
-    adminName: process.env.BLOGUS_ADMIN_NAME ?? "Blogus Admin",
+    defaultInviteCode:
+      process.env.BLOGUS_DEFAULT_INVITE_CODE ?? (nodeEnv === "production" ? undefined : "blogus-dev-invite"),
     enableDevLogin: readBoolean("BLOGUS_ENABLE_DEV_LOGIN", process.env.NODE_ENV !== "production")
   },
   minio: {

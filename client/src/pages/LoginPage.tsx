@@ -28,7 +28,7 @@ export function LoginPage() {
     <>
       <section className="page-heading">
         <h1>登录</h1>
-        <p>使用管理员邮箱和密码进入写作后台。</p>
+        <p>使用邮箱和密码进入写作后台。</p>
       </section>
       <form className="form-panel" onSubmit={handleSubmit}>
         <label>

@@ -60,7 +60,7 @@
 
 完成记录：
 
-- 2026-06-11：已实现邮箱密码登录、scrypt 密码哈希、初始管理员 seed、access/refresh token cookie、refresh 轮换和登出会话吊销。
+- 2026-06-11：已实现邮箱密码登录、scrypt 密码哈希、首个注册用户成为管理员、邀请码注册、access/refresh token cookie、refresh 轮换和登出会话吊销。
 - 2026-06-11：已新增 `auth_sessions` 表，access token 必须绑定有效 session；文章管理列表、文章写操作和上传均要求鉴权。
 - 2026-06-11：已将 CLI 登录从 device placeholder 改为邮箱密码或 token 登录模式，`logout` 会尝试吊销服务端会话。
 - 2026-06-11：已限制 `dev-login` 在生产环境不可用；生产环境默认 `JWT_SECRET=dev-secret` 会启动失败。
@@ -162,7 +162,7 @@
 - 配置 CORS、secure cookie、sameSite、生产域名。
 - 限制上传文件大小、类型、路径。
 - 增加 API rate limit。
-- 实现管理员初始化流程。
+- 实现首个注册用户成为管理员的初始化流程。
 - 审计敏感默认值，例如 JWT secret、公开 bucket、dev auth。
 - 错误信息脱敏。
 
@@ -171,7 +171,7 @@
 - [ ] 生产环境不能使用默认弱密钥启动。
 - [ ] 未授权请求没有敏感信息泄露。
 - [ ] 上传恶意文件、超大文件、非预期类型会被拒绝。
-- [ ] 管理员初始化有明确一次性流程。
+- [x] 管理员初始化有明确一次性流程。
 - [ ] 基础安全 checklist 全部通过。
 - [ ] `pnpm typecheck` 通过。
 

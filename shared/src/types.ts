@@ -37,4 +37,16 @@ export interface CurrentUser {
   id: string;
   email: string;
   name?: string;
+  role: "admin" | "user";
+}
+
+export interface InviteCode {
+  id: string;
+  code: string;
+  createdBy?: string;
+  usedCount: number;
+  maxUses?: number;
+  expiresAt?: string;
+  disabledAt?: string;
+  createdAt: string;
 }
