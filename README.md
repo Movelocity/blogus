@@ -130,6 +130,7 @@ pnpm --filter @blogus/cli dev register -e writer@example.com -p blogus-dev-passw
 | 页面 | 状态 | 说明 |
 | --- | --- | --- |
 | `/` | 可用 | 展示已发布文章列表，包含摘要、封面和标签 |
+| `/archive` | 可用 | 按月份展示已发布文章归档，包含发布时间和阅读时长 |
 | `/posts/:slug` | 可用 | 按 slug 展示已发布文章详情，刷新后可直接访问 |
 | `/admin` | 可用 | 登录后可创建、编辑、预览、插图、发布、撤回和删除文章 |
 | `/login` | 可用 | 邮箱密码登录并写入 cookie 会话 |

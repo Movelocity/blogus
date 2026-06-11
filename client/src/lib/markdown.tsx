@@ -121,7 +121,7 @@ function renderInline(text: string): ReactNode[] {
     if (full.startsWith("![")) {
       nodes.push(
         isSafeUrl(url) ? (
-          <img alt={label} className="my-4 max-h-[520px] w-full rounded-md object-contain" key={key} src={url} />
+          <img alt={label} className="my-6 max-h-[560px] w-full rounded-lg object-contain" key={key} src={url} />
         ) : (
           label
         )
@@ -166,16 +166,16 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
   }
 
   return (
-    <div className="grid gap-4 text-slate-800">
+    <div className="grid gap-5 text-[17px] leading-8 text-slate-800 max-sm:text-base">
       {blocks.map((block, index) => {
         const key = `${block.type}-${index}`;
         if (block.type === "heading") {
           const className =
             block.level === 1
-              ? "mt-2 text-3xl font-bold leading-tight text-slate-950"
+              ? "mt-4 text-3xl font-bold leading-tight text-slate-950"
               : block.level === 2
-                ? "mt-2 text-2xl font-semibold leading-tight text-slate-950"
-                : "mt-1 text-xl font-semibold leading-snug text-slate-950";
+                ? "mt-4 text-2xl font-semibold leading-tight text-slate-950"
+                : "mt-2 text-xl font-semibold leading-snug text-slate-950";
           const Heading = `h${block.level}` as "h1" | "h2" | "h3";
           return (
             <Heading className={className} key={key}>
@@ -185,7 +185,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
         if (block.type === "code") {
           return (
-            <pre className="overflow-x-auto rounded-md bg-slate-950 p-4 text-sm text-slate-100" key={key}>
+            <pre className="overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100" key={key}>
               <code>{block.text}</code>
             </pre>
           );
@@ -193,7 +193,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         if (block.type === "list") {
           const List = block.ordered ? "ol" : "ul";
           return (
-            <List className={`grid gap-2 pl-6 ${block.ordered ? "list-decimal" : "list-disc"}`} key={key}>
+            <List className={`grid gap-2 pl-6 leading-8 ${block.ordered ? "list-decimal" : "list-disc"}`} key={key}>
               {block.items.map((item, itemIndex) => (
                 <li key={`${key}-${itemIndex}`}>{renderInline(item)}</li>
               ))}
@@ -202,13 +202,13 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
         if (block.type === "blockquote") {
           return (
-            <blockquote className="border-l-4 border-teal-700 bg-teal-50 px-4 py-3 text-slate-700" key={key}>
+            <blockquote className="rounded-lg border-l-4 border-teal-700 bg-teal-50 px-4 py-3 text-slate-700" key={key}>
               {renderInline(block.text)}
             </blockquote>
           );
         }
         return (
-          <p className="m-0 leading-7 text-slate-700" key={key}>
+          <p className="m-0 leading-8 text-slate-700" key={key}>
             {renderInline(block.text)}
           </p>
         );

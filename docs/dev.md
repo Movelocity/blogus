@@ -20,6 +20,13 @@ pnpm --filter @blogus/cli dev upload ./cover.png
 - 上传默认使用 `STORAGE_DRIVER=local`，文件保存到 `UPLOAD_DIR` 并通过 `UPLOAD_PUBLIC_PATH` 返回可访问 URL。
 - 需要 S3 兼容存储时再设置 `STORAGE_DRIVER=minio` 和 `MINIO_*`；MinIO 是可选后端，不作为默认开发依赖。
 
+## 阶段 4 前台体验约定
+
+- 前台公开导航只展示文章和归档，不暴露管理端入口；管理端仍可通过 `/admin` 直接访问。
+- 首页 `/` 只请求已发布文章，并提供加载态、空站点状态和接口错误状态。
+- 归档页 `/archive` 按发布时间月份分组，只展示已发布文章。
+- 文章详情页 `/posts/:slug` 保持 slug 直达，展示发布时间、阅读时长、标签、摘要和安全 Markdown 正文。
+
 ## 开发与验证
 
 - 每个阶段完成前至少运行：
