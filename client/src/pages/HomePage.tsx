@@ -16,19 +16,19 @@ export function HomePage() {
 
   return (
     <>
-      <section className="page-heading">
-        <h1>Blogus</h1>
-        <p>自托管、可编程、面向 Agent 的个人博客系统。</p>
+      <section className="mb-6">
+        <h1 className="mb-2 text-4xl font-bold leading-tight text-slate-900">Blogus</h1>
+        <p className="m-0 text-slate-600">自托管、可编程、面向 Agent 的个人博客系统。</p>
       </section>
 
-      {error ? <p>{error}</p> : null}
+      {error ? <p className="text-red-700">{error}</p> : null}
 
-      <section className="post-list">
+      <section className="grid gap-4">
         {posts.map((post) => (
-          <article className="post-card" key={post.id}>
-            <h2>{post.title}</h2>
-            <p>{post.excerpt ?? post.content.slice(0, 120)}</p>
-            <div className="post-meta">
+          <article className="rounded-lg border border-slate-200 bg-white p-5" key={post.id}>
+            <h2 className="mb-2 text-xl font-semibold text-slate-900">{post.title}</h2>
+            <p className="text-slate-700">{post.excerpt ?? post.content.slice(0, 120)}</p>
+            <div className="text-sm text-slate-500">
               {post.publishedAt ? new Date(post.publishedAt).toLocaleString() : "已发布"}
             </div>
           </article>

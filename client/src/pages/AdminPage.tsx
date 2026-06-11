@@ -41,14 +41,14 @@ export function AdminPage() {
   if (authChecked && !user) {
     return (
       <>
-        <section className="page-heading">
-          <h1>文章管理</h1>
-          <p>需要登录后才能访问管理操作。</p>
+        <section className="mb-6">
+          <h1 className="mb-2 text-4xl font-bold leading-tight text-slate-900">文章管理</h1>
+          <p className="m-0 text-slate-600">需要登录后才能访问管理操作。</p>
         </section>
-        <div className="form-panel">
+        <div className="grid gap-4 rounded-lg border border-slate-200 bg-white p-6">
           {message ? <p>{message}</p> : null}
-          {error ? <p className="error-text">{error}</p> : null}
-          <Link className="primary-link" to="/login">
+          {error ? <p className="text-red-700">{error}</p> : null}
+          <Link className="justify-self-start rounded-md bg-teal-700 px-4 py-2 font-bold text-white transition hover:bg-teal-800" to="/login">
             去登录
           </Link>
         </div>
@@ -95,49 +95,72 @@ export function AdminPage() {
 
   return (
     <>
-      <section className="page-heading">
-        <h1>文章管理</h1>
-        <p>{user ? `${user.email} 已登录，可以创建草稿并通过 API 或 CLI 继续编辑发布。` : "正在检查登录状态..."}</p>
+      <section className="mb-6">
+        <h1 className="mb-2 text-4xl font-bold leading-tight text-slate-900">文章管理</h1>
+        <p className="m-0 text-slate-600">
+          {user ? `${user.email} 已登录，可以创建草稿并通过 API 或 CLI 继续编辑发布。` : "正在检查登录状态..."}
+        </p>
       </section>
 
-      <form className="form-panel" onSubmit={handleSubmit}>
-        <div className="form-actions">
-          <button onClick={handleLogout} type="button">
+      <form className="grid gap-4 rounded-lg border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
+        <div className="flex justify-end">
+          <button
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:text-slate-400"
+            onClick={handleLogout}
+            type="button"
+          >
             退出登录
           </button>
         </div>
-        <label>
+        <label className="grid gap-2 font-semibold">
           标题
-          <input value={title} onChange={(event) => setTitle(event.target.value)} />
+          <input
+            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
         </label>
-        <label>
+        <label className="grid gap-2 font-semibold">
           正文
-          <textarea value={content} onChange={(event) => setContent(event.target.value)} />
+          <textarea
+            className="min-h-44 resize-y rounded-md border border-slate-300 px-3 py-2 font-normal outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+          />
         </label>
-        <button className="primary-button" type="submit">
+        <button className="justify-self-start rounded-md bg-teal-700 px-4 py-2 font-bold text-white transition hover:bg-teal-800" type="submit">
           创建草稿
         </button>
         {message ? <p>{message}</p> : null}
-        {error ? <p className="error-text">{error}</p> : null}
+        {error ? <p className="text-red-700">{error}</p> : null}
       </form>
 
-      <section className="admin-list">
-        <h2>全部文章</h2>
-        <div className="post-list">
+      <section className="mt-8">
+        <h2 className="mb-4 text-2xl font-semibold text-slate-900">全部文章</h2>
+        <div className="grid gap-4">
           {posts.map((post) => (
-            <article className="post-card admin-post-card" key={post.id}>
+            <article className="flex items-start justify-between gap-5 rounded-lg border border-slate-200 bg-white p-5 max-sm:grid" key={post.id}>
               <div>
-                <h3>{post.title}</h3>
-                <p>{post.excerpt ?? (post.content.slice(0, 120) || "暂无正文")}</p>
-                <div className="post-meta">
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">{post.title}</h3>
+                <p className="mb-3 text-slate-700">{post.excerpt ?? (post.content.slice(0, 120) || "暂无正文")}</p>
+                <div className="text-sm text-slate-500">
                   {post.status} · {post.slug}
                 </div>
               </div>
-              <div className="post-actions">
-                <button disabled={post.status === "published"} onClick={() => publish(post.id)} type="button">
+              <div className="flex shrink-0 gap-2">
+                <button
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:text-slate-400"
+                  disabled={post.status === "published"}
+                  onClick={() => publish(post.id)}
+                  type="button"
+                >
                   发布
                 </button>
-                <button onClick={() => remove(post.id)} type="button">
+                <button
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:text-slate-400"
+                  onClick={() => remove(post.id)}
+                  type="button"
+                >
                   删除
                 </button>
               </div>
