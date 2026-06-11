@@ -1,13 +1,16 @@
 SHELL := /bin/sh
 
+-include .env
+
 PNPM ?= pnpm
 COMPOSE ?= docker compose
 CLI_ARGS ?= --help
 POST_ID ?=
+BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server dev-cli build typecheck check clean env services-up services-down services-restart services-ps services-logs db-logs minio-logs cli
+.PHONY: help install dev dev-client dev-server dev-cli build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs cli
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -41,7 +44,10 @@ clean: ## Remove local build output
 env: ## Create .env from .env.example if missing
 	cp -n .env.example .env
 
-services-up: ## Start Postgres, Redis, and MinIO with Docker Compose
+data-dirs: ## Create local service data directories
+	mkdir -p $(BLOGUS_DATA_DIR)/postgres $(BLOGUS_DATA_DIR)/redis $(BLOGUS_DATA_DIR)/minio
+
+services-up: data-dirs ## Start Postgres, Redis, and MinIO with Docker Compose
 	$(COMPOSE) up -d
 
 services-down: ## Stop Docker Compose services
