@@ -1,0 +1,66 @@
+SHELL := /bin/sh
+
+PNPM ?= pnpm
+COMPOSE ?= docker compose
+CLI_ARGS ?= --help
+POST_ID ?=
+
+.DEFAULT_GOAL := help
+
+.PHONY: help install dev dev-client dev-server dev-cli build typecheck check clean env services-up services-down services-restart services-ps services-logs db-logs minio-logs cli
+
+help: ## Show available commands
+	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+install: ## Install workspace dependencies
+	$(PNPM) install
+
+dev: ## Start client and server in development mode
+	$(PNPM) dev
+
+dev-client: ## Start only the Vite client
+	$(PNPM) --filter @blogus/client dev
+
+dev-server: ## Start only the Fastify server
+	$(PNPM) --filter @blogus/server dev
+
+dev-cli: ## Run the CLI in dev mode, pass args with CLI_ARGS='post list'
+	$(PNPM) --filter @blogus/cli dev -- $(CLI_ARGS)
+
+build: ## Build all workspace packages
+	$(PNPM) build
+
+typecheck: ## Typecheck all workspace packages
+	$(PNPM) typecheck
+
+check: typecheck ## Run the default local verification suite
+
+clean: ## Remove local build output
+	find . -type d \( -name dist -o -name coverage \) -prune -exec rm -rf {} +
+
+env: ## Create .env from .env.example if missing
+	cp -n .env.example .env
+
+services-up: ## Start Postgres, Redis, and MinIO with Docker Compose
+	$(COMPOSE) up -d
+
+services-down: ## Stop Docker Compose services
+	$(COMPOSE) down
+
+services-restart: ## Restart Docker Compose services
+	$(COMPOSE) restart
+
+services-ps: ## Show Docker Compose service status
+	$(COMPOSE) ps
+
+services-logs: ## Tail all Docker Compose service logs
+	$(COMPOSE) logs -f
+
+db-logs: ## Tail Postgres logs
+	$(COMPOSE) logs -f postgres
+
+minio-logs: ## Tail MinIO logs
+	$(COMPOSE) logs -f minio
+
+cli: ## Run the built CLI command through pnpm, pass args with CLI_ARGS='whoami'
+	$(PNPM) --filter @blogus/cli exec blogus-cli $(CLI_ARGS)

@@ -31,6 +31,17 @@ pnpm typecheck
 pnpm --filter @blogus/cli dev -- --help
 ```
 
+Common commands are also available through `make`:
+
+```bash
+make help
+make install
+make dev
+make typecheck
+make services-up
+make dev-cli CLI_ARGS="post list"
+```
+
 ## Notes
 
 - The API server expects PostgreSQL at `DATABASE_URL`.
