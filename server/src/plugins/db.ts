@@ -65,11 +65,19 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
       slug varchar(260) NOT NULL UNIQUE,
       content text NOT NULL DEFAULT '',
       excerpt text,
+      cover_image_url text,
+      tags text[],
       status varchar(24) NOT NULL DEFAULT 'draft',
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
       published_at timestamptz
     )
+  `;
+  await client`
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS cover_image_url text
+  `;
+  await client`
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS tags text[]
   `;
 }
 

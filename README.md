@@ -82,6 +82,8 @@ CLI 开发命令直接通过 pnpm 传参，例如：
 
 ```bash
 pnpm --filter @blogus/cli dev post list
+pnpm --filter @blogus/cli dev post create -t "Hello Blogus" -f ./draft.md -e "短摘要" --tags "blogus,release"
+pnpm --filter @blogus/cli dev upload ./cover.png
 pnpm --filter @blogus/cli dev register -e admin@example.com -p blogus-dev-password
 pnpm --filter @blogus/cli dev invite create -c team-code
 pnpm --filter @blogus/cli dev register -e writer@example.com -p blogus-dev-password -i team-code
@@ -117,17 +119,19 @@ pnpm --filter @blogus/cli dev register -e writer@example.com -p blogus-dev-passw
 | `POST /api/auth/invites` | 可用 | 管理员创建可多次使用的邀请码 |
 | `POST /api/auth/invites/:id/disable` | 可用 | 管理员停用邀请码 |
 | `GET /api/posts` | 可用 | 默认只返回已发布文章；`visibility=all` 需要登录 |
-| `POST /api/posts` | 可用 | 创建文章；需要登录，普通用户和管理员都可写作 |
-| `PATCH /api/posts/:id` | 可用 | 更新文章；需要登录，普通用户和管理员都可写作 |
+| `GET /api/posts/:slug` | 可用 | 按 slug 读取已发布文章；`visibility=all` 需要登录 |
+| `POST /api/posts` | 可用 | 创建文章；支持正文、摘要、封面图、标签和发布状态；需要登录 |
+| `PATCH /api/posts/:id` | 可用 | 更新文章内容、元数据或状态；撤回发布会清空发布时间；需要登录 |
 | `DELETE /api/posts/:id` | 可用 | 删除文章；需要登录，普通用户和管理员都可写作 |
-| `POST /api/upload` | scaffold | 需要登录；上传到本地目录或 MinIO，文件安全策略后续加固 |
+| `POST /api/upload` | 可用 | 需要登录；上传到本地目录或 MinIO，文件安全策略后续加固 |
 
 ### Web
 
 | 页面 | 状态 | 说明 |
 | --- | --- | --- |
-| `/` | 可用 | 展示已发布文章列表 |
-| `/admin` | 可用 | 登录后可创建草稿、发布和删除文章 |
+| `/` | 可用 | 展示已发布文章列表，包含摘要、封面和标签 |
+| `/posts/:slug` | 可用 | 按 slug 展示已发布文章详情，刷新后可直接访问 |
+| `/admin` | 可用 | 登录后可创建、编辑、预览、插图、发布、撤回和删除文章 |
 | `/login` | 可用 | 邮箱密码登录并写入 cookie 会话 |
 
 ### CLI
@@ -142,10 +146,10 @@ pnpm --filter @blogus/cli dev register -e writer@example.com -p blogus-dev-passw
 | `blogus-cli invite create` | 可用 | 管理员创建可多次使用的邀请码 |
 | `blogus-cli invite disable` | 可用 | 管理员停用邀请码 |
 | `blogus-cli post list` | 可用 | 登录后列出草稿和发布文章 |
-| `blogus-cli post create` | 可用 | 登录后创建草稿，可从 Markdown 文件读取正文 |
-| `blogus-cli post edit` | 可用 | 登录后用 Markdown 文件替换文章正文 |
+| `blogus-cli post create` | 可用 | 登录后创建草稿，可从 Markdown 文件读取正文，并设置摘要、封面和标签 |
+| `blogus-cli post edit` | 可用 | 登录后替换文章正文或更新标题、摘要、封面、标签和状态 |
 | `blogus-cli post publish` | 可用 | 登录后将文章状态改为 `published` |
-| `blogus-cli upload` | scaffold | 上传文件并打印 URL，需要有效 token |
+| `blogus-cli upload` | 可用 | 上传文件并打印 URL，需要有效 token |
 
 ## 质量门禁
 
@@ -169,7 +173,8 @@ pnpm build
 
 - `POST /api/auth/dev-login` 允许任意邮箱生成 token。
 - `JWT_SECRET=dev-secret`、非生产默认测试邀请码、MinIO 默认账号密码等默认值必须替换。
-- 上传接口已有鉴权，但文件类型、大小策略和路径安全仍需在后续阶段继续加固。
+- Markdown 由前端 React 组件安全渲染，不直接执行文章中的 HTML；当前覆盖常见标题、段落、列表、引用、代码、链接和图片语法。
+- 上传接口已有鉴权和大小限制，但文件类型策略仍需在后续阶段继续加固。
 - Docker Compose 配置 `pull_policy: never`，依赖本机已有镜像；镜像拉取和构建需人工确认。
 
 ## 开发规划

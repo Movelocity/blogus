@@ -10,6 +10,7 @@ export type PostVisibility = "published" | "all";
 
 export interface PostRepository {
   listPosts(options?: { visibility?: PostVisibility }): Promise<BlogPost[]>;
+  getPostBySlug(slug: string, options?: { visibility?: PostVisibility }): Promise<BlogPost | null>;
   createPost(input: CreatePostInput): Promise<BlogPost>;
   updatePost(id: string, input: UpdatePostInput): Promise<BlogPost | null>;
   deletePost(id: string): Promise<boolean>;
@@ -32,6 +33,8 @@ function toBlogPost(row: PostRow): BlogPost {
     slug: row.slug,
     content: row.content,
     excerpt: row.excerpt ?? undefined,
+    coverImageUrl: row.coverImageUrl ?? undefined,
+    tags: row.tags ?? [],
     status: row.status as PostStatus,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -62,6 +65,17 @@ export class DrizzlePostRepository implements PostRepository {
     return rows.map(toBlogPost);
   }
 
+  async getPostBySlug(slug: string, options: { visibility?: PostVisibility } = {}) {
+    const visibility = options.visibility ?? "published";
+    const filters =
+      visibility === "published"
+        ? and(eq(posts.slug, slug), eq(posts.status, "published"))
+        : eq(posts.slug, slug);
+    const [row] = await this.db.select().from(posts).where(filters).limit(1);
+
+    return row ? toBlogPost(row) : null;
+  }
+
   async createPost(input: CreatePostInput) {
     const now = new Date();
     const status = input.status ?? "draft";
@@ -78,6 +92,9 @@ export class DrizzlePostRepository implements PostRepository {
             title: input.title,
             slug,
             content: input.content ?? "",
+            excerpt: input.excerpt?.trim() || null,
+            coverImageUrl: input.coverImageUrl?.trim() || null,
+            tags: input.tags ?? [],
             status,
             createdAt: now,
             updatedAt: now,
@@ -108,21 +125,26 @@ export class DrizzlePostRepository implements PostRepository {
       input.title && input.title !== existing.title
         ? await this.createUniqueSlug(input.title, id)
         : existing.slug;
+    const publishedAt =
+      nextStatus === "published"
+        ? existing.publishedAt
+          ? new Date(existing.publishedAt)
+          : now
+        : null;
 
     const [row] = await this.db
       .update(posts)
       .set({
         ...(input.title === undefined ? {} : { title: input.title, slug }),
         ...(input.content === undefined ? {} : { content: input.content }),
-        ...(input.excerpt === undefined ? {} : { excerpt: input.excerpt }),
+        ...(input.excerpt === undefined ? {} : { excerpt: input.excerpt.trim() || null }),
+        ...(input.coverImageUrl === undefined
+          ? {}
+          : { coverImageUrl: input.coverImageUrl.trim() || null }),
+        ...(input.tags === undefined ? {} : { tags: input.tags }),
         ...(input.status === undefined ? {} : { status: input.status }),
         updatedAt: now,
-        publishedAt:
-          nextStatus === "published" && !existing.publishedAt
-            ? now
-            : existing.publishedAt
-              ? new Date(existing.publishedAt)
-              : null
+        publishedAt
       })
       .where(eq(posts.id, id))
       .returning();

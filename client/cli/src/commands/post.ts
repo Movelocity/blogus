@@ -13,6 +13,14 @@ function parseStatus(status: string) {
   return status as PostStatus;
 }
 
+function parseTags(tags: string) {
+  return tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
 export function registerPostCommands(program: Command) {
   const post = program.command("post").description("Manage posts");
 
@@ -28,12 +36,22 @@ export function registerPostCommands(program: Command) {
     .description("Create a draft post")
     .requiredOption("-t, --title <title>", "Post title")
     .option("-f, --file <path>", "Markdown file to use as content")
+    .option("-e, --excerpt <excerpt>", "Post excerpt")
+    .option("-c, --cover <url>", "Cover image URL")
+    .option("--tags <tags>", "Comma-separated tags")
     .option("-p, --publish", "Create the post as published")
-    .action(async (options: { title: string; file?: string; publish?: boolean }) => {
+    .action(async (options: { title: string; file?: string; excerpt?: string; cover?: string; tags?: string; publish?: boolean }) => {
       const content = options.file ? await readFile(options.file, "utf8") : "";
       const result = await apiRequest<{ post: BlogPost }>("/api/posts", {
         method: "POST",
-        body: JSON.stringify({ title: options.title, content, status: options.publish ? "published" : "draft" })
+        body: JSON.stringify({
+          title: options.title,
+          content,
+          excerpt: options.excerpt,
+          coverImageUrl: options.cover,
+          tags: options.tags ? parseTags(options.tags) : undefined,
+          status: options.publish ? "published" : "draft"
+        })
       });
       console.log(result.post.id);
     });
@@ -44,8 +62,11 @@ export function registerPostCommands(program: Command) {
     .argument("<id>", "Post id")
     .option("-t, --title <title>", "Post title")
     .option("-f, --file <path>", "Markdown file to use as content")
+    .option("-e, --excerpt <excerpt>", "Post excerpt")
+    .option("-c, --cover <url>", "Cover image URL")
+    .option("--tags <tags>", "Comma-separated tags")
     .option("-s, --status <status>", "Post status: draft, published, archived")
-    .action(async (id: string, options: { title?: string; file?: string; status?: string }) => {
+    .action(async (id: string, options: { title?: string; file?: string; excerpt?: string; cover?: string; tags?: string; status?: string }) => {
       const input: UpdatePostInput = {};
 
       if (options.title) {
@@ -54,11 +75,20 @@ export function registerPostCommands(program: Command) {
       if (options.file) {
         input.content = await readFile(options.file, "utf8");
       }
+      if (options.excerpt !== undefined) {
+        input.excerpt = options.excerpt;
+      }
+      if (options.cover !== undefined) {
+        input.coverImageUrl = options.cover;
+      }
+      if (options.tags !== undefined) {
+        input.tags = parseTags(options.tags);
+      }
       if (options.status) {
         input.status = parseStatus(options.status);
       }
       if (Object.keys(input).length === 0) {
-        throw new Error("Provide at least one of --title, --file, or --status");
+        throw new Error("Provide at least one of --title, --file, --excerpt, --cover, --tags, or --status");
       }
 
       await apiRequest(`/api/posts/${id}`, {

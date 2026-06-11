@@ -46,6 +46,8 @@ export const posts = pgTable("posts", {
   slug: varchar("slug", { length: 260 }).notNull().unique(),
   content: text("content").default("").notNull(),
   excerpt: text("excerpt"),
+  coverImageUrl: text("cover_image_url"),
+  tags: text("tags").array(),
   status: varchar("status", { length: 24 }).default("draft").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

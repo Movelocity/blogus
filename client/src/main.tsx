@@ -4,6 +4,7 @@ import { BrowserRouter, Link, Route, Routes } from "react-router";
 import { AdminPage } from "./pages/AdminPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { PostPage } from "./pages/PostPage";
 import "./tailwind.css";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <main className="mx-auto max-w-5xl px-6 py-10 max-sm:px-4 max-sm:py-7">
           <Routes>
             <Route element={<HomePage />} path="/" />
+            <Route element={<PostPage />} path="/posts/:slug" />
             <Route element={<AdminPage />} path="/admin" />
             <Route element={<LoginPage />} path="/login" />
           </Routes>

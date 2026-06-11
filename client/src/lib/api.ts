@@ -21,13 +21,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function fetchApi(path: string, init?: RequestInit) {
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+  const headers = isFormData
+    ? init?.headers
+    : {
+        "content-type": "application/json",
+        ...init?.headers
+      };
+
   return fetch(`/api${path}`, {
+    ...init,
     credentials: "include",
-    headers: {
-      "content-type": "application/json",
-      ...init?.headers
-    },
-    ...init
+    headers
   });
 }
 
@@ -52,6 +57,15 @@ export function listPosts(options: { visibility?: "published" | "all" } = {}) {
   return request<{ posts: BlogPost[] }>(`/posts${params.size ? `?${params.toString()}` : ""}`);
 }
 
+export function getPostBySlug(slug: string, options: { visibility?: "published" | "all" } = {}) {
+  const params = new URLSearchParams();
+  if (options.visibility) {
+    params.set("visibility", options.visibility);
+  }
+
+  return request<{ post: BlogPost }>(`/posts/${encodeURIComponent(slug)}${params.size ? `?${params.toString()}` : ""}`);
+}
+
 export function createPost(input: CreatePostInput) {
   return request<{ post: BlogPost }>("/posts", {
     method: "POST",
@@ -70,6 +84,32 @@ export function deletePost(id: string) {
   return request<{ ok: true }>(`/posts/${id}`, {
     method: "DELETE"
   });
+}
+
+export async function uploadFile(file: File) {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetchApi("/upload", {
+    method: "POST",
+    body,
+    headers: {}
+  });
+
+  if (response.status === 401) {
+    const refreshed = await fetchApi("/auth/refresh", { method: "POST" });
+    if (refreshed.ok) {
+      const retryBody = new FormData();
+      retryBody.append("file", file);
+      const retryResponse = await fetchApi("/upload", {
+        method: "POST",
+        body: retryBody,
+        headers: {}
+      });
+      return parseResponse<{ file: { bucket: string; key: string; url: string } }>(retryResponse);
+    }
+  }
+
+  return parseResponse<{ file: { bucket: string; key: string; url: string } }>(response);
 }
 
 export function login(input: { email: string; password: string }) {

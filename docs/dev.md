@@ -6,7 +6,19 @@ pnpm --filter @blogus/cli dev register -e admin@example.com -p blogus-dev-passwo
 pnpm --filter @blogus/cli dev invite create -c team-code
 pnpm --filter @blogus/cli dev register -e writer@example.com -p blogus-dev-password -i team-code
 pnpm --filter @blogus/cli dev post list
+pnpm --filter @blogus/cli dev post create -t "Hello Blogus" -f ./draft.md -e "短摘要" --tags "blogus,release"
+pnpm --filter @blogus/cli dev post edit <post-id> --cover /uploads/2026/06/cover.png --tags "blogus,release"
+pnpm --filter @blogus/cli dev post publish <post-id>
+pnpm --filter @blogus/cli dev upload ./cover.png
 ```
+
+## 阶段 3 内容编辑约定
+
+- 管理端 `/admin` 支持文章列表、创建草稿、编辑 Markdown、预览、安全渲染、上传封面、上传插图、发布、撤回和删除。
+- 前台文章详情页使用 `/posts/:slug`，公开请求只读取已发布文章；管理态读取草稿需要登录并传 `visibility=all`。
+- 文章元数据包含 `excerpt`、`coverImageUrl` 和 `tags`。CLI 的标签用英文逗号分隔，最多保留 12 个。
+- 上传默认使用 `STORAGE_DRIVER=local`，文件保存到 `UPLOAD_DIR` 并通过 `UPLOAD_PUBLIC_PATH` 返回可访问 URL。
+- 需要 S3 兼容存储时再设置 `STORAGE_DRIVER=minio` 和 `MINIO_*`；MinIO 是可选后端，不作为默认开发依赖。
 
 ## 开发与验证
 

@@ -6,6 +6,8 @@ export interface BlogPost {
   slug: string;
   content: string;
   excerpt?: string;
+  coverImageUrl?: string;
+  tags: string[];
   status: PostStatus;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +25,9 @@ export interface ApiErrorResponse {
 export interface CreatePostInput {
   title: string;
   content?: string;
+  excerpt?: string;
+  coverImageUrl?: string;
+  tags?: string[];
   status?: PostStatus;
 }
 
@@ -30,6 +35,8 @@ export interface UpdatePostInput {
   title?: string;
   content?: string;
   excerpt?: string;
+  coverImageUrl?: string;
+  tags?: string[];
   status?: PostStatus;
 }
 

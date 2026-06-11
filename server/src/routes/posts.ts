@@ -27,6 +27,28 @@ export function createPostRoutes(
       };
     });
 
+    app.get<{
+      Params: { slug: string };
+      Querystring: unknown;
+    }>("/:slug", async (request, reply) => {
+      const query = listPostsQuerySchema.parse(request.query);
+      if (query.visibility === "all") {
+        await app.authenticate(request, reply);
+        if (reply.sent) {
+          return reply;
+        }
+      }
+
+      const post = await repository.getPostBySlug(request.params.slug, {
+        visibility: query.visibility as PostVisibility
+      });
+      if (!post) {
+        return sendApiError(reply, 404, "post_not_found", "Post not found");
+      }
+
+      return { post };
+    });
+
     app.post<{
       Body: unknown;
     }>("/", { preHandler: app.authenticate }, async (request, reply) => {

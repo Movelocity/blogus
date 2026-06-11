@@ -18,6 +18,13 @@ class InMemoryPostRepository implements PostRepository {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async getPostBySlug(slug: string, options: { visibility?: PostVisibility } = {}) {
+    const post = Array.from(this.posts.values()).find(
+      (item) => item.slug === slug && ((options.visibility ?? "published") === "all" || item.status === "published")
+    );
+    return post ?? null;
+  }
+
   async createPost(input: CreatePostInput) {
     const now = new Date().toISOString();
     const status = input.status ?? "draft";
@@ -26,6 +33,9 @@ class InMemoryPostRepository implements PostRepository {
       title: input.title,
       slug: this.createUniqueSlug(input.title),
       content: input.content ?? "",
+      excerpt: input.excerpt,
+      coverImageUrl: input.coverImageUrl,
+      tags: input.tags ?? [],
       status,
       createdAt: now,
       updatedAt: now,
@@ -53,7 +63,9 @@ class InMemoryPostRepository implements PostRepository {
           : existing.slug,
       updatedAt: new Date().toISOString(),
       publishedAt:
-        status === "published" && !existing.publishedAt ? new Date().toISOString() : existing.publishedAt
+        status === "published"
+          ? existing.publishedAt ?? new Date().toISOString()
+          : undefined
     };
 
     this.posts.set(id, updated);
@@ -145,6 +157,42 @@ test("creates drafts, lists only published posts by default, and lists all posts
   assert.equal(adminList.json<{ posts: BlogPost[] }>().posts.length, 2);
 });
 
+test("reads published posts by slug without exposing drafts publicly", async (t) => {
+  const { app } = await buildTestApp();
+  t.after(async () => app.close());
+
+  const draftResponse = await app.inject({
+    method: "POST",
+    url: "/api/posts",
+    payload: { title: "Private notes", content: "Hidden" }
+  });
+  const publishedResponse = await app.inject({
+    method: "POST",
+    url: "/api/posts",
+    payload: {
+      title: "Public notes",
+      content: "# Hello",
+      excerpt: "Short intro",
+      coverImageUrl: "/uploads/cover.png",
+      tags: ["release", "notes"],
+      status: "published" as PostStatus
+    }
+  });
+
+  const draft = draftResponse.json<{ post: BlogPost }>().post;
+  const published = publishedResponse.json<{ post: BlogPost }>().post;
+  const publicRead = await app.inject({ method: "GET", url: `/api/posts/${published.slug}` });
+  assert.equal(publicRead.statusCode, 200);
+  assert.deepEqual(publicRead.json<{ post: BlogPost }>().post.tags, ["release", "notes"]);
+  assert.equal(publicRead.json<{ post: BlogPost }>().post.coverImageUrl, "/uploads/cover.png");
+
+  const draftRead = await app.inject({ method: "GET", url: `/api/posts/${draft.slug}` });
+  assert.equal(draftRead.statusCode, 404);
+
+  const adminDraftRead = await app.inject({ method: "GET", url: `/api/posts/${draft.slug}?visibility=all` });
+  assert.equal(adminDraftRead.statusCode, 200);
+});
+
 test("generates stable unique slugs for empty, duplicate, and special-character titles", async (t) => {
   const { app } = await buildTestApp();
   t.after(async () => app.close());
@@ -190,6 +238,16 @@ test("updates, publishes, and deletes posts", async (t) => {
   assert.equal(updated.content, "New");
   assert.equal(updated.status, "published");
   assert.ok(updated.publishedAt);
+
+  const unpublishResponse = await app.inject({
+    method: "PATCH",
+    url: `/api/posts/${created.id}`,
+    payload: { status: "draft" }
+  });
+  assert.equal(unpublishResponse.statusCode, 200);
+  const unpublished = unpublishResponse.json<{ post: BlogPost }>().post;
+  assert.equal(unpublished.status, "draft");
+  assert.equal(unpublished.publishedAt, undefined);
 
   const deleteResponse = await app.inject({ method: "DELETE", url: `/api/posts/${created.id}` });
   assert.equal(deleteResponse.statusCode, 200);
