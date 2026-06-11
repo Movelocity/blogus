@@ -11,6 +11,14 @@ function readBoolean(name: string, fallback: boolean) {
   return value === "true" || value === "1";
 }
 
+function readStorageDriver() {
+  const value = process.env.STORAGE_DRIVER ?? "local";
+  if (value !== "local" && value !== "minio") {
+    throw new Error("STORAGE_DRIVER must be either 'local' or 'minio'");
+  }
+  return value;
+}
+
 export function parseDurationSeconds(value: string) {
   const match = /^(\d+)([smhd])?$/.exec(value);
   if (!match) {
@@ -54,6 +62,11 @@ export const config = {
     secretKey: process.env.MINIO_SECRET_KEY ?? "minioadmin",
     bucket: process.env.MINIO_BUCKET ?? "vault-files",
     useSsl: readBoolean("MINIO_USE_SSL", false)
+  },
+  storage: {
+    driver: readStorageDriver(),
+    uploadDir: process.env.UPLOAD_DIR ?? "./uploads",
+    publicPath: process.env.UPLOAD_PUBLIC_PATH ?? "/uploads"
   },
   upload: {
     maxSizeMb: readNumber("UPLOAD_MAX_SIZE_MB", 512),
