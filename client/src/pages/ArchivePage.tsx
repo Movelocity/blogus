@@ -34,15 +34,15 @@ export function ArchivePage() {
         <div className="lg:col-span-7">
           <span className="mb-6 inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
             <span className="h-px w-8 bg-foreground/30" />
-            Archive
+            Timeline
           </span>
           <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
-            文章归档
+            时间线
           </h1>
         </div>
         <div className="lg:col-span-5 lg:pb-4">
           <p className="m-0 text-lg leading-relaxed text-muted-foreground">
-            按发布时间整理所有公开文章，适合从时间线回看已经发布的内容。
+            按发布时间整理所有公开文章。
           </p>
         </div>
       </header>
@@ -51,15 +51,15 @@ export function ArchivePage() {
 
       {!loading && error ? (
         <section className="border border-destructive/30 bg-destructive/5 p-8 text-destructive">
-          <h2 className="m-0 font-display text-xl">归档加载失败</h2>
+          <h2 className="m-0 font-display text-xl">时间线加载失败</h2>
           <p className="mb-0 mt-2 leading-relaxed">{error}</p>
         </section>
       ) : null}
 
       {!loading && !error && posts.length === 0 ? (
         <section className="border border-dashed border-foreground/20 bg-card p-8 text-foreground">
-          <h2 className="m-0 font-display text-xl">暂无归档</h2>
-          <p className="mb-0 mt-2 leading-relaxed text-muted-foreground">发布文章后，归档会自动按月份生成。</p>
+          <h2 className="m-0 font-display text-xl">暂无文章</h2>
+          <p className="mb-0 mt-2 leading-relaxed text-muted-foreground">发布文章后，时间线会自动按月份生成。</p>
         </section>
       ) : null}
 
@@ -123,7 +123,7 @@ function groupPostsByMonth(posts: BlogPost[]) {
 
 function ArchiveSkeleton() {
   return (
-    <section className="grid gap-8" aria-label="归档正在加载">
+    <section className="grid gap-8" aria-label="时间线正在加载">
       {[0, 1, 2].map((group) => (
         <div className="grid gap-6 md:grid-cols-[11rem_1fr]" key={group}>
           <div className="h-8 w-32 animate-pulse rounded bg-muted" />

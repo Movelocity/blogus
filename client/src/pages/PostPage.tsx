@@ -60,7 +60,7 @@ export function PostPage() {
             to="/archive"
           >
             <span className="h-px w-6 bg-foreground/30" />
-            返回归档
+            返回时间线
           </Link>
         </div>
         {post.coverImageUrl ? (

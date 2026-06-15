@@ -35,9 +35,9 @@ export function HomePage() {
             Blogus Journal
           </span>
           <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
-            自托管写作，
-            <br />
-            <span className="text-muted-foreground">面向长期阅读。</span>
+            Journals
+            {/* <br /> */}
+            {/* <span className="text-muted-foreground">点亮灵感</span> */}
           </h1>
         </div>
         <div className="lg:col-span-5 lg:pb-4">
@@ -72,7 +72,7 @@ export function HomePage() {
                   className="text-sm text-foreground/70 transition-colors hover:text-foreground"
                   to="/archive"
                 >
-                  查看归档 →
+                  查看时间线 →
                 </Link>
               </div>
               <div className="grid gap-4">

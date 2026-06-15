@@ -45,7 +45,7 @@ function Navigation() {
         transform: hidden && !isMobileMenuOpen ? "translateY(-100%)" : "translateY(0)",
       }}
     >
-      <nav className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
+      <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
         <NavLink to="/" className="flex items-center gap-2">
           <span className="text-base font-bold tracking-tight text-foreground">Blogus</span>
         </NavLink>
@@ -53,7 +53,7 @@ function Navigation() {
         <div className="hidden items-center gap-10 md:flex">
           {[
             { name: "文章", to: "/blog" },
-            { name: "归档", to: "/archive" },
+            { name: "时间线", to: "/archive" },
           ].map((link) => (
             <NavLink
               key={link.to}
@@ -114,7 +114,7 @@ function Navigation() {
           <div className="flex flex-1 flex-col justify-center gap-8">
             {[
               { name: "文章", to: "/blog" },
-              { name: "归档", to: "/archive" },
+              { name: "时间线", to: "/archive" },
               { name: "管理", to: "/admin" },
             ].map((link, i) => (
               <NavLink
@@ -154,7 +154,7 @@ function Footer() {
             <ul className="space-y-4">
               {[
                 { name: "全部文章", to: "/blog" },
-                { name: "文章归档", to: "/archive" },
+                { name: "时间线", to: "/archive" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link

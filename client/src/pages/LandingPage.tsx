@@ -166,7 +166,7 @@ export function LandingPage() {
           transform: navHidden ? "translateY(-100%)" : "translateY(0)",
         }}
       >
-        <nav className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
+        <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
           <span className="text-base font-bold tracking-tight text-foreground">Blogus</span>
           <div className="flex items-center gap-8">
             <Link
@@ -179,7 +179,7 @@ export function LandingPage() {
               to="/archive"
               className="hidden text-[0.85rem] text-muted-foreground transition-colors hover:text-foreground sm:block"
             >
-              归档
+              时间线
             </Link>
             <Link
               to="/blog"
@@ -432,7 +432,7 @@ export function LandingPage() {
                 文章
               </Link>
               <Link to="/archive" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
-                归档
+                时间线
               </Link>
               <Link to="/admin" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
                 管理
