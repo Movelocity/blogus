@@ -4,6 +4,7 @@ import type { Command } from "commander";
 import { apiRequest } from "../lib/http.js";
 
 const allowedStatuses = new Set<PostStatus>(["draft", "published", "archived"]);
+const allowedVisibility = new Set<string>(["draft", "published", "archived", "all"]);
 
 function parseStatus(status: string) {
   if (!allowedStatuses.has(status as PostStatus)) {
@@ -11,6 +12,14 @@ function parseStatus(status: string) {
   }
 
   return status as PostStatus;
+}
+
+function parseVisibility(value: string) {
+  if (!allowedVisibility.has(value)) {
+    throw new Error("Status must be one of: draft, published, archived, all");
+  }
+
+  return value;
 }
 
 function parseTags(tags: string) {
@@ -24,12 +33,17 @@ function parseTags(tags: string) {
 export function registerPostCommands(program: Command) {
   const post = program.command("post").description("Manage posts");
 
-  post.command("list").description("List posts").action(async () => {
-    const result = await apiRequest<{ posts: BlogPost[] }>("/api/posts?visibility=all");
-    for (const item of result.posts) {
-      console.log(`${item.id}\t${item.status}\t${item.slug}\t${item.title}`);
-    }
-  });
+  post
+    .command("list")
+    .description("List posts")
+    .option("-s, --status <status>", "Filter by status: draft, published, archived, all (default: all)")
+    .action(async (options: { status?: string }) => {
+      const visibility = options.status ? parseVisibility(options.status) : "all";
+      const result = await apiRequest<{ posts: BlogPost[] }>(`/api/posts?visibility=${visibility}`);
+      for (const item of result.posts) {
+        console.log(`${item.id}\t${item.status}\t${item.slug}\t${item.title}`);
+      }
+    });
 
   post
     .command("create")
@@ -104,6 +118,30 @@ export function registerPostCommands(program: Command) {
       body: JSON.stringify({ status: "published" })
     });
     console.log("Published");
+  });
+
+  post.command("unpublish").description("Revert a published post to draft").argument("<id>", "Post id").action(async (id) => {
+    await apiRequest(`/api/posts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "draft" })
+    });
+    console.log("Reverted to draft");
+  });
+
+  post.command("archive").description("Archive a published post (hidden from visitors)").argument("<id>", "Post id").action(async (id) => {
+    await apiRequest(`/api/posts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "archived" })
+    });
+    console.log("Archived");
+  });
+
+  post.command("unarchive").description("Restore an archived post to draft").argument("<id>", "Post id").action(async (id) => {
+    await apiRequest(`/api/posts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "draft" })
+    });
+    console.log("Unarchived (restored to draft)");
   });
 
   post.command("delete").description("Delete a post").argument("<id>", "Post id").action(async (id) => {

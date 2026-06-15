@@ -3,6 +3,7 @@ import type {
   BlogPost,
   CreatePostInput,
   CurrentUser,
+  PostVisibility,
   UpdatePostInput
 } from "@blogus/shared";
 
@@ -48,7 +49,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function listPosts(options: { visibility?: "published" | "all" } = {}) {
+export function listPosts(options: { visibility?: PostVisibility } = {}) {
   const params = new URLSearchParams();
   if (options.visibility) {
     params.set("visibility", options.visibility);
@@ -57,7 +58,7 @@ export function listPosts(options: { visibility?: "published" | "all" } = {}) {
   return request<{ posts: BlogPost[] }>(`/posts${params.size ? `?${params.toString()}` : ""}`);
 }
 
-export function getPostBySlug(slug: string, options: { visibility?: "published" | "all" } = {}) {
+export function getPostBySlug(slug: string, options: { visibility?: PostVisibility } = {}) {
   const params = new URLSearchParams();
   if (options.visibility) {
     params.set("visibility", options.visibility);

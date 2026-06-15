@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type { BlogPost, CreatePostInput, PostStatus, UpdatePostInput } from "@blogus/shared";
+import type { BlogPost, CreatePostInput, PostStatus, PostVisibility, UpdatePostInput } from "@blogus/shared";
 import { and, desc, eq, ne } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../db/schema.js";
 import { posts } from "../db/schema.js";
 
 export type PostsDatabase = PostgresJsDatabase<typeof schema>;
-export type PostVisibility = "published" | "all";
 
 export interface PostRepository {
   listPosts(options?: { visibility?: PostVisibility }): Promise<BlogPost[]>;
@@ -57,10 +56,20 @@ export class DrizzlePostRepository implements PostRepository {
   async listPosts(options: { visibility?: PostVisibility } = {}) {
     const visibility = options.visibility ?? "published";
     const query = this.db.select().from(posts);
-    const rows =
-      visibility === "published"
-        ? await query.where(eq(posts.status, "published")).orderBy(desc(posts.createdAt))
-        : await query.orderBy(desc(posts.createdAt));
+
+    const rows = await (() => {
+      switch (visibility) {
+        case "published":
+          return query.where(eq(posts.status, "published")).orderBy(desc(posts.createdAt));
+        case "draft":
+          return query.where(eq(posts.status, "draft")).orderBy(desc(posts.createdAt));
+        case "archived":
+          return query.where(eq(posts.status, "archived")).orderBy(desc(posts.createdAt));
+        case "all":
+        default:
+          return query.orderBy(desc(posts.createdAt));
+      }
+    })();
 
     return rows.map(toBlogPost);
   }
@@ -130,7 +139,9 @@ export class DrizzlePostRepository implements PostRepository {
         ? existing.publishedAt
           ? new Date(existing.publishedAt)
           : now
-        : null;
+        : existing.publishedAt
+          ? new Date(existing.publishedAt)
+          : null;
 
     const [row] = await this.db
       .update(posts)

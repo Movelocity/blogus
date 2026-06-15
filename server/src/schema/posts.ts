@@ -19,5 +19,5 @@ export const updatePostSchema = z.object({
 });
 
 export const listPostsQuerySchema = z.object({
-  visibility: z.enum(["published", "all"]).optional().default("published")
+  visibility: z.enum(["published", "archived", "draft", "all"]).optional().default("published")
 });

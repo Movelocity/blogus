@@ -1,6 +1,7 @@
+import type { PostVisibility } from "@blogus/shared";
 import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { sendApiError } from "../http/errors.js";
-import { DrizzlePostRepository, type PostRepository, type PostVisibility } from "../repositories/posts.js";
+import { DrizzlePostRepository, type PostRepository } from "../repositories/posts.js";
 import { createPostSchema, listPostsQuerySchema, updatePostSchema } from "../schema/posts.js";
 
 type PostRepositoryFactory = (app: FastifyInstance) => PostRepository;

@@ -1,4 +1,5 @@
 export type PostStatus = "draft" | "published" | "archived";
+export type PostVisibility = "published" | "archived" | "draft" | "all";
 
 export interface BlogPost {
   id: string;

@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { BlogPost, CreatePostInput, PostStatus, UpdatePostInput } from "@blogus/shared";
+import type { BlogPost, CreatePostInput, PostStatus, PostVisibility, UpdatePostInput } from "@blogus/shared";
 import Fastify from "fastify";
 import { apiErrorHandler } from "../http/errors.js";
 import { sendApiError } from "../http/errors.js";
-import type { PostRepository, PostVisibility } from "../repositories/posts.js";
+import type { PostRepository } from "../repositories/posts.js";
 import { slugify } from "../repositories/posts.js";
 import { createPostRoutes } from "./posts.js";
 

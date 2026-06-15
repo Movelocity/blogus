@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
+import type { BlogPost, CurrentUser, PostStatus, PostVisibility } from "@blogus/shared";
 import { createPost, deletePost, listPosts, logout, updatePost, uploadFile, whoami } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 
@@ -33,6 +33,7 @@ export function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState<PostVisibility>("all");
   const selectedPost = useMemo(() => posts.find((post) => post.id === selectedId) ?? null, [posts, selectedId]);
   const tags = splitTags(tagsText);
 
@@ -61,7 +62,7 @@ export function AdminPage() {
   }
 
   async function refreshPosts(nextSelectedId = selectedId) {
-    const result = await listPosts({ visibility: "all" });
+    const result = await listPosts({ visibility: filter });
     setPosts(result.posts);
     if (nextSelectedId) {
       const nextPost = result.posts.find((post) => post.id === nextSelectedId);
@@ -85,6 +86,21 @@ export function AdminPage() {
       })
       .finally(() => setAuthChecked(true));
   }, []);
+
+  useEffect(() => {
+    if (authChecked && user) {
+      listPosts({ visibility: filter })
+        .then((result) => {
+          setPosts(result.posts);
+          if (result.posts[0]) {
+            loadPost(result.posts[0]);
+          } else {
+            startNewPost();
+          }
+        })
+        .catch(() => {});
+    }
+  }, [filter, authChecked, user]);
 
   async function handleLogout() {
     setError(null);
@@ -156,10 +172,28 @@ export function AdminPage() {
   }
 
   async function changeStatus(id: string, status: PostStatus) {
+    const post = posts.find((p) => p.id === id);
+    if (!post) return;
+
+    const confirmMap: Partial<Record<PostStatus, string>> = {
+      archived: `确认将「${post.title}」归档？归档后访客将无法访问。`,
+      draft: post.status === "archived"
+        ? `确认取消归档「${post.title}」？将移回草稿状态。`
+        : "",
+    };
+
+    const message = confirmMap[status];
+    if (message && !window.confirm(message)) return;
+
     setError(null);
     try {
       const result = await updatePost(id, { status });
-      setMessage(status === "published" ? `已发布：${result.post.title}` : `已撤回：${result.post.title}`);
+      const labelMap: Record<string, string> = {
+        published: `已发布：${result.post.title}`,
+        draft: post.status === "archived" ? `已取消归档：${result.post.title}` : `已撤回：${result.post.title}`,
+        archived: `已归档：${result.post.title}`,
+      };
+      setMessage(labelMap[status] ?? `状态已更新：${result.post.title}`);
       await refreshPosts(result.post.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "状态更新失败");
@@ -167,8 +201,9 @@ export function AdminPage() {
   }
 
   async function remove(id: string) {
+    const post = posts.find((p) => p.id === id);
     setError(null);
-    if (!window.confirm("确认删除这篇文章？")) {
+    if (!window.confirm(`确认删除「${post?.title ?? "这篇文章"}」？此操作不可恢复。`)) {
       return;
     }
 
@@ -263,6 +298,27 @@ export function AdminPage() {
           >
             新建草稿
           </button>
+          <div className="flex flex-wrap gap-1">
+            {([
+              ["all", "全部"],
+              ["published", "已发布"],
+              ["draft", "草稿"],
+              ["archived", "已归档"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                className={`px-3 py-1.5 text-xs transition ${
+                  filter === value
+                    ? "bg-foreground text-primary-foreground"
+                    : "border border-foreground/10 bg-card hover:border-foreground/20"
+                }`}
+                onClick={() => setFilter(value)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="grid gap-3">
             {posts.length === 0 ? (
               <p className="border border-dashed border-foreground/20 bg-card p-4 text-sm text-muted-foreground">
@@ -282,8 +338,16 @@ export function AdminPage() {
               >
                 <span className="break-words font-medium text-foreground">{post.title}</span>
                 <span className="line-clamp-2 text-sm text-muted-foreground">{postExcerpt(post)}</span>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {post.status} · {post.slug}
+                <span
+                  className={`font-mono text-xs ${
+                    post.status === "published"
+                      ? "text-green-600"
+                      : post.status === "archived"
+                        ? "text-orange-500"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {post.status === "published" ? "已发布" : post.status === "archived" ? "已归档" : "草稿"} · {post.slug}
                 </span>
               </button>
             ))}
@@ -454,6 +518,22 @@ export function AdminPage() {
                   type="button"
                 >
                   撤回
+                </button>
+                <button
+                  className="border border-foreground/10 bg-card px-4 py-2.5 text-sm transition hover:border-foreground/30 disabled:cursor-not-allowed disabled:text-muted-foreground"
+                  disabled={selectedPost.status !== "published"}
+                  onClick={() => void changeStatus(selectedPost.id, "archived")}
+                  type="button"
+                >
+                  归档
+                </button>
+                <button
+                  className="border border-foreground/10 bg-card px-4 py-2.5 text-sm transition hover:border-foreground/30 disabled:cursor-not-allowed disabled:text-muted-foreground"
+                  disabled={selectedPost.status !== "archived"}
+                  onClick={() => void changeStatus(selectedPost.id, "draft")}
+                  type="button"
+                >
+                  取消归档
                 </button>
                 <button
                   className="border border-destructive/30 bg-card px-4 py-2.5 text-sm text-destructive transition hover:border-destructive/50 disabled:cursor-not-allowed disabled:text-muted-foreground"
