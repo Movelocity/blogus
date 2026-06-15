@@ -52,23 +52,25 @@ export function PostPage() {
   }
 
   return (
-    <article className="grid gap-10">
+    <article className="mx-auto w-full min-w-0 max-w-304">
       <header className="grid gap-8 border-b border-foreground/10 pb-10">
-        <Link
-          className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
-          to="/archive"
-        >
-          <span className="h-px w-6 bg-foreground/30" />
-          返回归档
-        </Link>
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0">
+          <Link
+            className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
+            to="/archive"
+          >
+            <span className="h-px w-6 bg-foreground/30" />
+            返回归档
+          </Link>
+        </div>
         {post.coverImageUrl ? (
           <img
             alt=""
-            className="max-h-[520px] w-full border border-foreground/10 object-cover"
+            className="mx-auto max-h-[520px] w-full max-w-5xl border border-foreground/10 object-cover"
             src={post.coverImageUrl}
           />
         ) : null}
-        <div className="mx-auto grid w-full max-w-3xl gap-5">
+        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0">
           <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
             <span>{formatPostDate(post.publishedAt)}</span>
             <span className="h-px w-4 bg-foreground/20" />
@@ -94,8 +96,13 @@ export function PostPage() {
           ) : null}
         </div>
       </header>
-      <div className="mx-auto w-full max-w-3xl">
-        <MarkdownView content={post.content} />
+
+      <div className="relative mt-10 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
+        <aside className="max-xl:hidden">{/* reserved: TOC */}</aside>
+        <div className="mx-auto w-full min-w-0 max-w-3xl xl:max-w-none">
+          <MarkdownView content={post.content} />
+        </div>
+        <aside className="max-xl:hidden">{/* reserved: related */}</aside>
       </div>
     </article>
   );
@@ -103,23 +110,29 @@ export function PostPage() {
 
 function PostSkeleton() {
   return (
-    <article className="grid gap-10" aria-label="文章正在加载">
+    <article className="mx-auto w-full min-w-0 max-w-304" aria-label="文章正在加载">
       <header className="grid gap-8 border-b border-foreground/10 pb-10">
-        <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-        <div className="h-72 w-full animate-pulse bg-muted" />
-        <div className="mx-auto grid w-full max-w-3xl gap-5">
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0">
+          <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="mx-auto h-72 w-full max-w-5xl animate-pulse bg-muted" />
+        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0">
           <div className="h-4 w-44 animate-pulse rounded bg-muted" />
           <div className="h-16 w-5/6 animate-pulse rounded bg-muted" />
           <div className="h-20 w-full animate-pulse rounded bg-secondary" />
         </div>
       </header>
-      <div className="mx-auto grid w-full max-w-3xl gap-4">
-        {[0, 1, 2, 3].map((item) => (
-          <div className="grid gap-2" key={item}>
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-          </div>
-        ))}
+      <div className="relative mt-10 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
+        <div className="max-xl:hidden" />
+        <div className="mx-auto grid w-full max-w-3xl gap-4 xl:max-w-none">
+          {[0, 1, 2, 3].map((item) => (
+            <div className="grid gap-2" key={item}>
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+        <div className="max-xl:hidden" />
       </div>
     </article>
   );

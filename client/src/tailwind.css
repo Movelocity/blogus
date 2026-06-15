@@ -69,6 +69,20 @@
   }
 }
 
+/* highlight.js: let our container own background/padding */
+pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
+/* KaTeX: scale down display math slightly for body text */
+.katex-display {
+  margin: 0;
+}
+.katex {
+  font-size: 1.05em;
+}
+
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
