@@ -10,5 +10,5 @@ uploads/
 *.log
 .DS_Store
 .pnpm-store
-.skills
+taste-skill*
 ref-web
