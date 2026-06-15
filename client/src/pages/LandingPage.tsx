@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
-const words = ["沉淀", "书写", "归档", "思考"];
+const words = ["探索", "发现", "spark", "相遇"];
 
 function BlurWord({ word, trigger }: { word: string; trigger: number }) {
   const chars = [...word];
@@ -219,9 +219,9 @@ export function LandingPage() {
                 heroReady ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
             >
-              <span className="inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
                 <span className="h-px w-8 bg-foreground/30" />
-                Self-hosted writing platform
+                somewhere brighter
               </span>
             </div>
 
@@ -232,9 +232,8 @@ export function LandingPage() {
                   heroReady ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
                 }`}
               >
-                <span className="block">面向长期阅读，</span>
+                <span className="block">ちょっとだけ、</span>
                 <span className="block">
-                  用于
                   <span className="relative inline-block">
                     <BlurWord word={words[wordIndex]} trigger={wordIndex} />
                   </span>
@@ -249,7 +248,7 @@ export function LandingPage() {
                 heroReady ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
             >
-              一个自托管的写作平台。没有算法、没有推荐流，只有文字和阅读本身。
+              好的文字让人忘记自己在阅读，就像好的门窗让人忘记墙壁的存在。
             </p>
           </div>
         </div>
@@ -262,9 +261,9 @@ export function LandingPage() {
         >
           <div className="mx-auto flex max-w-[1400px] items-start gap-10 lg:gap-20">
             {[
-              { value: "Markdown", label: "原生写作格式" },
-              { value: "100%", label: "数据自主可控" },
-              { value: "0", label: "第三方追踪" },
+              { value: "0", label: "边界" },
+              { value: "0", label: "限制" },
+              { value: "∞", label: "可能" },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col gap-2">
                 <span className="font-display text-3xl text-foreground lg:text-4xl">{stat.value}</span>
@@ -281,7 +280,7 @@ export function LandingPage() {
           }`}
         >
           <div className="flex flex-col items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Scroll</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">探索</span>
             <div className="h-8 w-px animate-pulse bg-foreground/30" />
           </div>
         </div>
@@ -301,7 +300,7 @@ export function LandingPage() {
                 }`}
               >
                 <span className="h-px w-12 bg-foreground/30" />
-                Philosophy
+                ここについて
               </span>
             </div>
             <div className="lg:col-span-8">
@@ -310,31 +309,31 @@ export function LandingPage() {
                   philosophy.visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
                 }`}
               >
-                写作不需要平台，
+                像推开一扇未知的窗，
                 <br />
-                <span className="text-muted-foreground">只需要一个安静的地方。</span>
+                <span className="text-muted-foreground">每次都有新的风景。</span>
               </h2>
               <div className="grid gap-8 md:grid-cols-2">
                 {[
                   {
                     number: "01",
-                    title: "自托管",
-                    desc: "部署在你自己的服务器上。数据、内容、读者关系，全部由你掌控。不依赖任何第三方服务。",
+                    title: "发现",
+                    desc: "随手捕捉闪烁的念头，让灵感自然流淌。",
                   },
                   {
                     number: "02",
-                    title: "Markdown 原生",
-                    desc: "以 Markdown 写作，以 Markdown 存储。无锁定格式，随时导出，永远可读。",
+                    title: "碰撞",
+                    desc: "不看标签，不听定义。只在意那一刻的灵感与悸动。"
                   },
                   {
                     number: "03",
-                    title: "极简前台",
-                    desc: "没有侧边栏、没有弹窗、没有推荐算法。读者看到的只有文字本身。",
+                    title: "延伸",
+                    desc: "没有最终答案，只有不断生长的视角。昨天的想法，今天依然有趣。"
                   },
                   {
                     number: "04",
-                    title: "面向长期",
-                    desc: "不追求流量峰值，追求内容的持久价值。设计每一个细节都是为了十年后依然好用。",
+                    title: "开阔",
+                    desc: "不设围墙。每一次回访，都像踏入一片新领地。",
                   },
                 ].map((item, i) => (
                   <div
@@ -363,14 +362,14 @@ export function LandingPage() {
               quote.visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
           >
-            好的写作工具不会让你注意到它的存在。
+            探索不是赶路，而是让每一个路口都值得驻足。
           </blockquote>
           <cite
             className={`font-mono text-sm not-italic text-muted-foreground transition-all delay-200 duration-700 ${
               quote.visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
             }`}
           >
-            Blogus Design Principle
+            — 关于这个小角落
           </cite>
         </div>
       </section>
@@ -389,12 +388,12 @@ export function LandingPage() {
               <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto]">
                 <div>
                   <h2 className="mb-6 font-display text-5xl tracking-tight text-foreground md:text-6xl lg:text-7xl lg:leading-[0.95]">
-                    开始阅读，
+                    准备好了吗？
                     <br />
-                    或开始写作。
+                    现在就启程。
                   </h2>
                   <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-                    浏览已发布的文章，或登录后台开始你的写作。
+                    永远有新东西，永远有下一段风景。翻到哪里，都是出发。
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
@@ -402,7 +401,7 @@ export function LandingPage() {
                     to="/blog"
                     className="group inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-8 py-4 text-base font-medium text-primary-foreground transition hover:bg-foreground/90"
                   >
-                    浏览文章
+                    立即探索
                     <svg
                       className="h-4 w-4 transition-transform group-hover:translate-x-1"
                       fill="none"
@@ -412,12 +411,6 @@ export function LandingPage() {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
-                  </Link>
-                  <Link
-                    to="/admin"
-                    className="inline-flex items-center justify-center rounded-full border border-foreground/20 px-8 py-4 text-base font-medium text-foreground transition hover:bg-foreground/5"
-                  >
-                    写作后台
                   </Link>
                 </div>
               </div>
@@ -432,7 +425,7 @@ export function LandingPage() {
           <div className="flex flex-col items-center justify-between gap-6 py-12 md:flex-row">
             <div className="flex items-center gap-3">
               <span className="font-display text-xl text-primary-foreground">Blogus</span>
-              <span className="font-mono text-xs text-primary-foreground/40">Self-hosted</span>
+              <span className="font-mono text-xs text-primary-foreground/40">さあ、出かけよう</span>
             </div>
             <div className="flex items-center gap-8">
               <Link to="/blog" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
