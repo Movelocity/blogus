@@ -4,12 +4,11 @@ SHELL := /bin/sh
 
 PNPM ?= pnpm
 COMPOSE ?= docker compose
-POST_ID ?=
 BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs
+.PHONY: help install dev dev-client dev-server build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -63,3 +62,9 @@ db-logs: ## Tail Postgres logs
 
 minio-logs: ## Tail MinIO logs
 	$(COMPOSE) logs -f minio
+
+# ── CLI ───────────────────────────────────────────────────────
+
+install-cli: ## Build and install blogus-cli globally (run again to update)
+	$(PNPM) --filter @blogus/cli build
+	cd client/cli && npm link

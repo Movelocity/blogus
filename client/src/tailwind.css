@@ -99,6 +99,10 @@ pre code.hljs {
     animation: fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
+  button {
+    @apply cursor-pointer;
+  }
+
   @keyframes fade-in {
     from {
       opacity: 0;
