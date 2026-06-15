@@ -26,17 +26,25 @@ export function HomePage() {
   const recentPosts = posts.slice(1);
 
   return (
-    <div className="grid gap-12">
-      <section className="grid gap-7 border-b border-slate-200 pb-10 md:grid-cols-[1.05fr_0.95fr] md:items-end">
-        <div className="max-w-3xl">
-          <p className="mb-3 text-sm font-semibold text-teal-700">Blogus Journal</p>
-          <h1 className="m-0 text-4xl font-bold leading-tight text-slate-950 md:text-5xl">
-            自托管写作，面向长期阅读。
+    <div className="grid gap-16">
+      {/* Hero */}
+      <section className="relative grid gap-8 border-b border-foreground/10 pb-12 lg:grid-cols-12 lg:items-end">
+        <div className="lg:col-span-7">
+          <span className="mb-6 inline-flex items-center gap-3 text-sm font-mono text-muted-foreground">
+            <span className="h-px w-8 bg-foreground/30" />
+            Blogus Journal
+          </span>
+          <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
+            自托管写作，
+            <br />
+            <span className="text-muted-foreground">面向长期阅读。</span>
           </h1>
         </div>
-        <p className="m-0 max-w-xl text-base leading-7 text-slate-600 md:justify-self-end">
-          这里收录已经发布的内容，适合从最新一篇开始阅读。
-        </p>
+        <div className="lg:col-span-5 lg:pb-4">
+          <p className="m-0 text-lg leading-relaxed text-muted-foreground">
+            这里收录已经发布的内容，适合从最新一篇开始阅读。
+          </p>
+        </div>
       </section>
 
       {loading ? <HomeSkeleton /> : null}
@@ -48,14 +56,23 @@ export function HomePage() {
       ) : null}
 
       {!loading && !error && featuredPost ? (
-        <section className="grid gap-8">
+        <section className="grid gap-12">
           <FeaturedPost post={featuredPost} />
           {recentPosts.length > 0 ? (
-            <div className="grid gap-4">
+            <div className="grid gap-6">
               <div className="flex items-end justify-between gap-4">
-                <h2 className="m-0 text-2xl font-semibold text-slate-950">最近文章</h2>
-                <Link className="text-sm font-medium text-teal-700 transition hover:text-teal-900" to="/archive">
-                  查看归档
+                <div>
+                  <span className="mb-2 inline-flex items-center gap-3 text-sm font-mono text-muted-foreground">
+                    <span className="h-px w-8 bg-foreground/30" />
+                    最近发布
+                  </span>
+                  <h2 className="m-0 font-display text-4xl tracking-tight text-foreground">全部文章</h2>
+                </div>
+                <Link
+                  className="text-sm text-foreground/70 transition-colors hover:text-foreground"
+                  to="/archive"
+                >
+                  查看归档 →
                 </Link>
               </div>
               <div className="grid gap-4">
@@ -73,30 +90,34 @@ export function HomePage() {
 
 function FeaturedPost({ post }: { post: BlogPost }) {
   return (
-    <article className="grid overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm md:grid-cols-[0.95fr_1.05fr]">
+    <article className="group grid overflow-hidden border border-foreground/10 bg-card transition-all duration-500 md:grid-cols-[0.95fr_1.05fr]">
       {post.coverImageUrl ? (
         <img alt="" className="h-72 w-full object-cover md:h-full" src={post.coverImageUrl} />
       ) : (
-        <div className="grid min-h-64 place-items-center bg-[linear-gradient(135deg,#0f766e,#111827)] px-8 text-white">
-          <span className="max-w-xs text-3xl font-semibold leading-tight">Blogus</span>
+        <div className="grid min-h-64 place-items-center bg-foreground px-8">
+          <span className="font-display text-4xl text-primary-foreground">Blogus</span>
         </div>
       )}
-      <div className="grid gap-5 p-6 md:p-8">
-        <div className="flex flex-wrap gap-3 text-sm text-slate-500">
+      <div className="grid gap-6 p-8 lg:p-12">
+        <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
           <span>{formatPostDate(post.publishedAt)}</span>
+          <span className="h-px w-4 bg-foreground/20" />
           <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
         </div>
-        <div className="grid gap-3">
-          <h2 className="m-0 break-words text-3xl font-bold leading-tight text-slate-950 md:text-4xl">
-            <Link className="transition hover:text-teal-700" to={`/posts/${post.slug}`}>
+        <div className="grid gap-4">
+          <h2 className="m-0 break-words font-display text-4xl leading-[1.1] tracking-tight text-foreground md:text-5xl">
+            <Link
+              className="transition-colors duration-300 hover:text-muted-foreground"
+              to={`/posts/${post.slug}`}
+            >
               {post.title}
             </Link>
           </h2>
-          <p className="m-0 max-w-2xl text-base leading-7 text-slate-600">{getPostSummary(post, 150)}</p>
+          <p className="m-0 max-w-2xl leading-relaxed text-muted-foreground">{getPostSummary(post, 150)}</p>
         </div>
         {post.tags.length > 0 ? <TagList tags={post.tags} /> : null}
         <Link
-          className="inline-flex w-fit items-center rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 active:translate-y-px"
+          className="inline-flex w-fit items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:bg-foreground/90 active:translate-y-px"
           to={`/posts/${post.slug}`}
         >
           阅读文章
@@ -108,22 +129,23 @@ function FeaturedPost({ post }: { post: BlogPost }) {
 
 function PostListItem({ post }: { post: BlogPost }) {
   return (
-    <article className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 md:grid-cols-[1fr_auto] md:items-start">
+    <article className="hover-lift grid gap-4 border border-foreground/10 bg-card p-6 transition-all duration-300 md:grid-cols-[1fr_auto] md:items-start lg:p-8">
       <div className="grid gap-3">
-        <div className="flex flex-wrap gap-3 text-sm text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
           <span>{formatPostDate(post.publishedAt)}</span>
+          <span className="h-px w-4 bg-foreground/20" />
           <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
         </div>
-        <h3 className="m-0 break-words text-2xl font-semibold leading-snug text-slate-950">
-          <Link className="transition hover:text-teal-700" to={`/posts/${post.slug}`}>
+        <h3 className="m-0 break-words font-display text-2xl leading-snug tracking-tight text-foreground lg:text-3xl">
+          <Link className="transition-colors duration-300 hover:text-muted-foreground" to={`/posts/${post.slug}`}>
             {post.title}
           </Link>
         </h3>
-        <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{getPostSummary(post)}</p>
+        <p className="m-0 max-w-3xl text-sm leading-relaxed text-muted-foreground">{getPostSummary(post)}</p>
         {post.tags.length > 0 ? <TagList tags={post.tags} /> : null}
       </div>
       {post.coverImageUrl ? (
-        <img alt="" className="h-32 w-full rounded-lg object-cover md:w-44" src={post.coverImageUrl} />
+        <img alt="" className="h-32 w-full rounded object-cover md:w-44" src={post.coverImageUrl} />
       ) : null}
     </article>
   );
@@ -133,7 +155,10 @@ function TagList({ tags }: { tags: string[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700" key={tag}>
+        <span
+          className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
+          key={tag}
+        >
           {tag}
         </span>
       ))}
@@ -141,15 +166,25 @@ function TagList({ tags }: { tags: string[] }) {
   );
 }
 
-function StatePanel({ title, description, tone = "empty" }: { title: string; description: string; tone?: "empty" | "error" }) {
+function StatePanel({
+  title,
+  description,
+  tone = "empty",
+}: {
+  title: string;
+  description: string;
+  tone?: "empty" | "error";
+}) {
   return (
     <section
-      className={`rounded-lg border border-dashed p-8 ${
-        tone === "error" ? "border-red-200 bg-red-50 text-red-900" : "border-slate-300 bg-white text-slate-700"
+      className={`border border-dashed p-8 ${
+        tone === "error"
+          ? "border-destructive/30 bg-destructive/5 text-destructive"
+          : "border-foreground/20 bg-card text-foreground"
       }`}
     >
-      <h2 className="m-0 text-xl font-semibold">{title}</h2>
-      <p className="mb-0 mt-2 leading-7">{description}</p>
+      <h2 className="m-0 font-display text-xl">{title}</h2>
+      <p className="mb-0 mt-2 leading-relaxed text-muted-foreground">{description}</p>
     </section>
   );
 }
@@ -157,21 +192,21 @@ function StatePanel({ title, description, tone = "empty" }: { title: string; des
 function HomeSkeleton() {
   return (
     <section className="grid gap-4" aria-label="文章正在加载">
-      <div className="grid overflow-hidden rounded-lg border border-slate-200 bg-white md:grid-cols-[0.95fr_1.05fr]">
-        <div className="h-64 animate-pulse bg-slate-200" />
-        <div className="grid gap-4 p-6 md:p-8">
-          <div className="h-4 w-40 animate-pulse rounded bg-slate-200" />
-          <div className="h-10 w-4/5 animate-pulse rounded bg-slate-200" />
-          <div className="h-20 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-10 w-28 animate-pulse rounded-lg bg-slate-200" />
+      <div className="grid overflow-hidden border border-foreground/10 bg-card md:grid-cols-[0.95fr_1.05fr]">
+        <div className="h-64 animate-pulse bg-muted" />
+        <div className="grid gap-4 p-8 lg:p-12">
+          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+          <div className="h-10 w-4/5 animate-pulse rounded bg-muted" />
+          <div className="h-20 w-full animate-pulse rounded bg-secondary" />
+          <div className="h-10 w-28 animate-pulse rounded-full bg-muted" />
         </div>
       </div>
       <div className="grid gap-3">
         {[0, 1].map((item) => (
-          <div className="rounded-lg border border-slate-200 bg-white p-5" key={item}>
-            <div className="mb-3 h-4 w-36 animate-pulse rounded bg-slate-200" />
-            <div className="mb-3 h-7 w-2/3 animate-pulse rounded bg-slate-200" />
-            <div className="h-14 w-full animate-pulse rounded bg-slate-100" />
+          <div className="border border-foreground/10 bg-card p-6" key={item}>
+            <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted" />
+            <div className="mb-3 h-7 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="h-14 w-full animate-pulse rounded bg-secondary" />
           </div>
         ))}
       </div>

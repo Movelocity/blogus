@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonk Studio - We make things that move people</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fef6e8;
+    --bg-warm: #fdebd0;
+    --bg-card: #fff;
+    --text: #1a1408;
+    --text-mid: #4a4030;
+    --text-light: #8a7e6a;
+    --accent: #e63946;
+    --accent-2: #264653;
+    --accent-3: #2a9d8f;
+    --accent-4: #e9c46a;
+    --sans: 'Space Grotesk', sans-serif;
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(1.5rem, 4vw, 3rem);
+    background: rgba(254, 246, 232, 0.9);
+    backdrop-filter: blur(12px);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.hidden { transform: translateY(-100%); }
+
+  .nav-logo {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+
+  .nav-logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .nav-links {
+    display: flex; gap: 1.5rem; align-items: center;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    padding: 0.6rem 1.5rem;
+    background: var(--accent);
+    color: #fff !important;
+    border-radius: 100px;
+    font-weight: 600;
+    transition: transform 0.15s;
+  }
+
+  .nav-cta:hover { transform: scale(1.03); color: #fff !important; }
+  .nav-cta:active { transform: scale(0.98); }
+
+  /* Marquee */
+  .marquee {
+    overflow: hidden;
+    padding: 1rem 0;
+    background: var(--accent);
+    color: #fff;
+    margin-top: 64px;
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 20s linear infinite;
+  }
+
+  .marquee-item {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 2rem;
+  }
+
+  .marquee-item::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100dvh;
+    padding: 6rem clamp(1.5rem, 4vw, 3rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    margin-top: -64px;
+    padding-top: calc(64px + 6rem);
+  }
+
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    margin-bottom: 2rem;
+    max-width: 900px;
+  }
+
+  .hero h1 .highlight {
+    color: var(--accent);
+    position: relative;
+    display: inline-block;
+  }
+
+  .hero h1 .highlight::after {
+    content: '';
+    position: absolute;
+    bottom: 0.05em;
+    left: 0; right: 0;
+    height: 0.12em;
+    background: var(--accent);
+    border-radius: 100px;
+    opacity: 0.3;
+  }
+
+  .hero-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+    max-width: 380px;
+  }
+
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 1rem 2.5rem;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(26, 20, 8, 0.15);
+  }
+
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(26, 20, 8, 0.2); }
+  .hero-cta:active { transform: scale(0.98); }
+
+  /* Bento grid */
+  .bento {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem clamp(1.5rem, 4vw, 3rem) 6rem;
+  }
+
+  .bento-header {
+    margin-bottom: 3rem;
+  }
+
+  .bento-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: auto;
+    gap: 1rem;
+  }
+
+  .bento-cell {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 240px;
+  }
+
+  .bento-cell:hover { transform: translateY(-4px); }
+
+  .bento-1 { grid-column: 1 / 7; background: var(--accent-2); color: #fff; }
+  .bento-2 { grid-column: 7 / 13; background: var(--accent); color: #fff; }
+  .bento-3 { grid-column: 1 / 5; background: var(--accent-4); }
+  .bento-4 { grid-column: 5 / 9; }
+  .bento-5 { grid-column: 9 / 13; background: var(--accent-3); color: #fff; }
+
+  .bento-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: auto;
+  }
+
+  .bento-title {
+    font-size: clamp(1.2rem, 2vw, 1.6rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-top: 1.5rem;
+  }
+
+  .bento-desc {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+  }
+
+  .bento-big-number {
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-top: auto;
+  }
+
+  /* Work grid */
+  .work {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(1.5rem, 4vw, 3rem) 6rem;
+  }
+
+  .work-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 3rem;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .work-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .work-header a {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 0.4rem;
+    transition: gap 0.2s;
+  }
+
+  .work-header a:hover { gap: 0.7rem; }
+
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .work-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: var(--bg-card);
+  }
+
+  .work-card:hover { transform: translateY(-4px); }
+
+  .work-card-img {
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .work-card-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .work-card:hover .work-card-img img { transform: scale(1.04); }
+
+  .work-card-body {
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  .work-card-tags {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .work-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border-radius: 100px;
+    background: var(--bg);
+    color: var(--text-mid);
+  }
+
+  .work-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+
+  .work-card-desc {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+  }
+
+  /* Team */
+  .team {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(1.5rem, 4vw, 3rem) 6rem;
+  }
+
+  .team-header h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 3rem;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .team-card {
+    text-align: center;
+  }
+
+  .team-avatar {
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background: var(--bg-warm);
+  }
+
+  .team-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .team-card:hover .team-avatar img { transform: scale(1.05); }
+
+  .team-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .team-role {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+  }
+
+  /* Testimonial */
+  .testimonial {
+    background: var(--accent-2);
+    color: #fff;
+    padding: 5rem clamp(1.5rem, 4vw, 3rem);
+    border-radius: var(--radius);
+    max-width: 1200px;
+    margin: 0 auto 6rem;
+    margin-left: clamp(1.5rem, 4vw, 3rem);
+    margin-right: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  @media (min-width: 1232px) {
+    .testimonial { margin-left: auto; margin-right: auto; }
+  }
+
+  .testimonial-inner {
+    max-width: 680px;
+  }
+
+  .testimonial blockquote {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin-bottom: 2rem;
+  }
+
+  .testimonial-author {
+    display: flex; align-items: center; gap: 1rem;
+  }
+
+  .testimonial-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .testimonial-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .testimonial-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .testimonial-role {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.15rem;
+  }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 6rem clamp(1.5rem, 4vw, 3rem) 8rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .cta h2 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.25rem;
+  }
+
+  .cta p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+    margin-bottom: 2.5rem;
+  }
+
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 1.1rem 3rem;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(230, 57, 70, 0.3);
+  }
+
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(230, 57, 70, 0.35); }
+  .cta-btn:active { transform: scale(0.98); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid #1a140810;
+    padding: 3rem clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .footer-logo {
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .footer-copy {
+    font-size: 0.72rem;
+    color: var(--text-light);
+  }
+
+  .footer-links {
+    display: flex; gap: 1.5rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .bento-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .bento-1, .bento-2, .bento-3, .bento-4, .bento-5 {
+      grid-column: auto / span 2;
+    }
+    .bento-3, .bento-5 { grid-column: auto / span 1; }
+    .work-grid { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .hero h1 { font-size: clamp(2.5rem, 10vw, 4rem); }
+  }
+
+  /* Animations */
+  @media (prefers-reduced-motion: no-preference) {
+    .pop-in {
+      opacity: 0;
+      transform: scale(0.92) translateY(16px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pop-in.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+    .slide-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-up.visible { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pop-in, .slide-up { opacity: 1; transform: none; }
+    .marquee-track { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <a href="#" class="nav-logo"><span class="nav-logo-dot"></span> Bonk</a>
+  <ul class="nav-links">
+    <li><a href="#work">Work</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#">Services</a></li>
+    <li><a href="#contact" class="nav-cta">Start a project</a></li>
+  </ul>
+</nav>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span class="marquee-item">Branding</span>
+    <span class="marquee-item">Product Design</span>
+    <span class="marquee-item">Motion</span>
+    <span class="marquee-item">Web Development</span>
+    <span class="marquee-item">Strategy</span>
+    <span class="marquee-item">Identity</span>
+    <span class="marquee-item">Branding</span>
+    <span class="marquee-item">Product Design</span>
+    <span class="marquee-item">Motion</span>
+    <span class="marquee-item">Web Development</span>
+    <span class="marquee-item">Strategy</span>
+    <span class="marquee-item">Identity</span>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="slide-up">We make things that <span class="highlight">move</span> people</h1>
+    <div class="hero-bottom">
+      <p class="hero-sub slide-up">Bonk is a design studio in Berlin. We build brands, products, and digital experiences for companies that care about craft.</p>
+      <a href="#contact" class="hero-cta slide-up">Let's talk</a>
+    </div>
+  </div>
+</section>
+
+<section class="bento" id="services">
+  <div class="bento-header">
+    <h2 class="slide-up">What we do</h2>
+  </div>
+  <div class="bento-grid">
+    <div class="bento-cell bento-1 pop-in">
+      <div class="bento-label">Brand</div>
+      <div>
+        <div class="bento-title">Identity systems that scale</div>
+        <div class="bento-desc">From naming to full visual systems. We build brands that work at every touchpoint.</div>
+      </div>
+    </div>
+    <div class="bento-cell bento-2 pop-in">
+      <div class="bento-label">Product</div>
+      <div>
+        <div class="bento-title">Digital products people keep using</div>
+        <div class="bento-desc">UI/UX design and front-end development for web and mobile.</div>
+      </div>
+    </div>
+    <div class="bento-cell bento-3 pop-in">
+      <div class="bento-big-number">127</div>
+      <div class="bento-label">Projects shipped since 2019</div>
+    </div>
+    <div class="bento-cell bento-4 pop-in">
+      <div class="bento-label">Motion</div>
+      <div>
+        <div class="bento-title">Animation and film</div>
+        <div class="bento-desc">Product demos, brand films, and motion design that tells a story.</div>
+      </div>
+    </div>
+    <div class="bento-cell bento-5 pop-in">
+      <div class="bento-label">Strategy</div>
+      <div>
+        <div class="bento-title">Positioning and naming</div>
+        <div class="bento-desc">We help you figure out what to say before we figure out how it looks.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="work" id="work">
+  <div class="work-header">
+    <h2 class="slide-up">Selected work</h2>
+    <a href="#">View all projects</a>
+  </div>
+  <div class="work-grid">
+    <a href="#" class="work-card pop-in">
+      <div class="work-card-img">
+        <img src="https://picsum.photos/seed/bonk-luma/640/400" alt="Luma brand project">
+      </div>
+      <div class="work-card-body">
+        <div class="work-card-tags">
+          <span class="work-tag">Branding</span>
+          <span class="work-tag">Web</span>
+        </div>
+        <div class="work-card-title">Luma Health</div>
+        <div class="work-card-desc">Brand identity and marketing site for a telehealth platform serving rural communities.</div>
+      </div>
+    </a>
+    <a href="#" class="work-card pop-in">
+      <div class="work-card-img">
+        <img src="https://picsum.photos/seed/bonk-drift/640/400" alt="Drift app project">
+      </div>
+      <div class="work-card-body">
+        <div class="work-card-tags">
+          <span class="work-tag">Product</span>
+          <span class="work-tag">Mobile</span>
+        </div>
+        <div class="work-card-title">Drift</div>
+        <div class="work-card-desc">A habit tracker that uses gentle nudges instead of guilt. iOS and Android.</div>
+      </div>
+    </a>
+    <a href="#" class="work-card pop-in">
+      <div class="work-card-img">
+        <img src="https://picsum.photos/seed/bonk-arbor/640/400" alt="Arbor project">
+      </div>
+      <div class="work-card-body">
+        <div class="work-card-tags">
+          <span class="work-tag">Identity</span>
+          <span class="work-tag">Motion</span>
+        </div>
+        <div class="work-card-title">Arbor Coffee</div>
+        <div class="work-card-desc">Full rebrand for a specialty roaster. Logo, packaging, and a 30-second brand film.</div>
+      </div>
+    </a>
+    <a href="#" class="work-card pop-in">
+      <div class="work-card-img">
+        <img src="https://picsum.photos/seed/bonk-terra/640/400" alt="Terra project">
+      </div>
+      <div class="work-card-body">
+        <div class="work-card-tags">
+          <span class="work-tag">Strategy</span>
+          <span class="work-tag">Branding</span>
+        </div>
+        <div class="work-card-title">Terra Collective</div>
+        <div class="work-card-desc">Naming, positioning, and visual identity for a climate-tech fund.</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="team" id="team">
+  <div class="team-header">
+    <h2 class="slide-up">The people</h2>
+  </div>
+  <div class="team-grid">
+    <div class="team-card pop-in">
+      <div class="team-avatar">
+        <img src="https://picsum.photos/seed/bonk-maya/300/400" alt="Maya Chen">
+      </div>
+      <div class="team-name">Maya Chen</div>
+      <div class="team-role">Creative Director</div>
+    </div>
+    <div class="team-card pop-in">
+      <div class="team-avatar">
+        <img src="https://picsum.photos/seed/bonk-felix/300/400" alt="Felix Brandt">
+      </div>
+      <div class="team-name">Felix Brandt</div>
+      <div class="team-role">Lead Developer</div>
+    </div>
+    <div class="team-card pop-in">
+      <div class="team-avatar">
+        <img src="https://picsum.photos/seed/bonk-sofia/300/400" alt="Sofia Reyes">
+      </div>
+      <div class="team-name">Sofia Reyes</div>
+      <div class="team-role">Brand Strategist</div>
+    </div>
+    <div class="team-card pop-in">
+      <div class="team-avatar">
+        <img src="https://picsum.photos/seed/bonk-kai/300/400" alt="Kai Nakamura">
+      </div>
+      <div class="team-name">Kai Nakamura</div>
+      <div class="team-role">Motion Designer</div>
+    </div>
+  </div>
+</section>
+
+<section class="testimonial pop-in">
+  <div class="testimonial-inner">
+    <blockquote>They did not just design our brand. They helped us understand what we actually wanted to say. The work speaks for itself.</blockquote>
+    <div class="testimonial-author">
+      <div class="testimonial-avatar">
+        <img src="https://picsum.photos/seed/bonk-anna/96/96" alt="Anna Petrova">
+      </div>
+      <div>
+        <div class="testimonial-name">Anna Petrova</div>
+        <div class="testimonial-role">CEO, Luma Health</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="contact">
+  <h2 class="slide-up">Got a project in mind?</h2>
+  <p class="slide-up">We take on a small number of projects each quarter. If the brief is interesting, we will make time.</p>
+  <a href="mailto:hello@bonk.studio" class="cta-btn slide-up">Get in touch</a>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo"><span class="nav-logo-dot"></span> Bonk Studio</div>
+    <div class="footer-copy">Berlin, Germany</div>
+    <ul class="footer-links">
+      <li><a href="#">Instagram</a></li>
+      <li><a href="#">Dribbble</a></li>
+      <li><a href="#">LinkedIn</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const delay = entry.target.dataset.delay || 0;
+        setTimeout(() => entry.target.classList.add('visible'), delay);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.pop-in, .slide-up').forEach((el, i) => {
+    el.dataset.delay = (i % 5) * 70;
+    observer.observe(el);
+  });
+
+  // Magnetic button effect on CTA
+  const ctaBtn = document.querySelector('.cta-btn');
+  if (ctaBtn) {
+    ctaBtn.addEventListener('mousemove', (e) => {
+      const rect = ctaBtn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      ctaBtn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+    });
+
+    ctaBtn.addEventListener('mouseleave', () => {
+      ctaBtn.style.transform = '';
+    });
+  }
+
+  (function() {
+    const nav = document.getElementById('mainNav');
+    let last = 0, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const curr = window.scrollY;
+          if (curr > 80 && curr > last) nav.classList.add('hidden');
+          else nav.classList.remove('hidden');
+          last = curr;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>

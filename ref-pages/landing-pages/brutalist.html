@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKTR - Build Fast. Ship Raw.</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f5f5f0;
+    --text: #0a0a0a;
+    --accent: #c8ff00;
+    --accent-dark: #9abf00;
+    --border: #0a0a0a;
+    --muted: #6b6b60;
+    --mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+    --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--accent); color: var(--text); }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 clamp(1.5rem, 4vw, 3rem);
+    background: var(--bg);
+    border-bottom: 3px solid var(--border);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.hidden { transform: translateY(-100%); }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .nav-links a { transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-install {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.8rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .nav-install:hover { background: #333; }
+
+  /* HERO */
+  .hero {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+    padding: 0 clamp(1.5rem, 4vw, 3rem);
+    padding-top: 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .hero-content { max-width: 700px; }
+
+  .hero-headline {
+    font-family: var(--mono);
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    margin-bottom: 2rem;
+  }
+
+  .hero-headline .hl {
+    background: var(--accent);
+    padding: 0 0.08em;
+    display: inline;
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 38ch;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-cmd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.7rem 1.2rem;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    position: relative;
+  }
+
+  .hero-cmd:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .hero-cmd:active { transform: scale(0.98); }
+
+  .hero-cmd .dollar {
+    color: var(--muted);
+    user-select: none;
+  }
+
+  .hero-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-block {
+    width: clamp(200px, 22vw, 320px);
+    height: clamp(240px, 26vw, 380px);
+    background: var(--accent);
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 1.5rem;
+    transform: rotate(3deg);
+    position: relative;
+  }
+
+  .hero-block-label {
+    font-family: var(--mono);
+    font-size: clamp(3rem, 5vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--text);
+  }
+
+  .hero-block-tag {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text);
+    opacity: 0.5;
+  }
+
+  /* FEATURES */
+  .features {
+    padding: clamp(4rem, 10vh, 8rem) clamp(1.5rem, 4vw, 3rem);
+    max-width: 1400px;
+    margin: 0 auto;
+    border-top: 3px solid var(--border);
+  }
+
+  .features-heading {
+    font-family: var(--mono);
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: clamp(3rem, 6vh, 5rem);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 1.5rem;
+  }
+
+  .feature-item {
+    padding: 2rem 0 2rem 2rem;
+    border-left: 4px solid var(--border);
+  }
+
+  .feature-item:nth-child(1) { border-left-color: var(--accent); }
+
+  .feature-title {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-body {
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 45ch;
+  }
+
+  /* STATS STRIP */
+  .stats {
+    border-top: 3px solid var(--border);
+    border-bottom: 3px solid var(--border);
+    background: var(--text);
+    color: var(--bg);
+    padding: clamp(2.5rem, 5vh, 4rem) clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .stats-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+
+  .stat {
+    text-align: center;
+    position: relative;
+  }
+
+  .stat:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 10%;
+    height: 80%;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .stat-number {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: #888;
+    margin-top: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    padding: clamp(4rem, 10vh, 8rem) clamp(1.5rem, 4vw, 3rem);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .how-heading {
+    font-family: var(--mono);
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: clamp(3rem, 6vh, 5rem);
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .how-step {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 2px solid var(--border);
+    margin-top: -2px;
+    margin-left: -2px;
+  }
+
+  .how-step:first-child { margin-top: 0; margin-left: 0; }
+  .how-step:nth-child(2) { margin-top: 0; }
+  .how-step:nth-child(3) { margin-left: 0; }
+
+  .how-step-name {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+
+  .how-step-body {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 35ch;
+  }
+
+  /* CTA */
+  .cta {
+    background: var(--accent);
+    border-top: 3px solid var(--border);
+    padding: clamp(4rem, 8vh, 7rem) clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .cta-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .cta-heading {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 4.5vw, 3.8rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .cta-btn {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.9rem 2rem;
+    background: var(--text);
+    color: var(--bg);
+    border: 3px solid var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .cta-btn:hover {
+    background: transparent;
+    color: var(--text);
+  }
+
+  .cta-btn:active { transform: scale(0.98); }
+
+  /* FOOTER */
+  footer {
+    border-top: 3px solid var(--border);
+    padding: 1.5rem clamp(1.5rem, 4vw, 3rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* SCROLL ANIMATIONS */
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .anim-up {
+    animation: slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 25%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-up { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      padding-top: calc(64px + 3rem);
+      padding-bottom: 3rem;
+    }
+
+    .hero-visual { display: none; }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-inner {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .stat:not(:last-child)::after {
+      display: none;
+    }
+
+    .how-steps {
+      grid-template-columns: 1fr;
+    }
+
+    .how-step { margin-left: 0 !important; }
+
+    .cta-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <div class="nav-logo">RKTR</div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="https://github.com" target="_blank">Source</a></li>
+  </ul>
+  <a href="#cta" class="nav-install">Install</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1 class="hero-headline">
+      BUILD<br>
+      <span class="hl">FAST.</span><br>
+      SHIP RAW.
+    </h1>
+    <p class="hero-desc">
+      The zero-config bundler that gets out of your way. No plugins, no magic. Just your code, built in milliseconds.
+    </p>
+    <button class="hero-cmd" onclick="navigator.clipboard.writeText('npm install rktr')">
+      <span class="dollar">$</span> npm install rktr
+    </button>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-block">
+      <span class="hero-block-tag">stable</span>
+      <span class="hero-block-label">v4</span>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <h2 class="features-heading anim-up">Why RKTR</h2>
+  <div class="features-grid">
+    <div class="feature-item anim-up">
+      <div class="feature-title">Zero configuration</div>
+      <p class="feature-body">
+        Point it at your entry file. That's the whole setup.
+        TypeScript, JSX, CSS modules, all handled. No config files,
+        no boilerplate, no twenty-minute onboarding.
+      </p>
+    </div>
+    <div class="feature-item anim-up">
+      <div class="feature-title">Sub-10ms builds</div>
+      <p class="feature-body">
+        Incremental compilation with persistent caching.
+        Hot module replacement that actually stays hot.
+        Your feedback loop stays tight.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="stats anim-up">
+  <div class="stats-inner">
+    <div class="stat">
+      <div class="stat-number">47.2k</div>
+      <div class="stat-label">weekly installs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">10ms</div>
+      <div class="stat-label">avg cold build</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">2.1k</div>
+      <div class="stat-label">GitHub stars</div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <h2 class="how-heading anim-up">How it works</h2>
+  <div class="how-steps">
+    <div class="how-step anim-up">
+      <div class="how-step-name">Install</div>
+      <p class="how-step-body">One command. No global install required. Works with npm, pnpm, yarn.</p>
+    </div>
+    <div class="how-step anim-up">
+      <div class="how-step-name">Point</div>
+      <p class="how-step-body">Give it your entry file. RKTR infers the rest from your imports and file extensions.</p>
+    </div>
+    <div class="how-step anim-up">
+      <div class="how-step-name">Build</div>
+      <p class="how-step-body">Persistent caching kicks in from the second build. Most rebuilds under 5ms.</p>
+    </div>
+    <div class="how-step anim-up">
+      <div class="how-step-name">Ship</div>
+      <p class="how-step-body">Tree-shaken, code-split output. Deploy to any static host or edge runtime.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="cta">
+  <div class="cta-inner anim-up">
+    <h2 class="cta-heading">Start building.</h2>
+    <a href="https://github.com" class="cta-btn">Install RKTR</a>
+  </div>
+</section>
+
+<footer>
+  <span>RKTR 2026</span>
+  <span>MIT License</span>
+</footer>
+
+<script>
+  (function() {
+    const nav = document.getElementById('mainNav');
+    let last = 0, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const curr = window.scrollY;
+          if (curr > 80 && curr > last) nav.classList.add('hidden');
+          else nav.classList.remove('hidden');
+          last = curr;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>

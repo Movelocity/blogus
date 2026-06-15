@@ -25,28 +25,34 @@ export function LoginPage() {
   }
 
   return (
-    <>
-      <section className="mb-6">
-        <h1 className="mb-2 text-4xl font-bold leading-tight text-slate-900">登录</h1>
-        <p className="m-0 text-slate-600">使用邮箱和密码进入写作后台。</p>
-      </section>
-      <form className="grid gap-4 rounded-lg border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
-        <label className="grid gap-2 font-semibold">
-          邮箱
+    <div className="mx-auto grid max-w-md gap-10 pt-8">
+      <header className="grid gap-4 text-center">
+        <span className="mx-auto inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
+          <span className="h-px w-8 bg-foreground/30" />
+          Authentication
+          <span className="h-px w-8 bg-foreground/30" />
+        </span>
+        <h1 className="m-0 font-display text-5xl tracking-tight text-foreground">登录</h1>
+        <p className="m-0 text-muted-foreground">使用邮箱和密码进入写作后台。</p>
+      </header>
+
+      <form className="grid gap-5 border border-foreground/10 bg-card p-8" onSubmit={handleSubmit}>
+        <label className="grid gap-2">
+          <span className="font-mono text-xs text-muted-foreground">邮箱</span>
           <input
             autoComplete="email"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="border border-foreground/10 bg-background px-4 py-3 text-foreground outline-none transition focus:border-foreground/30 focus:ring-2 focus:ring-ring/10"
             placeholder="you@example.com"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
-        <label className="grid gap-2 font-semibold">
-          密码
+        <label className="grid gap-2">
+          <span className="font-mono text-xs text-muted-foreground">密码</span>
           <input
             autoComplete="current-password"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="border border-foreground/10 bg-background px-4 py-3 text-foreground outline-none transition focus:border-foreground/30 focus:ring-2 focus:ring-ring/10"
             placeholder="password"
             type="password"
             value={password}
@@ -54,14 +60,16 @@ export function LoginPage() {
           />
         </label>
         <button
-          className="justify-self-start rounded-md bg-teal-700 px-4 py-2 font-bold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="rounded-full bg-foreground px-6 py-3 font-medium text-primary-foreground transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           disabled={loading}
           type="submit"
         >
           {loading ? "登录中..." : "登录"}
         </button>
-        {error ? <p className="text-red-700">{error}</p> : null}
+        {error ? (
+          <p className="m-0 text-center font-mono text-sm text-destructive">{error}</p>
+        ) : null}
       </form>
-    </>
+    </div>
   );
 }

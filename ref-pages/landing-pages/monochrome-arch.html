@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raume - Architecture of Absence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fafafa;
+    --text: #111;
+    --text-dim: #666;
+    --border: #e0e0e0;
+    --font: 'Geist', -apple-system, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(2rem, 5vw, 5rem);
+    background: rgba(250, 250, 250, 0.92);
+    backdrop-filter: blur(12px);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.hidden { transform: translateY(-100%); }
+
+  .nav-mark {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .nav-right {
+    display: flex; gap: 2.5rem; align-items: center;
+    list-style: none;
+  }
+
+  .nav-right a {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+
+  .nav-right a:hover { color: var(--text); }
+
+  .nav-contact {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.45rem 1.2rem;
+    border: 1px solid var(--text);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .nav-contact:hover {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 64px;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 clamp(2rem, 5vw, 5rem);
+    padding-bottom: 5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(3.2rem, 6vw, 6rem);
+    font-weight: 300;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    margin-bottom: 2rem;
+  }
+
+  .hero-sub {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 380px;
+  }
+
+  .hero-right {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-right img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(100%);
+  }
+
+  /* Projects */
+  .projects {
+    padding: 10rem clamp(2rem, 5vw, 5rem);
+  }
+
+  .projects-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 5rem;
+  }
+
+  .projects-head h2 {
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+  }
+
+  .projects-head span {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .project-row {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 2rem;
+    margin-bottom: 8rem;
+    align-items: end;
+  }
+
+  .project-row:nth-child(even) {
+    grid-template-columns: 5fr 7fr;
+  }
+
+  .project-row:nth-child(even) .project-img {
+    order: 2;
+  }
+
+  .project-img {
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    background: #eee;
+  }
+
+  .project-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(100%);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .project-row:hover .project-img img {
+    transform: scale(1.03);
+  }
+
+  .project-info {
+    padding: 1rem 0;
+  }
+
+  .project-info h3 {
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  .project-info p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 320px;
+    margin-bottom: 1.5rem;
+  }
+
+  .project-info span {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+
+  /* Philosophy */
+  .philosophy {
+    padding: 8rem clamp(2rem, 5vw, 5rem);
+    border-top: 1px solid var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .philosophy blockquote {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 300;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+  }
+
+  .philosophy cite {
+    font-style: normal;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  /* Approach */
+  .approach {
+    padding: 8rem clamp(2rem, 5vw, 5rem) 10rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .approach-item h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .approach-item p {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+
+  /* Full image */
+  .full-image {
+    width: 100%;
+    aspect-ratio: 21/9;
+    overflow: hidden;
+  }
+
+  .full-image img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(100%);
+  }
+
+  /* Contact */
+  .contact {
+    padding: 10rem clamp(2rem, 5vw, 5rem);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .contact h2 {
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .contact-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .contact-right p {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 360px;
+  }
+
+  .contact-link {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--text);
+    padding-bottom: 0.2rem;
+    align-self: flex-start;
+    transition: opacity 0.2s;
+  }
+
+  .contact-link:hover { opacity: 0.6; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem clamp(2rem, 5vw, 5rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer span {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  footer ul {
+    display: flex; gap: 1.5rem;
+    list-style: none;
+  }
+
+  footer a {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  footer a:hover { color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { height: 50vh; order: -1; }
+    .hero-left { padding-bottom: 3rem; padding-top: 2rem; }
+    .project-row,
+    .project-row:nth-child(even) { grid-template-columns: 1fr; }
+    .project-row:nth-child(even) .project-img { order: 0; }
+    .approach { grid-template-columns: 1fr; gap: 2.5rem; }
+    .contact { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-right { display: none; }
+  }
+
+  /* Animations */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <div class="nav-mark">Raume</div>
+  <ul class="nav-right">
+    <li><a href="#">Work</a></li>
+    <li><a href="#">Practice</a></li>
+    <li><a href="#">People</a></li>
+    <li><a href="#" class="nav-contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <h1 class="reveal">Architecture<br>of absence</h1>
+    <p class="hero-sub reveal">We design spaces defined by what we leave out. Light, proportion, and silence do the rest.</p>
+  </div>
+  <div class="hero-right">
+    <img src="https://picsum.photos/seed/raume-concrete/900/1200" alt="Concrete facade with light shaft">
+  </div>
+</section>
+
+<section class="projects">
+  <div class="projects-head reveal">
+    <h2>Selected work</h2>
+    <span>2019 - 2026</span>
+  </div>
+
+  <div class="project-row reveal">
+    <div class="project-img">
+      <img src="https://picsum.photos/seed/raume-house-1/1000/625" alt="House with courtyard">
+    </div>
+    <div class="project-info">
+      <h3>House with Courtyard</h3>
+      <p>A private residence in Aarhus where the central void organizes all circulation. The courtyard is the room you pass through most.</p>
+      <span>Aarhus, Denmark, 2024</span>
+    </div>
+  </div>
+
+  <div class="project-row reveal">
+    <div class="project-img">
+      <img src="https://picsum.photos/seed/raume-gallery/1000/625" alt="Gallery interior">
+    </div>
+    <div class="project-info">
+      <h3>Nordlys Gallery</h3>
+      <p>Conversion of a 1940s grain store into an exhibition space. We removed everything that was not structure, then added only light.</p>
+      <span>Oslo, Norway, 2023</span>
+    </div>
+  </div>
+
+  <div class="project-row reveal">
+    <div class="project-img">
+      <img src="https://picsum.photos/seed/raume-chapel/1000/625" alt="Chapel in forest">
+    </div>
+    <div class="project-info">
+      <h3>Forest Chapel</h3>
+      <p>A non-denominational chapel built from local timber and cast concrete. The roof lifts to frame a single pine tree at the altar position.</p>
+      <span>Varmland, Sweden, 2022</span>
+    </div>
+  </div>
+</section>
+
+<section class="philosophy reveal">
+  <blockquote>The best architecture is the space you do not notice until you feel different inside it.</blockquote>
+  <cite>Kasper Raume, founding partner</cite>
+</section>
+
+<section class="full-image">
+  <img src="https://picsum.photos/seed/raume-wide/1600/685" alt="Minimalist interior with natural light">
+</section>
+
+<section class="approach">
+  <div class="approach-item reveal">
+    <h3>Listen first</h3>
+    <p>Every project begins with weeks of observation. We study how light moves through the site before we draw a single line.</p>
+  </div>
+  <div class="approach-item reveal">
+    <h3>Subtract</h3>
+    <p>We add nothing decorative. Materials speak when left honest. Concrete ages. Wood darkens. Copper turns green. These are features.</p>
+  </div>
+  <div class="approach-item reveal">
+    <h3>Time as material</h3>
+    <p>Buildings should improve with decades. We specify materials that gain character rather than degrade. Maintenance is part of the design.</p>
+  </div>
+</section>
+
+<section class="contact reveal">
+  <h2>Start a<br>conversation</h2>
+  <div class="contact-right">
+    <p>We take on three to four projects per year. If you are considering building something that will last, we would like to hear about it.</p>
+    <a href="#" class="contact-link">studio@raume.co</a>
+  </div>
+</section>
+
+<footer>
+  <span>2026 Raume Arkitekter</span>
+  <ul>
+    <li><a href="#">Instagram</a></li>
+    <li><a href="#">LinkedIn</a></li>
+    <li><a href="#">Privacy</a></li>
+  </ul>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  (function() {
+    const nav = document.getElementById('mainNav');
+    let last = 0, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const curr = window.scrollY;
+          if (curr > 80 && curr > last) nav.classList.add('hidden');
+          else nav.classList.remove('hidden');
+          last = curr;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>

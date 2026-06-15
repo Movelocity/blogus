@@ -7,7 +7,7 @@ import {
   formatPostDate,
   formatPostMonth,
   getPostDate,
-  sortPostsByPublishedDate
+  sortPostsByPublishedDate,
 } from "../lib/posts";
 
 export function ArchivePage() {
@@ -29,48 +29,61 @@ export function ArchivePage() {
   const groups = useMemo(() => groupPostsByMonth(posts), [posts]);
 
   return (
-    <div className="grid gap-10">
-      <header className="grid gap-3 border-b border-slate-200 pb-8">
-        <p className="m-0 text-sm font-semibold text-teal-700">Archive</p>
-        <h1 className="m-0 text-4xl font-bold leading-tight text-slate-950 md:text-5xl">文章归档</h1>
-        <p className="m-0 max-w-2xl text-base leading-7 text-slate-600">
-          按发布时间整理所有公开文章，适合从时间线回看已经发布的内容。
-        </p>
+    <div className="grid gap-16">
+      <header className="grid gap-6 border-b border-foreground/10 pb-10 lg:grid-cols-12 lg:items-end">
+        <div className="lg:col-span-7">
+          <span className="mb-6 inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
+            <span className="h-px w-8 bg-foreground/30" />
+            Archive
+          </span>
+          <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
+            文章归档
+          </h1>
+        </div>
+        <div className="lg:col-span-5 lg:pb-4">
+          <p className="m-0 text-lg leading-relaxed text-muted-foreground">
+            按发布时间整理所有公开文章，适合从时间线回看已经发布的内容。
+          </p>
+        </div>
       </header>
 
       {loading ? <ArchiveSkeleton /> : null}
 
       {!loading && error ? (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-8 text-red-900">
-          <h2 className="m-0 text-xl font-semibold">归档加载失败</h2>
-          <p className="mb-0 mt-2 leading-7">{error}</p>
+        <section className="border border-destructive/30 bg-destructive/5 p-8 text-destructive">
+          <h2 className="m-0 font-display text-xl">归档加载失败</h2>
+          <p className="mb-0 mt-2 leading-relaxed">{error}</p>
         </section>
       ) : null}
 
       {!loading && !error && posts.length === 0 ? (
-        <section className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-slate-700">
-          <h2 className="m-0 text-xl font-semibold">暂无归档</h2>
-          <p className="mb-0 mt-2 leading-7">发布文章后，归档会自动按月份生成。</p>
+        <section className="border border-dashed border-foreground/20 bg-card p-8 text-foreground">
+          <h2 className="m-0 font-display text-xl">暂无归档</h2>
+          <p className="mb-0 mt-2 leading-relaxed text-muted-foreground">发布文章后，归档会自动按月份生成。</p>
         </section>
       ) : null}
 
       {!loading && !error && groups.length > 0 ? (
-        <section className="grid gap-8">
+        <section className="grid gap-12">
           {groups.map((group) => (
-            <div className="grid gap-4 md:grid-cols-[11rem_1fr]" key={group.month}>
-              <h2 className="m-0 text-xl font-semibold text-slate-950">{group.month}</h2>
-              <div className="grid gap-3">
+            <div className="grid gap-6 md:grid-cols-[11rem_1fr]" key={group.month}>
+              <h2 className="m-0 font-display text-2xl tracking-tight text-foreground">{group.month}</h2>
+              <div className="grid gap-4">
                 {group.posts.map((post) => (
                   <article
-                    className="grid gap-2 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200"
+                    className="hover-lift grid gap-3 border border-foreground/10 bg-card p-6 transition-all duration-300"
                     key={post.id}
                   >
-                    <div className="flex flex-wrap gap-3 text-sm text-slate-500">
+                    <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
                       <time dateTime={getPostDate(post)}>{formatPostDate(getPostDate(post))}</time>
+                      <span className="h-px w-4 bg-foreground/20" />
                       <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
                     </div>
-                    <h3 className="m-0 break-words text-xl font-semibold leading-snug text-slate-950">
-                      <Link className="transition hover:text-teal-700" to={`/posts/${post.slug}`}>
+                    <h3 className="m-0 break-words font-display text-2xl leading-snug tracking-tight text-foreground">
+                      <Link
+                        className="transition-colors duration-300 hover:text-muted-foreground"
+                        to={`/posts/${post.slug}`}
+                      >
                         {post.title}
                       </Link>
                     </h3>
@@ -78,7 +91,7 @@ export function ArchivePage() {
                       <div className="flex flex-wrap gap-2">
                         {post.tags.map((tag) => (
                           <span
-                            className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                            className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
                             key={tag}
                           >
                             {tag}
@@ -110,15 +123,15 @@ function groupPostsByMonth(posts: BlogPost[]) {
 
 function ArchiveSkeleton() {
   return (
-    <section className="grid gap-6" aria-label="归档正在加载">
+    <section className="grid gap-8" aria-label="归档正在加载">
       {[0, 1, 2].map((group) => (
-        <div className="grid gap-4 md:grid-cols-[11rem_1fr]" key={group}>
-          <div className="h-7 w-32 animate-pulse rounded bg-slate-200" />
-          <div className="grid gap-3">
+        <div className="grid gap-6 md:grid-cols-[11rem_1fr]" key={group}>
+          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+          <div className="grid gap-4">
             {[0, 1].map((item) => (
-              <div className="rounded-lg border border-slate-200 bg-white p-5" key={item}>
-                <div className="mb-3 h-4 w-36 animate-pulse rounded bg-slate-200" />
-                <div className="h-7 w-2/3 animate-pulse rounded bg-slate-200" />
+              <div className="border border-foreground/10 bg-card p-6" key={item}>
+                <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted" />
+                <div className="h-8 w-2/3 animate-pulse rounded bg-muted" />
               </div>
             ))}
           </div>

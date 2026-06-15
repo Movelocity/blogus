@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonal - Precision Listening</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Satoshi:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f0f2f5;
+    --bg-cool: #e4e8ed;
+    --surface: #fff;
+    --text: #0f1419;
+    --text-mid: #4a5568;
+    --text-dim: #8895a7;
+    --accent: #0066ff;
+    --accent-dim: #0066ff18;
+    --border: #d1d9e2;
+    --font: 'Satoshi', -apple-system, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 68px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(2rem, 5vw, 4rem);
+    background: rgba(240, 242, 245, 0.88);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.hidden { transform: translateY(-100%); }
+
+  .nav-brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .nav-items {
+    display: flex; gap: 2rem; align-items: center;
+    list-style: none;
+  }
+
+  .nav-items a {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-items a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: var(--text);
+    color: var(--bg);
+    padding: 0.5rem 1.3rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .nav-cta:hover { opacity: 0.8; }
+
+  /* Hero - split */
+  .hero {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 68px;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(3rem, 6vw, 6rem);
+    padding-right: clamp(2rem, 4vw, 4rem);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-desc {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-mid);
+    line-height: 1.7;
+    max-width: 380px;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-actions {
+    display: flex; gap: 1rem; align-items: center;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
+
+  .btn-ghost {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .btn-ghost:hover { border-color: var(--text); }
+
+  .hero-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-cool);
+    padding: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-visual img {
+    width: 80%;
+    max-width: 400px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 40px 80px rgba(0,0,0,0.15));
+  }
+
+  /* Metrics */
+  .metrics {
+    padding: 6rem clamp(2rem, 5vw, 4rem);
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .metric {
+    text-align: center;
+  }
+
+  .metric-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+  }
+
+  .metric-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* Feature section - offset layout */
+  .feature {
+    padding: 8rem clamp(2rem, 5vw, 4rem);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .feature-block {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: 4rem;
+    align-items: center;
+    margin-bottom: 8rem;
+  }
+
+  .feature-block:nth-child(even) {
+    grid-template-columns: 7fr 5fr;
+  }
+
+  .feature-block:nth-child(even) .feature-text {
+    order: 2;
+  }
+
+  .feature-text h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .feature-text p {
+    font-size: 0.88rem;
+    color: var(--text-mid);
+    line-height: 1.7;
+    max-width: 360px;
+  }
+
+  .feature-img {
+    aspect-ratio: 4/3;
+    background: var(--bg-cool);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Testimonial */
+  .testimonial {
+    background: var(--surface);
+    padding: 6rem clamp(2rem, 5vw, 4rem);
+    text-align: center;
+  }
+
+  .testimonial blockquote {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    color: var(--text);
+  }
+
+  .testimonial cite {
+    font-style: normal;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: block;
+  }
+
+  .testimonial cite strong {
+    color: var(--text-mid);
+    font-weight: 500;
+  }
+
+  /* Product grid */
+  .products {
+    padding: 8rem clamp(2rem, 5vw, 4rem);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .products h2 {
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 4rem;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .product-card {
+    background: var(--surface);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    transition: box-shadow 0.3s;
+  }
+
+  .product-card:hover {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+  }
+
+  .product-card img {
+    width: 60%;
+    max-width: 240px;
+    height: auto;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0 16px 40px rgba(0,0,0,0.1));
+  }
+
+  .product-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .product-card .price {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* CTA */
+  .cta-section {
+    padding: 10rem clamp(2rem, 5vw, 4rem);
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .cta-section h2 {
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+  }
+
+  .cta-section p {
+    font-size: 0.92rem;
+    color: var(--text-mid);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem clamp(2rem, 5vw, 4rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .footer-brand {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .footer-copy {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+
+  .footer-links {
+    display: flex; gap: 1.5rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-visual { height: 50vh; order: -1; padding: 3rem; }
+    .metrics { grid-template-columns: 1fr 1fr; gap: 2rem 1rem; }
+    .feature-block,
+    .feature-block:nth-child(even) { grid-template-columns: 1fr; gap: 2rem; }
+    .feature-block:nth-child(even) .feature-text { order: 0; }
+    .product-grid { grid-template-columns: 1fr; }
+    .nav-items { display: none; }
+  }
+
+  /* Animations */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <div class="nav-brand">Sonal</div>
+  <ul class="nav-items">
+    <li><a href="#">Products</a></li>
+    <li><a href="#">Technology</a></li>
+    <li><a href="#">Support</a></li>
+    <li><button class="nav-cta">Shop</button></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1 class="reveal">Sound, stripped to its truth</h1>
+    <p class="hero-desc reveal">Reference-grade headphones engineered for the listener who refuses compromise. No tuning tricks. No flattery. Just the recording.</p>
+    <div class="hero-actions reveal">
+      <a href="#" class="btn-primary">Explore SR-1</a>
+      <a href="#" class="btn-ghost">How we tune</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <img src="https://picsum.photos/seed/sonal-headphone/600/700" alt="Sonal SR-1 headphone in silver">
+  </div>
+</section>
+
+<section class="metrics reveal">
+  <div class="metric">
+    <div class="metric-value">5 Hz</div>
+    <div class="metric-label">Low frequency extension</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">42 kHz</div>
+    <div class="metric-label">Upper range</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">298 g</div>
+    <div class="metric-label">Total weight</div>
+  </div>
+  <div class="metric">
+    <div class="metric-value">64 ohm</div>
+    <div class="metric-label">Impedance</div>
+  </div>
+</section>
+
+<section class="feature">
+  <div class="feature-block reveal">
+    <div class="feature-text">
+      <h3>Planar magnetic drivers, hand-matched</h3>
+      <p>Each driver pair is measured and matched within 0.3 dB across the audible range. You hear the recording, not the hardware.</p>
+    </div>
+    <div class="feature-img">
+      <img src="https://picsum.photos/seed/sonal-driver/800/600" alt="Close-up of planar magnetic driver">
+    </div>
+  </div>
+
+  <div class="feature-block reveal">
+    <div class="feature-img">
+      <img src="https://picsum.photos/seed/sonal-frame/800/600" alt="Machined aluminium frame detail">
+    </div>
+    <div class="feature-text">
+      <h3>Milled from a single aluminium billet</h3>
+      <p>The headband and yokes are CNC-machined from 6061 aluminium. No plastic joints. No creaking. The mechanism will outlast the pads by a decade.</p>
+    </div>
+  </div>
+
+  <div class="feature-block reveal">
+    <div class="feature-text">
+      <h3>Ear pads that breathe</h3>
+      <p>Perforated lambskin over memory foam with a ventilation channel. Cool after two hours. Replaceable in ten seconds without tools.</p>
+    </div>
+    <div class="feature-img">
+      <img src="https://picsum.photos/seed/sonal-pad/800/600" alt="Leather ear pad detail">
+    </div>
+  </div>
+</section>
+
+<section class="testimonial reveal">
+  <blockquote>I have been mixing records for twenty years. The SR-1 is the first headphone that makes me forget I am wearing one.</blockquote>
+  <cite><strong>Aleks Kowalski</strong>, mastering engineer, Berlin</cite>
+</section>
+
+<section class="products">
+  <h2 class="reveal">The range</h2>
+  <div class="product-grid">
+    <a href="#" class="product-card reveal">
+      <img src="https://picsum.photos/seed/sonal-sr1/400/400" alt="SR-1 headphone">
+      <h3>SR-1 Reference</h3>
+      <span class="price">$1,290</span>
+    </a>
+    <a href="#" class="product-card reveal">
+      <img src="https://picsum.photos/seed/sonal-sr2/400/400" alt="SR-2 headphone">
+      <h3>SR-2 Portable</h3>
+      <span class="price">$680</span>
+    </a>
+  </div>
+</section>
+
+<section class="cta-section reveal">
+  <h2>Hear for yourself</h2>
+  <p>Visit one of our listening rooms in Berlin, Tokyo, or Portland. No appointment needed. Bring your own music.</p>
+  <a href="#" class="btn-primary">Find a room</a>
+</section>
+
+<footer>
+  <div class="footer-brand">Sonal</div>
+  <span class="footer-copy">2026 Sonal Audio GmbH</span>
+  <ul class="footer-links">
+    <li><a href="#">Support</a></li>
+    <li><a href="#">Warranty</a></li>
+    <li><a href="#">Privacy</a></li>
+  </ul>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  (function() {
+    const nav = document.getElementById('mainNav');
+    let last = 0, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const curr = window.scrollY;
+          if (curr > 80 && curr > last) nav.classList.add('hidden');
+          else nav.classList.remove('hidden');
+          last = curr;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>

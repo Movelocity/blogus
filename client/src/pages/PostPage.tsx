@@ -36,13 +36,13 @@ export function PostPage() {
 
   if (error || !post) {
     return (
-      <section className="grid max-w-2xl gap-5 rounded-lg border border-red-200 bg-red-50 p-8 text-red-900">
-        <div className="grid gap-2">
-          <h1 className="m-0 text-2xl font-semibold">无法打开这篇文章</h1>
-          <p className="m-0 leading-7">{error ?? "文章不存在，或尚未发布。"}</p>
+      <section className="grid max-w-2xl gap-6 border border-destructive/30 bg-destructive/5 p-8">
+        <div className="grid gap-3">
+          <h1 className="m-0 font-display text-3xl text-foreground">无法打开这篇文章</h1>
+          <p className="m-0 leading-relaxed text-muted-foreground">{error ?? "文章不存在，或尚未发布。"}</p>
         </div>
         <Link
-          className="inline-flex w-fit items-center rounded-lg bg-red-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 active:translate-y-px"
+          className="inline-flex w-fit items-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-primary-foreground transition hover:bg-foreground/90 active:translate-y-px"
           to="/"
         >
           返回首页
@@ -52,36 +52,46 @@ export function PostPage() {
   }
 
   return (
-    <article className="grid gap-8">
-      <header className="grid gap-6 border-b border-slate-200 pb-8">
-        <Link className="text-sm font-medium text-teal-700 transition hover:text-teal-900" to="/archive">
+    <article className="grid gap-10">
+      <header className="grid gap-8 border-b border-foreground/10 pb-10">
+        <Link
+          className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
+          to="/archive"
+        >
+          <span className="h-px w-6 bg-foreground/30" />
           返回归档
         </Link>
         {post.coverImageUrl ? (
           <img
             alt=""
-            className="max-h-[520px] w-full rounded-lg border border-slate-200 object-cover"
+            className="max-h-[520px] w-full border border-foreground/10 object-cover"
             src={post.coverImageUrl}
           />
         ) : null}
-        <div className="mx-auto grid w-full max-w-3xl gap-4">
-          <div className="flex flex-wrap gap-3 text-sm text-slate-500">
+        <div className="mx-auto grid w-full max-w-3xl gap-5">
+          <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
             <span>{formatPostDate(post.publishedAt)}</span>
+            <span className="h-px w-4 bg-foreground/20" />
             <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
           </div>
-          <h1 className="m-0 break-words text-4xl font-bold leading-tight text-slate-950 md:text-5xl">
+          <h1 className="m-0 break-words font-display text-5xl leading-[1.05] tracking-tight text-foreground md:text-6xl lg:text-7xl">
             {post.title}
           </h1>
           {post.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (
-                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700" key={tag}>
+                <span
+                  className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
+                  key={tag}
+                >
                   {tag}
                 </span>
               ))}
             </div>
           ) : null}
-          {post.excerpt ? <p className="m-0 text-lg leading-8 text-slate-600">{post.excerpt}</p> : null}
+          {post.excerpt ? (
+            <p className="m-0 text-xl leading-relaxed text-muted-foreground">{post.excerpt}</p>
+          ) : null}
         </div>
       </header>
       <div className="mx-auto w-full max-w-3xl">
@@ -93,21 +103,21 @@ export function PostPage() {
 
 function PostSkeleton() {
   return (
-    <article className="grid gap-8" aria-label="文章正在加载">
-      <header className="grid gap-6 border-b border-slate-200 pb-8">
-        <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-        <div className="h-72 w-full animate-pulse rounded-lg bg-slate-200" />
-        <div className="mx-auto grid w-full max-w-3xl gap-4">
-          <div className="h-4 w-44 animate-pulse rounded bg-slate-200" />
-          <div className="h-12 w-5/6 animate-pulse rounded bg-slate-200" />
-          <div className="h-20 w-full animate-pulse rounded bg-slate-100" />
+    <article className="grid gap-10" aria-label="文章正在加载">
+      <header className="grid gap-8 border-b border-foreground/10 pb-10">
+        <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+        <div className="h-72 w-full animate-pulse bg-muted" />
+        <div className="mx-auto grid w-full max-w-3xl gap-5">
+          <div className="h-4 w-44 animate-pulse rounded bg-muted" />
+          <div className="h-16 w-5/6 animate-pulse rounded bg-muted" />
+          <div className="h-20 w-full animate-pulse rounded bg-secondary" />
         </div>
       </header>
       <div className="mx-auto grid w-full max-w-3xl gap-4">
         {[0, 1, 2, 3].map((item) => (
           <div className="grid gap-2" key={item}>
-            <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-slate-200" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
           </div>
         ))}
       </div>

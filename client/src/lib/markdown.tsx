@@ -48,7 +48,7 @@ function parseMarkdown(source: string) {
       blocks.push({
         type: "heading",
         level: heading[1].length as 1 | 2 | 3,
-        text: heading[2]
+        text: heading[2],
       });
       index += 1;
       continue;
@@ -121,7 +121,7 @@ function renderInline(text: string): ReactNode[] {
     if (full.startsWith("![")) {
       nodes.push(
         isSafeUrl(url) ? (
-          <img alt={label} className="my-6 max-h-[560px] w-full rounded-lg object-contain" key={key} src={url} />
+          <img alt={label} className="my-6 max-h-[560px] w-full object-contain" key={key} src={url} />
         ) : (
           label
         )
@@ -129,7 +129,11 @@ function renderInline(text: string): ReactNode[] {
     } else if (label !== undefined && url !== undefined) {
       nodes.push(
         isSafeUrl(url) ? (
-          <a className="font-medium text-teal-700 underline-offset-4 hover:underline" href={url} key={key}>
+          <a
+            className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+            href={url}
+            key={key}
+          >
             {label || url}
           </a>
         ) : (
@@ -138,7 +142,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (code !== undefined) {
       nodes.push(
-        <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[0.92em] text-slate-900" key={key}>
+        <code className="bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={key}>
           {code}
         </code>
       );
@@ -162,20 +166,20 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
   const blocks = parseMarkdown(content);
 
   if (blocks.length === 0) {
-    return <p className="m-0 text-slate-500">{emptyText}</p>;
+    return <p className="m-0 text-muted-foreground">{emptyText}</p>;
   }
 
   return (
-    <div className="grid gap-5 text-[17px] leading-8 text-slate-800 max-sm:text-base">
+    <div className="grid gap-5 text-[17px] leading-8 text-foreground/80 max-sm:text-base">
       {blocks.map((block, index) => {
         const key = `${block.type}-${index}`;
         if (block.type === "heading") {
           const className =
             block.level === 1
-              ? "mt-4 text-3xl font-bold leading-tight text-slate-950"
+              ? "mt-6 font-display text-4xl leading-tight tracking-tight text-foreground"
               : block.level === 2
-                ? "mt-4 text-2xl font-semibold leading-tight text-slate-950"
-                : "mt-2 text-xl font-semibold leading-snug text-slate-950";
+                ? "mt-6 font-display text-3xl leading-tight tracking-tight text-foreground"
+                : "mt-4 font-display text-2xl leading-snug tracking-tight text-foreground";
           const Heading = `h${block.level}` as "h1" | "h2" | "h3";
           return (
             <Heading className={className} key={key}>
@@ -185,7 +189,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
         if (block.type === "code") {
           return (
-            <pre className="overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100" key={key}>
+            <pre className="overflow-x-auto bg-foreground p-5 font-mono text-sm leading-6 text-primary-foreground" key={key}>
               <code>{block.text}</code>
             </pre>
           );
@@ -202,13 +206,16 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
         if (block.type === "blockquote") {
           return (
-            <blockquote className="rounded-lg border-l-4 border-teal-700 bg-teal-50 px-4 py-3 text-slate-700" key={key}>
+            <blockquote
+              className="border-l-2 border-foreground/20 bg-secondary px-5 py-4 text-muted-foreground"
+              key={key}
+            >
               {renderInline(block.text)}
             </blockquote>
           );
         }
         return (
-          <p className="m-0 leading-8 text-slate-700" key={key}>
+          <p className="m-0 leading-8 text-foreground/70" key={key}>
             {renderInline(block.text)}
           </p>
         );

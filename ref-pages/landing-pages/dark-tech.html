@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vektor - Infrastructure for the Machine Era</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0c;
+    --bg-elevated: #111114;
+    --bg-surface: #16161a;
+    --text-primary: #e8e8ec;
+    --text-secondary: #7a7a85;
+    --accent: #00e5a0;
+    --accent-dim: #00e5a033;
+    --border: #ffffff0a;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Outfit', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(1.5rem, 4vw, 3rem);
+    background: rgba(10, 10, 12, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.hidden { transform: translateY(-100%); }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--text-secondary); font-weight: 300; }
+
+  .nav-links {
+    display: flex; gap: 2rem; align-items: center;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-cta {
+    padding: 0.5rem 1.25rem;
+    background: var(--accent);
+    color: var(--bg) !important;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .nav-cta:hover { opacity: 0.85; color: var(--bg) !important; }
+
+  /* Hero */
+  .hero {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    padding: 0 clamp(1.5rem, 4vw, 3rem);
+    padding-top: 64px;
+    position: relative;
+  }
+
+  .hero-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .hero-content { max-width: 600px; }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+
+  .hero-label::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: var(--sans);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.85rem 2rem;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: none; border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.85rem 2rem;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn-ghost:active { transform: scale(0.98); }
+
+  /* Terminal visual */
+  .hero-visual {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #ffffff0a;
+    background: var(--bg-elevated);
+  }
+
+  .terminal-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0.75rem 1rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .terminal-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ffffff15;
+  }
+
+  .terminal-body {
+    padding: 1.25rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    line-height: 1.9;
+    color: var(--text-secondary);
+    min-height: 280px;
+  }
+
+  .terminal-body .prompt { color: var(--accent); }
+  .terminal-body .cmd { color: var(--text-primary); }
+  .terminal-body .output { color: var(--text-secondary); }
+  .terminal-body .success { color: var(--accent); }
+  .terminal-body .dim { color: #ffffff20; }
+
+  /* Scanline overlay */
+  .hero-visual::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 229, 160, 0.015) 2px,
+      rgba(0, 229, 160, 0.015) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* Stats */
+  .stats {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+
+  .stats-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem clamp(1.5rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .stat-item { text-align: left; }
+
+  .stat-number {
+    font-family: var(--mono);
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* Features */
+  .features {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 8rem clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .features-header {
+    max-width: 520px;
+    margin-bottom: 5rem;
+  }
+
+  .features-header h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .features-header p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .feature-card {
+    background: var(--bg);
+    padding: 2.5rem;
+    transition: background 0.3s;
+  }
+
+  .feature-card:hover { background: var(--bg-elevated); }
+
+  .feature-icon {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.25rem;
+    color: var(--accent);
+    font-size: 1.2rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .feature-card p {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  /* Code block section */
+  .code-section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 clamp(1.5rem, 4vw, 3rem) 8rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .code-block {
+    background: var(--bg-elevated);
+    border: 1px solid #ffffff0a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+  }
+
+  .code-body {
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .code-body .kw { color: #c792ea; }
+  .code-body .fn { color: #82aaff; }
+  .code-body .str { color: #c3e88d; }
+  .code-body .cm { color: #546e7a; }
+  .code-body .op { color: #89ddff; }
+  .code-body .num { color: #f78c6c; }
+  .code-body .var { color: var(--text-primary); }
+
+  .code-content h2 {
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+
+  .code-content p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .code-content ul {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+
+  .code-content li {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .code-content li::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* CTA */
+  .cta-section {
+    border-top: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+
+  .cta-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 6rem clamp(1.5rem, 4vw, 3rem);
+    text-align: center;
+  }
+
+  .cta-inner h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .cta-inner p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .footer-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+
+  .footer-links {
+    display: flex; gap: 1.5rem;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--accent); }
+
+  /* Grid overlay */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .grid-overlay.visible { opacity: 1; }
+
+  .grid-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,229,160,0.03) 0, rgba(0,229,160,0.03) 1px, transparent 1px, transparent calc(100% / 12)),
+      repeating-linear-gradient(0deg, rgba(0,229,160,0.03) 0, rgba(0,229,160,0.03) 1px, transparent 1px, 80px);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .hero-visual { display: none; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .features-grid { grid-template-columns: 1fr; }
+    .code-section { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+
+  /* Animations */
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    .terminal-body .line {
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .terminal-body .line.visible { opacity: 1; transform: translateX(0); }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--accent);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up { opacity: 1; transform: none; }
+    .terminal-body .line { opacity: 1; transform: none; }
+    .cursor { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <div class="logo">VEKTOR<span>.io</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Product</a></li>
+    <li><a href="#code">Docs</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#cta" class="nav-cta">Start building</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="hero-label fade-up">Infrastructure layer</div>
+      <h1 class="fade-up">Deploy to the edge in <em>under 4 seconds</em></h1>
+      <p class="fade-up">Vektor is the runtime for latency-sensitive applications. Global distribution, zero cold starts, native WebAssembly support.</p>
+      <div class="hero-actions fade-up">
+        <button class="btn-primary">Start building</button>
+        <button class="btn-ghost">Read the docs</button>
+      </div>
+    </div>
+    <div class="hero-visual fade-up">
+      <div class="terminal-bar">
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+      </div>
+      <div class="terminal-body">
+        <div class="line"><span class="prompt">$</span> <span class="cmd">vkt deploy --region global</span></div>
+        <div class="line"><span class="output">  Analyzing build output...</span></div>
+        <div class="line"><span class="output">  Bundling 14 assets (2.3 MB)</span></div>
+        <div class="line"><span class="output">  Deploying to 42 edge nodes...</span></div>
+        <div class="line"><span class="success">  Done in 3.8s</span></div>
+        <div class="line dim">  </div>
+        <div class="line"><span class="prompt">$</span> <span class="cmd">vkt status</span></div>
+        <div class="line"><span class="output">  Region    Nodes  Latency  Status</span></div>
+        <div class="line"><span class="output">  us-east      12    12ms  </span><span class="success">healthy</span></div>
+        <div class="line"><span class="output">  eu-west       9    18ms  </span><span class="success">healthy</span></div>
+        <div class="line"><span class="output">  ap-south     11    24ms  </span><span class="success">healthy</span></div>
+        <div class="line"><span class="output">  sa-east      10    31ms  </span><span class="success">healthy</span></div>
+        <div class="line"><span class="prompt">$</span> <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat-item fade-up">
+      <div class="stat-number" data-count="3.8">0</div>
+      <div class="stat-label">Second deploys</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-number" data-count="42">0</div>
+      <div class="stat-label">Edge regions</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-number" data-count="99.99">0</div>
+      <div class="stat-label">Uptime SLA %</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-number" data-count="2800">0</div>
+      <div class="stat-label">Teams shipping</div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="features-header fade-up">
+    <h2>Everything at the edge. Nothing in the way.</h2>
+    <p>Single runtime for compute, storage, and networking. No configuration files, no infrastructure management.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h3>Zero cold starts</h3>
+      <p>Functions warm in under 50ms. No provisioned concurrency needed. Pay only for execution time.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      </div>
+      <h3>Global by default</h3>
+      <p>Every deploy runs across all 42 regions automatically. No region configuration, no geo-routing setup.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <h3>Native WASM</h3>
+      <p>Run Rust, C++, or Go alongside JavaScript in the same isolate. No polyfills, native execution speed.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Built-in auth</h3>
+      <p>JWT validation, session management, and RBAC at the edge. No separate auth service to manage.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
+      </div>
+      <h3>Object storage</h3>
+      <p>S3-compatible storage replicated to every edge. Upload from the client, serve from the nearest node.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <div class="feature-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <h3>Instant rollbacks</h3>
+      <p>Every deploy is immutable. Roll back to any version in one command. Zero downtime, zero data loss.</p>
+    </div>
+  </div>
+</section>
+
+<section class="code-section" id="code">
+  <div class="code-block fade-up">
+    <div class="code-header">
+      <span>api/handler.ts</span>
+      <span>TypeScript</span>
+    </div>
+    <pre class="code-body"><span class="kw">import</span> <span class="var">{ Router }</span> <span class="kw">from</span> <span class="str">"vkt"</span>;
+<span class="kw">import</span> <span class="var">{ db }</span> <span class="kw">from</span> <span class="str">"vkt/storage"</span>;
+
+<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">Router</span>();
+
+<span class="cm">// Runs at the edge, closest to the user</span>
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">"/api/users/:id"</span>, <span class="kw">async</span> (<span class="var">req</span>) <span class="op">=></span> {
+  <span class="kw">const</span> <span class="var">user</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">db</span>.<span class="fn">get</span>(<span class="str">`users:</span><span class="var">${req.params.id}</span><span class="str">`</span>);
+
+  <span class="kw">if</span> (<span class="op">!</span><span class="var">user</span>) {
+    <span class="kw">return</span> <span class="var">Response</span>.<span class="fn">json</span>(
+      { <span class="var">error</span>: <span class="str">"Not found"</span> },
+      { <span class="var">status</span>: <span class="num">404</span> }
+    );
+  }
+
+  <span class="kw">return</span> <span class="var">Response</span>.<span class="fn">json</span>({ <span class="var">user</span> });
+});</pre>
+  </div>
+  <div class="code-content fade-up">
+    <h2>Write code. We handle the rest.</h2>
+    <p>Standard HTTP handlers with zero vendor lock-in. Your code runs identically on Vektor and on your laptop.</p>
+    <ul>
+      <li>TypeScript, JavaScript, Rust, Go, Python</li>
+      <li>Automatic DDoS protection at every edge</li>
+      <li>Built-in rate limiting and caching</li>
+      <li>WebSocket and SSE support</li>
+    </ul>
+  </div>
+</section>
+
+<section class="cta-section" id="cta">
+  <div class="cta-inner">
+    <h2 class="fade-up">Start shipping faster today</h2>
+    <p class="fade-up">Free tier includes 100k requests per month. No credit card required.</p>
+    <div class="fade-up">
+      <button class="btn-primary">Create free account</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-copy">VEKTOR.IO 2026</div>
+    <ul class="footer-links">
+      <li><a href="#">Status</a></li>
+      <li><a href="#">Docs</a></li>
+      <li><a href="#">GitHub</a></li>
+      <li><a href="#">Terms</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+  // Intersection Observer for fade-up animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        const delay = entry.target.dataset.delay || 0;
+        setTimeout(() => entry.target.classList.add('visible'), delay);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.fade-up').forEach((el, i) => {
+    el.dataset.delay = (i % 4) * 80;
+    observer.observe(el);
+  });
+
+  // Terminal line reveal
+  const termObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const lines = entry.target.querySelectorAll('.line');
+        lines.forEach((line, i) => {
+          setTimeout(() => line.classList.add('visible'), i * 120);
+        });
+        termObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const termBody = document.querySelector('.terminal-body');
+  if (termBody) termObserver.observe(termBody);
+
+  // Stat counter animation
+  function animateCount(el) {
+    const target = parseFloat(el.dataset.count);
+    const duration = 1200;
+    const start = performance.now();
+    const isDecimal = target % 1 !== 0;
+
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = target * eased;
+
+      if (target > 100) {
+        el.textContent = Math.round(current).toLocaleString();
+      } else if (isDecimal) {
+        el.textContent = current.toFixed(2);
+      } else {
+        el.textContent = Math.round(current);
+      }
+
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const nums = entry.target.querySelectorAll('[data-count]');
+        nums.forEach((n, i) => setTimeout(() => animateCount(n), i * 100));
+        statObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const statsSection = document.querySelector('.stats');
+  if (statsSection) statObserver.observe(statsSection);
+
+  // Grid overlay toggle (press G)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+      document.querySelector('.grid-overlay')?.classList.toggle('visible');
+    }
+  });
+
+  // Nav hide/show on scroll
+  (function() {
+    const nav = document.getElementById('mainNav');
+    let last = 0, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const curr = window.scrollY;
+          nav.style.background = curr > 50
+            ? 'rgba(10, 10, 12, 0.95)'
+            : 'rgba(10, 10, 12, 0.85)';
+          if (curr > 80 && curr > last) nav.classList.add('hidden');
+          else nav.classList.remove('hidden');
+          last = curr;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>
