@@ -39,7 +39,7 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 
 | 项目 | 默认值 | 说明 |
 | --- | --- | --- |
-| Web 开发服务 | `http://127.0.0.1:5173` | Vite dev server；`/api` 代理到 API 服务 |
+| Web 开发服务 | `http://127.0.0.1:5177` | Vite dev server；`/api` 代理到 API 服务 |
 | API 服务 | `http://127.0.0.1:3009` | Fastify；由 `HOST`、`PORT` 配置 |
 | PostgreSQL | `localhost:5633` | Docker Compose 暴露；`DATABASE_URL` 默认连接这里 |
 | Redis | `localhost:6379` | 当前只记录配置，后续阶段接入更多会话/队列能力 |
