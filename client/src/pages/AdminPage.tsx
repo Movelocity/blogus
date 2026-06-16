@@ -238,9 +238,9 @@ export function AdminPage() {
   ];
 
   return (
-    <div className="grid min-h-[calc(100dvh-200px)] grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
+    <div className="grid grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
       {/* ── Sidebar ── */}
-      <aside className="flex flex-col max-lg:border-b max-lg:pb-4">
+      <aside className="sticky top-24 flex max-h-[calc(100dvh-7rem)] flex-col self-start max-lg:static max-lg:max-h-none max-lg:border-b max-lg:pb-4">
         {/* Header row */}
         <div className="flex items-center justify-between px-1 pb-4">
           <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
@@ -298,7 +298,7 @@ export function AdminPage() {
                   }`}
                 >
                   <span className="line-clamp-1 text-[15px] text-foreground">{post.title || "未命名文章"}</span>
-                  <span className="font-mono text-xs text-muted-foreground/60">
+                  <span className="font-mono text-xs text-muted-foreground/60 line-clamp-1">
                     {statusLabel(post.status)}
                     {postExcerpt(post) ? ` · ${postExcerpt(post)}` : ""}
                   </span>
@@ -324,9 +324,9 @@ export function AdminPage() {
           <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
         ) : null}
 
-        <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
-          {/* Top bar: mode toggle + slug */}
-          <div className="flex items-center justify-between pb-4">
+        <form className="flex flex-col -mt-4" onSubmit={handleSubmit}>
+          {/* Top bar: mode toggle + slug - sticks to top of viewport (just below fixed nav) */}
+          <div className="sticky top-0 z-20 flex items-center justify-between bg-background py-4">
             <div className="flex items-center gap-3">
               <span className="font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
@@ -357,8 +357,8 @@ export function AdminPage() {
             </div>
           </div>
 
-          {/* Editor content */}
-          <div className="flex-1">
+          {/* Editor content - flows naturally with the page scroll */}
+          <div>
             {editorMode === "edit" ? (
               <div className="flex flex-col gap-5">
                 {/* Title - bottom border only */}
@@ -422,7 +422,7 @@ export function AdminPage() {
 
                 {/* Markdown body */}
                 <textarea
-                  className="min-h-[420px] flex-1 resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                  className="min-h-[660px] resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
                   ref={textareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -430,7 +430,7 @@ export function AdminPage() {
                 />
               </div>
             ) : (
-              <article className="mx-auto max-w-2xl">
+              <article className="mx-auto max-w-3xl">
                 {coverImageUrl ? (
                   <img alt="" className="mb-6 max-h-72 w-full rounded-md object-cover" src={coverImageUrl} />
                 ) : null}
@@ -450,8 +450,8 @@ export function AdminPage() {
             )}
           </div>
 
-          {/* Action row */}
-          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4 mt-4">
+          {/* Action row - sticks to bottom of viewport until right content finishes scrolling */}
+          <div className="sticky bottom-0 z-20 mt-4 flex flex-wrap items-center gap-3 border-t border-border bg-background pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               className="rounded-md bg-foreground px-5 py-2 text-base font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               disabled={saving}

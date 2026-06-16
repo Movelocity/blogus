@@ -53,8 +53,8 @@ export function PostPage() {
 
   return (
     <article className="mx-auto w-full min-w-0 max-w-304">
-      <header className="grid gap-8 border-b border-foreground/10 pb-10">
-        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0">
+      <header className="grid gap-8 border-b border-foreground/10 pb-6">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-0">
           <Link
             className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
             to="/archive"
@@ -66,7 +66,7 @@ export function PostPage() {
         {post.coverImageUrl ? (
           <img
             alt=""
-            className="mx-auto max-h-[520px] w-full max-w-5xl border border-foreground/10 object-cover"
+            className="mx-auto max-h-[420px] w-full max-w-4xl border border-foreground/10 object-cover"
             src={post.coverImageUrl}
           />
         ) : null}
@@ -76,7 +76,7 @@ export function PostPage() {
             <span className="h-px w-4 bg-foreground/20" />
             <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
           </div>
-          <h1 className="m-0 break-words font-display text-5xl leading-[1.05] tracking-tight text-foreground md:text-6xl lg:text-7xl">
+          <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-5xl">
             {post.title}
           </h1>
           {post.tags.length > 0 ? (
@@ -97,9 +97,9 @@ export function PostPage() {
         </div>
       </header>
 
-      <div className="relative mt-10 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
+      <div className="relative mt-6 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
         <aside className="max-xl:hidden">{/* reserved: TOC */}</aside>
-        <div className="mx-auto w-full min-w-0 max-w-3xl xl:max-w-none">
+        <div className="mx-auto w-full min-w-0 max-w-3xl xl:max-w-none min-h-[60vh]">
           <MarkdownView content={post.content} />
         </div>
         <aside className="max-xl:hidden">{/* reserved: related */}</aside>
@@ -122,7 +122,7 @@ function PostSkeleton() {
           <div className="h-20 w-full animate-pulse rounded bg-secondary" />
         </div>
       </header>
-      <div className="relative mt-10 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
+      <div className="relative mt-6 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
         <div className="max-xl:hidden" />
         <div className="mx-auto grid w-full max-w-3xl gap-4 xl:max-w-none">
           {[0, 1, 2, 3].map((item) => (

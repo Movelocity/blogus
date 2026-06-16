@@ -281,7 +281,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
   }
 
   return (
-    <div className="grid gap-5 *:min-w-0 text-[17px] leading-8 text-foreground/80 max-sm:text-base">
+    <div className="grid gap-3 *:min-w-0 text-base leading-8 text-foreground/80">
       {blocks.map((block, idx) => {
         const key = `${block.type}-${idx}`;
 
@@ -309,7 +309,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                   {block.lang}
                 </span>
               )}
-              <pre className="overflow-x-auto bg-foreground p-5 font-mono text-sm leading-6 text-primary-foreground">
+              <pre className="overflow-x-auto bg-foreground p-5 font-mono text-sm leading-6 text-primary-foreground rounded-xl">
                 <code
                   dangerouslySetInnerHTML={{ __html: html }}
                   style={{ background: "transparent", padding: 0 }}
@@ -337,7 +337,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                   <tr className="border-b-2 border-foreground/15">
                     {block.headers.map((header, hi) => (
                       <th
-                        className="px-4 py-3 text-left font-semibold text-foreground"
+                        className="px-4 py-3 text-left font-semibold text-foreground min-w-32"
                         key={hi}
                         style={{ textAlign: block.alignments[hi] ?? "left" }}
                       >

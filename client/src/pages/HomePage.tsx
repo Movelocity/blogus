@@ -92,7 +92,7 @@ function FeaturedPost({ post }: { post: BlogPost }) {
   return (
     <article className="group grid overflow-hidden border border-foreground/10 bg-card transition-all duration-500 md:grid-cols-[0.95fr_1.05fr]">
       {post.coverImageUrl ? (
-        <img alt="" className="h-72 w-full object-cover md:h-full" src={post.coverImageUrl} />
+        <img alt="" className="h-72 w-full object-cover md:h-[320px]" src={post.coverImageUrl} />
       ) : (
         <div className="grid min-h-64 place-items-center bg-foreground px-8">
           <span className="font-display text-4xl text-primary-foreground">Blogus</span>
