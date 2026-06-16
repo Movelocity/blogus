@@ -324,7 +324,7 @@ export function AdminPage() {
           <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
         ) : null}
 
-        <form className="flex flex-col -mt-4" onSubmit={handleSubmit}>
+        <form className="flex flex-col" onSubmit={handleSubmit}>
           {/* Top bar: mode toggle + slug - sticks to top of viewport (just below fixed nav) */}
           <div className="sticky top-0 z-20 flex items-center justify-between bg-background py-4">
             <div className="flex items-center gap-3">
@@ -422,7 +422,7 @@ export function AdminPage() {
 
                 {/* Markdown body */}
                 <textarea
-                  className="min-h-[660px] resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                  className="min-h-[70vh] resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
                   ref={textareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -450,8 +450,8 @@ export function AdminPage() {
             )}
           </div>
 
-          {/* Action row - sticks to bottom of viewport until right content finishes scrolling */}
-          <div className="sticky bottom-0 z-20 mt-4 flex flex-wrap items-center gap-3 border-t border-border bg-background pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {/* Action row - fixed to viewport bottom, full width within layout */}
+          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[1400px] flex-wrap items-center gap-3 border-t border-border bg-background/95 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-background/75 lg:px-12">
             <button
               className="rounded-md bg-foreground px-5 py-2 text-base font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
               disabled={saving}
