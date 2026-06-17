@@ -234,12 +234,12 @@ pnpm test
 - [x] T5 curl cookie/refresh 流程通过（5/5 step；step 4 改为断言 server 返 401，详见下方"实施调整"）
 - [x] T10 typecheck + test 通过
 
-### 待手工验收（浏览器 E2E，未跑）
+### 已手工验收（浏览器 E2E，2026-06-17）
 
-- [ ] T6 静默 refresh：access 过期不闪登录页
-- [ ] T7 refresh 失败自动跳 /login
-- [ ] T8 输错密码不跳页
-- [ ] T9 后端重启期间不丢登录
+- [x] T6 静默 refresh：access 过期不闪登录页（JWT_EXPIRY=20s，等 30s 后刷新，直接显示管理后台）
+- [x] T7 refresh 失败时显示登录卡片（URL 保持 /admin，显示"需要登录后才能访问"，无红色错误条）
+- [x] T8 输错密码不跳页（URL 保持 /login）
+- [x] T9 后端重启期间不丢登录态（重启后 whoami 200，页面不跳转）
 
 ## 实施调整（与初稿的偏差）
 

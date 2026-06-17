@@ -11,7 +11,7 @@
 | 阶段 0~3 | ✅ 全部完成 |
 | 阶段 4：前台博客体验 | ✅ 核心完成（RSS / 站点配置 / 作者信息可选未做） |
 | 文章归档功能方案 | ✅ 后端 + Admin UI 已实施 |
-| Session expiry UX | ⚠️ 代码完成，4 项浏览器 E2E 未验收 |
+| Session expiry UX | ✅ 全部完成（含浏览器 E2E T6-T9） |
 | **阶段 5：测试、运维与发布准备** | ❌ 未开始 |
 | **阶段 6：生产安全加固** | ❌ 未开始 |
 
@@ -21,8 +21,8 @@
 
 | # | 事项 | 来源 | 预估工作量 |
 |---|------|------|-----------|
-| 1 | **Session expiry UX 浏览器 E2E** | `docs/specs/2026-06-16-session-expiry-ux.md` T6-T9 | 0.5h |
-| | 代码已合入，需手工跑：静默 refresh 不闪登录页、refresh 失败跳 /login、输错密码不跳页、后端重启不丢登录态。 | | |
+| ~~1~~ | ~~**Session expiry UX 浏览器 E2E**~~ | `docs/specs/2026-06-16-session-expiry-ux.md` T6-T9 | ✅ |
+| | 2026-06-17 已验收：T6 静默 refresh 不闪登录页 ✅、T7 refresh 失败显示登录卡片 ✅、T8 错误密码不跳页 ✅、T9 后端重启不丢登录态 ✅。 | | |
 | 2 | **健康检查扩展** | 阶段 5 | 1h |
 | | 当前 `GET /api/health` 仅存活检测；需报告 DB 连接状态和当前存储后端（local / minio）。 | | |
 | 3 | **数据库迁移流程固定** | 阶段 5 | 2h |
@@ -88,7 +88,7 @@
 ## 建议执行顺序
 
 ```text
-Session E2E (T6-T9)
+✅ Session E2E (T6-T9) — 已完成
   → 健康检查 + DB 迁移 + build 验证
     → 部署文档 + 备份文档
       → Cookie 安全 + 上传加固 + Rate Limit
