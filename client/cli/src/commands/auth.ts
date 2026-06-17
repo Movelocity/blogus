@@ -78,11 +78,11 @@ export function registerAuthCommands(program: Command) {
       }
 
       const credentials = await promptMissingCredentials(options);
-      const result = await apiRequest<{ user: CurrentUser; accessToken: string }>("/api/auth/login", {
+      const result = await apiRequest<{ user: CurrentUser; accessToken: string; refreshToken: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials)
       });
-      await writeConfig({ ...config, token: result.accessToken });
+      await writeConfig({ ...config, token: result.accessToken, refreshToken: result.refreshToken });
       console.log(`Logged in as ${result.user.email} (${result.user.role})`);
     });
 
@@ -97,12 +97,12 @@ export function registerAuthCommands(program: Command) {
       async (options: { email?: string; password?: string; name?: string; inviteCode?: string }) => {
         const config = await readConfig();
         const input = await promptMissingRegistration(options);
-        const result = await apiRequest<{ user: CurrentUser; accessToken: string }>("/api/auth/register", {
+        const result = await apiRequest<{ user: CurrentUser; accessToken: string; refreshToken: string }>("/api/auth/register", {
           method: "POST",
           body: JSON.stringify(input)
         });
 
-        await writeConfig({ ...config, token: result.accessToken });
+        await writeConfig({ ...config, token: result.accessToken, refreshToken: result.refreshToken });
         console.log(`Registered ${result.user.email} (${result.user.role})`);
       }
     );

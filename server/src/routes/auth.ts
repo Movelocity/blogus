@@ -194,7 +194,10 @@ export function createAuthRoutes(
   }));
 
   app.post("/refresh", async (request, reply) => {
-    const token = request.cookies[refreshTokenCookieName];
+    const cookieToken = request.cookies[refreshTokenCookieName];
+    const authHeader = request.headers.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+    const token = cookieToken ?? bearerToken;
     if (!token) {
       return sendApiError(reply, 401, "missing_refresh_token", "Missing refresh token");
     }

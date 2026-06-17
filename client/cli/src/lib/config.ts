@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 export interface CliConfig {
   apiBaseUrl: string;
   token?: string;
+  refreshToken?: string;
 }
 
 const configPath = join(homedir(), ".blogus-cli", "config.json");
@@ -28,6 +29,7 @@ export async function writeConfig(config: CliConfig) {
 export async function clearToken() {
   const config = await readConfig();
   delete config.token;
+  delete config.refreshToken;
   await writeConfig(config);
 }
 
