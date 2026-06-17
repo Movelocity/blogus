@@ -75,6 +75,9 @@ export const storagePlugin = fp(async (app) => {
           key,
           url: `${config.storage.publicPath.replace(/\/$/, "")}/${key}`
         };
+      },
+      async check() {
+        return { ok: true as const, driver: "local" as const };
       }
     });
     return;
@@ -126,6 +129,14 @@ export const storagePlugin = fp(async (app) => {
         key,
         url: `${endpoint}/${config.minio.bucket}/${key}`
       };
+    },
+    async check() {
+      try {
+        await s3.send(new HeadBucketCommand({ Bucket: config.minio.bucket }));
+        return { ok: true as const, driver: "minio" as const, bucket: config.minio.bucket };
+      } catch {
+        return { ok: false as const, driver: "minio" as const, bucket: config.minio.bucket };
+      }
     }
   });
 

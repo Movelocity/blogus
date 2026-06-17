@@ -10,6 +10,7 @@ declare module "fastify" {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     storage: {
       putFile(input: PutFileInput): Promise<StoredFile>;
+      check(): Promise<{ ok: true; driver: "local" } | { ok: boolean; driver: "minio"; bucket: string }>;
     };
   }
 

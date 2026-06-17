@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import { sql } from "drizzle-orm";
 import Fastify from "fastify";
 import { config } from "./config.js";
 import { apiErrorHandler } from "./http/errors.js";
@@ -32,10 +33,24 @@ export async function buildApp() {
   await app.register(storagePlugin);
   await app.register(authPlugin);
 
-  app.get("/api/health", async () => ({
-    ok: true,
-    service: "blogus-api"
-  }));
+  app.get("/api/health", async (_request, reply) => {
+    const dbOk = await app.db
+      .execute(sql`SELECT 1`)
+      .then(() => true)
+      .catch(() => false);
+
+    const storage = await app.storage.check();
+
+    const ok = dbOk && storage.ok;
+    const body = {
+      ok,
+      service: "blogus-api",
+      db: dbOk ? "connected" : "disconnected",
+      storage
+    };
+
+    return reply.status(ok ? 200 : 503).send(body);
+  });
 
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(postRoutes, { prefix: "/api/posts" });
