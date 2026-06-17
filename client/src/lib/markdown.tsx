@@ -226,7 +226,7 @@ function renderInline(text: string): ReactNode[] {
     if (full!.startsWith("![")) {
       nodes.push(
         isSafeUrl(url!) ? (
-          <img alt={label} className="my-6 max-h-[560px] w-full object-contain" key={key} src={url} />
+          <img alt={label} className="my-6 max-h-[560px] w-full object-contain rounded-xl shadow-sm" key={key} src={url} />
         ) : (
           label
         ),

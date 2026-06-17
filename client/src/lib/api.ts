@@ -7,15 +7,49 @@ import type {
   UpdatePostInput
 } from "@blogus/shared";
 
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Session expired");
+    this.name = "SessionExpiredError";
+  }
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+export function refreshSession(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const r = await fetchApi("/auth/refresh", { method: "POST" });
+      return r.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
+function isAuthEntryPath(path: string): boolean {
+  return path === "/auth/login" || path === "/auth/register" || path === "/auth/refresh";
+}
+
+function emitSessionExpired() {
+  window.dispatchEvent(new CustomEvent("blogus:session-expired"));
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetchApi(path, init);
 
-  if (response.status === 401 && path !== "/auth/refresh") {
-    const refreshed = await fetchApi("/auth/refresh", { method: "POST" });
-    if (refreshed.ok) {
+  if (response.status === 401 && !isAuthEntryPath(path)) {
+    const refreshed = await refreshSession();
+    if (refreshed) {
       const retryResponse = await fetchApi(path, init);
       return parseResponse<T>(retryResponse);
     }
+    emitSessionExpired();
+    throw new SessionExpiredError();
   }
 
   return parseResponse<T>(response);
@@ -25,10 +59,12 @@ function fetchApi(path: string, init?: RequestInit) {
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
   const headers = isFormData
     ? init?.headers
-    : {
-        "content-type": "application/json",
-        ...init?.headers
-      };
+    : init?.body !== undefined && init?.body !== null
+      ? {
+          "content-type": "application/json",
+          ...init?.headers
+        }
+      : init?.headers;
 
   return fetch(`/api${path}`, {
     ...init,
@@ -88,26 +124,29 @@ export function deletePost(id: string) {
 }
 
 export async function uploadFile(file: File) {
-  const body = new FormData();
-  body.append("file", file);
+  const buildBody = () => {
+    const body = new FormData();
+    body.append("file", file);
+    return body;
+  };
   const response = await fetchApi("/upload", {
     method: "POST",
-    body,
+    body: buildBody(),
     headers: {}
   });
 
   if (response.status === 401) {
-    const refreshed = await fetchApi("/auth/refresh", { method: "POST" });
-    if (refreshed.ok) {
-      const retryBody = new FormData();
-      retryBody.append("file", file);
+    const refreshed = await refreshSession();
+    if (refreshed) {
       const retryResponse = await fetchApi("/upload", {
         method: "POST",
-        body: retryBody,
+        body: buildBody(),
         headers: {}
       });
       return parseResponse<{ file: { bucket: string; key: string; url: string } }>(retryResponse);
     }
+    emitSessionExpired();
+    throw new SessionExpiredError();
   }
 
   return parseResponse<{ file: { bucket: string; key: string; url: string } }>(response);

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogPost, CurrentUser, PostStatus, PostVisibility } from "@blogus/shared";
-import { createPost, deletePost, listPosts, logout, updatePost, uploadFile, whoami } from "../lib/api";
+import { createPost, deletePost, listPosts, logout, refreshSession, updatePost, uploadFile, whoami } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import {
   PlusIcon,
@@ -83,14 +83,21 @@ export function AdminPage() {
   }
 
   useEffect(() => {
-    Promise.all([whoami(), listPosts({ visibility: "all" })])
-      .then(([cu, result]) => {
-        setUser(cu.user);
-        setPosts(result.posts);
-        if (result.posts[0]) loadPost(result.posts[0]);
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "加载失败"))
-      .finally(() => setAuthChecked(true));
+    (async () => {
+      const refreshed = await refreshSession();
+      if (!refreshed) {
+        setAuthChecked(true);
+        return;
+      }
+      Promise.all([whoami(), listPosts({ visibility: "all" })])
+        .then(([cu, result]) => {
+          setUser(cu.user);
+          setPosts(result.posts);
+          if (result.posts[0]) loadPost(result.posts[0]);
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : "加载失败"))
+        .finally(() => setAuthChecked(true));
+    })();
   }, []);
 
   useEffect(() => {
@@ -325,8 +332,8 @@ export function AdminPage() {
         ) : null}
 
         <form className="flex flex-col" onSubmit={handleSubmit}>
-          {/* Top bar: mode toggle + slug - sticks to top of viewport (just below fixed nav) */}
-          <div className="sticky top-0 z-20 flex items-center justify-between bg-background py-4">
+          {/* Top bar - sticks to top of viewport (just below fixed nav) */}
+          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background py-4">
             <div className="flex items-center gap-3">
               <span className="font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
@@ -337,22 +344,88 @@ export function AdminPage() {
                 </span>
               ) : null}
             </div>
-            <div className="flex items-center gap-1 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              {selectedPost ? (
+                <>
+                  {selectedPost.status !== "published" ? (
+                    <button
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => void changeStatus(selectedPost.id, "published")}
+                      type="button"
+                    >
+                      发布
+                    </button>
+                  ) : null}
+                  {selectedPost.status === "published" ? (
+                    <>
+                      <button
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => void changeStatus(selectedPost.id, "draft")}
+                        type="button"
+                      >
+                        撤回
+                      </button>
+                      <button
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => void changeStatus(selectedPost.id, "archived")}
+                        type="button"
+                      >
+                        归档
+                      </button>
+                    </>
+                  ) : null}
+                  {selectedPost.status === "archived" ? (
+                    <button
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => void changeStatus(selectedPost.id, "draft")}
+                      type="button"
+                    >
+                      取消归档
+                    </button>
+                  ) : null}
+                  <span className="text-border">|</span>
+                  <button
+                    className="text-destructive/70 transition-colors hover:text-destructive"
+                    onClick={() => void remove(selectedPost.id)}
+                    type="button"
+                  >
+                    删除
+                  </button>
+                  {selectedPost.status === "published" ? (
+                    <Link
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                      to={`/posts/${selectedPost.slug}`}
+                    >
+                      查看前台
+                    </Link>
+                  ) : null}
+                  <span className="text-border">|</span>
+                </>
+              ) : null}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("edit")}
+                  className={`px-2 py-1 transition-colors ${editorMode === "edit" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <PencilSimpleIcon size={14} className="inline mr-1" />
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("preview")}
+                  className={`px-2 py-1 transition-colors ${editorMode === "preview" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <EyeIcon size={14} className="inline mr-1" />
+                  预览
+                </button>
+              </div>
               <button
-                type="button"
-                onClick={() => setEditorMode("edit")}
-                className={`px-2 py-1 transition-colors ${editorMode === "edit" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className="rounded-md bg-foreground px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                disabled={saving}
+                type="submit"
               >
-                <PencilSimpleIcon size={14} className="inline mr-1" />
-                编辑
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditorMode("preview")}
-                className={`px-2 py-1 transition-colors ${editorMode === "preview" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <EyeIcon size={14} className="inline mr-1" />
-                预览
+                {saving ? "保存中..." : selectedPost ? "保存" : "创建草稿"}
               </button>
             </div>
           </div>
@@ -432,7 +505,7 @@ export function AdminPage() {
                 />
               </div>
             ) : (
-              <article className="mx-auto max-w-3xl">
+              <article className="mx-auto md:mx-0 max-w-3xl pb-24">
                 {coverImageUrl ? (
                   <img alt="" className="mb-6 max-h-72 w-full rounded-md object-cover" src={coverImageUrl} />
                 ) : null}
@@ -452,68 +525,6 @@ export function AdminPage() {
             )}
           </div>
 
-          {/* Action row - sticky to right column bottom */}
-          <div className="sticky bottom-0 z-20 mt-4 -mx-6 flex flex-wrap items-center gap-3 border-t border-border bg-background px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:mx-0 lg:px-0">
-            <button
-              className="rounded-md bg-foreground px-5 py-2 text-base font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-              disabled={saving}
-              type="submit"
-            >
-              {saving ? "保存中..." : selectedPost ? "保存" : "创建草稿"}
-            </button>
-            {selectedPost ? (
-              <>
-                <button
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={selectedPost.status === "published"}
-                  onClick={() => void changeStatus(selectedPost.id, "published")}
-                  type="button"
-                >
-                  发布
-                </button>
-                <button
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={selectedPost.status !== "published"}
-                  onClick={() => void changeStatus(selectedPost.id, "draft")}
-                  type="button"
-                >
-                  撤回
-                </button>
-                <button
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={selectedPost.status !== "published"}
-                  onClick={() => void changeStatus(selectedPost.id, "archived")}
-                  type="button"
-                >
-                  归档
-                </button>
-                <button
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={selectedPost.status !== "archived"}
-                  onClick={() => void changeStatus(selectedPost.id, "draft")}
-                  type="button"
-                >
-                  取消归档
-                </button>
-                <span className="text-border">|</span>
-                <button
-                  className="text-sm text-destructive/70 transition-colors hover:text-destructive"
-                  onClick={() => void remove(selectedPost.id)}
-                  type="button"
-                >
-                  删除
-                </button>
-                {selectedPost.status === "published" ? (
-                  <Link
-                    className="ml-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    to={`/posts/${selectedPost.slug}`}
-                  >
-                    查看前台
-                  </Link>
-                ) : null}
-              </>
-            ) : null}
-          </div>
         </form>
       </div>
     </div>

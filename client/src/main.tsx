@@ -9,11 +9,13 @@ import { LoginPage } from "./pages/LoginPage";
 import { PostPage } from "./pages/PostPage";
 import { BlogLayout } from "./components/layouts/BlogLayout";
 import { AdminLayout } from "./components/layouts/AdminLayout";
+import { SessionWatcher } from "./components/SessionWatcher";
 import "./tailwind.css";
 
 function App() {
   return (
     <BrowserRouter>
+      <SessionWatcher />
       <Routes>
         <Route element={<LandingPage />} path="/" />
         <Route element={<BlogLayout />}>

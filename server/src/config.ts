@@ -65,7 +65,7 @@ export const config = {
   },
   jwt: {
     secret: readJwtSecret(),
-    expiry: process.env.JWT_EXPIRY ?? "2h",
+    expiry: process.env.JWT_EXPIRY && parseDurationSeconds(process.env.JWT_EXPIRY) !== undefined ? process.env.JWT_EXPIRY : "12h",
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY ?? "720h"
   },
   auth: {
