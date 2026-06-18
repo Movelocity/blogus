@@ -17,6 +17,20 @@ pnpm dev           # 同时启动前端和后端
 
 首次注册的用户自动成为管理员，后续注册需要邀请码。
 
+## 生产部署
+
+```bash
+cp .env.example .env
+# 编辑 .env，至少设置 NODE_ENV=production、JWT_SECRET=<随机密钥>、DATABASE_URL
+
+make build        # 构建前端 + 后端
+make start        # 启动生产服务
+```
+
+`SERVE_CLIENT=true` 时后端直接托管 `client/dist/`，无需 nginx 反代。访问 `http://<host>:3009` 即可使用完整博客。
+
+更多部署选项（PM2、systemd、反向代理）见 [docs/deployment.md](docs/deployment.md)。
+
 ## 项目结构
 
 ```text

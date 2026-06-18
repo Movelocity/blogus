@@ -6,6 +6,7 @@ import { config } from "./config.js";
 import { apiErrorHandler } from "./http/errors.js";
 import { authPlugin } from "./plugins/auth.js";
 import { dbPlugin } from "./plugins/db.js";
+import { serveClientPlugin } from "./plugins/serve-client.js";
 import { storagePlugin } from "./plugins/storage.js";
 import { authRoutes } from "./routes/auth.js";
 import { postRoutes } from "./routes/posts.js";
@@ -55,6 +56,10 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(postRoutes, { prefix: "/api/posts" });
   await app.register(uploadRoutes, { prefix: "/api/upload" });
+
+  if (config.server.serveClient) {
+    await app.register(serveClientPlugin);
+  }
 
   return app;
 }

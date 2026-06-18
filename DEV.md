@@ -9,6 +9,7 @@ make dev             # 启动前端 + 后端
 make dev-client      # 仅启动 Vite
 make dev-server      # 仅启动 Fastify
 make build           # 构建所有包
+make start           # 启动生产服务（需先 build）
 make typecheck       # 类型检查
 make install-cli     # 构建并全局安装 blogus-cli（改动 CLI 源码后重新执行）
 make services-up     # 启动 PostgreSQL、Redis、MinIO
@@ -51,6 +52,7 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 关键环境变量记录在 `.env.example`：
 
 - `HOST`、`PORT`、`CLIENT_ORIGIN`：API 监听地址和 CORS 来源。
+- `SERVE_CLIENT`：设为 `true` 时后端托管 `client/dist/`，生产单进程部署用。
 - `DATABASE_URL`、`REDIS_URL`：后端依赖服务连接地址。
 - `JWT_SECRET`、`JWT_EXPIRY`、`JWT_REFRESH_EXPIRY`：JWT 和 cookie 会话配置。
 - `BLOGUS_DEFAULT_INVITE_CODE`：默认测试邀请码；非生产环境不配置时默认使用 `blogus-dev-invite`，生产环境仅显式配置时生效。
@@ -89,6 +91,31 @@ pnpm build
 ```
 
 服务端核心文章路由有 `pnpm --filter @blogus/server test` 覆盖。
+
+## 生产部署
+
+最简部署只需后端进程，无需 nginx：
+
+```bash
+cp .env.example .env
+# 编辑 .env，至少设置 NODE_ENV=production、JWT_SECRET=<随机密钥>、DATABASE_URL
+
+make build        # 构建前端 + 后端
+make start        # 启动生产服务
+
+# 或一步到位
+make build-start
+```
+
+`SERVE_CLIENT=true` 时 Fastify 同时提供 API 和前端静态文件（含 SPA fallback），单端口 `:3009` 搞定。
+
+必须替换的生产配置：
+- `JWT_SECRET`：随机密钥，禁止使用 `dev-secret`（生产环境启动会失败）。
+- `NODE_ENV=production`：关闭 dev-login 等开发功能。
+- `BLOGUS_ENABLE_DEV_LOGIN`：生产环境不设置时自动关闭。
+- `CLIENT_ORIGIN`：如使用外部反代且前后端不同源，需设置为前端实际域名。
+
+可选进程管理：PM2 (`ecosystem.config.cjs`) 或 systemd (`blogus.service`)，详见 [docs/deployment.md](docs/deployment.md)。
 
 ## 非生产能力
 

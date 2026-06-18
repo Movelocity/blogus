@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,green \"pnpm --filter @blogus/client dev\" \"pnpm --filter @blogus/server dev\"",
     "build": "pnpm -r build",
+    "start": "pnpm --filter @blogus/server start",
+    "build:start": "pnpm build && pnpm start",
     "test": "pnpm --filter @blogus/server test",
     "typecheck": "pnpm -r typecheck"
   },

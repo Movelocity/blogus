@@ -8,7 +8,7 @@ BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server build typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
+.PHONY: help install dev dev-client dev-server build start build-start typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -17,16 +17,21 @@ install: ## Install workspace dependencies
 	$(PNPM) install
 
 dev: ## Start client and server in development mode
-	$(PNPM) dev
+	exec $(PNPM) dev
 
 dev-client: ## Start only the Vite client
-	$(PNPM) --filter @blogus/client dev
+	exec $(PNPM) --filter @blogus/client dev
 
 dev-server: ## Start only the Fastify server
-	$(PNPM) --filter @blogus/server dev
+	exec $(PNPM) --filter @blogus/server dev
 
 build: ## Build all workspace packages
 	$(PNPM) build
+
+start: ## Start production server (run `make build` first)
+	cd server && node --env-file=../.env dist/index.js
+
+build-start: build start ## Build and start production server
 
 typecheck: ## Typecheck all workspace packages
 	$(PNPM) typecheck

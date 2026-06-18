@@ -23,16 +23,16 @@
 |---|------|------|-----------|
 | ~~1~~ | ~~**Session expiry UX 浏览器 E2E**~~ | `docs/specs/2026-06-16-session-expiry-ux.md` T6-T9 | ✅ |
 | | 2026-06-17 已验收：T6 静默 refresh 不闪登录页 ✅、T7 refresh 失败显示登录卡片 ✅、T8 错误密码不跳页 ✅、T9 后端重启不丢登录态 ✅。 | | |
-| 2 | **健康检查扩展** | 阶段 5 | 1h |
-| | 当前 `GET /api/health` 仅存活检测；需报告 DB 连接状态和当前存储后端（local / minio）。 | | |
+| ~~2~~ | ~~**健康检查扩展**~~ | 阶段 5 | ✅ |
+| | 2026-06-17 已完成：`GET /api/health` 报告 DB 连接状态和存储后端（local / minio）。 | | |
 | 3 | **数据库迁移流程固定** | 阶段 5 | 2h |
 | | 目前靠启动时 `ensureTableExists` 保证表存在，无版本化迁移。生产部署需要可重复、不破坏数据的迁移方案（如 drizzle-kit migrate）。 | | |
 | 4 | **备份与恢复文档 / 脚本** | 阶段 5 | 1h |
 | | PostgreSQL 数据 + 本地上传目录 + 可选 MinIO 数据的备份恢复流程，目前无任何说明。 | | |
-| 5 | **`pnpm build` 产物可运行验证** | 阶段 5 | 1h |
-| | 确认 `client/dist` + `server/dist` 可独立部署运行，而非仅 dev 模式可用。 | | |
-| 6 | **部署文档** | 阶段 5 | 1.5h |
-| | 新机器按文档可完成部署：Node 版本、环境变量、反向代理、进程管理（PM2 / systemd）。 | | |
+| ~~5~~ | ~~**`pnpm build` 产物可运行验证**~~ | 阶段 5 | ✅ |
+| | 2026-06-17 已完成：`SERVE_CLIENT=true` 时后端直接托管 `client/dist/`，含 SPA fallback。部署只需 `pnpm build && pnpm start`。 | | |
+| ~~6~~ | ~~**部署文档**~~ | 阶段 5 | ✅ |
+| | 2026-06-17 已完成：`docs/deployment.md` 覆盖快速部署、PM2、systemd、nginx 反代、环境变量参考。 | | |
 
 ---
 
@@ -89,10 +89,12 @@
 
 ```text
 ✅ Session E2E (T6-T9) — 已完成
-  → 健康检查 + DB 迁移 + build 验证
-    → 部署文档 + 备份文档
-      → Cookie 安全 + 上传加固 + Rate Limit
-        → 测试补充 + RSS + 站点配置
+✅ 健康检查 — 已完成
+✅ build 验证 — 已完成（SERVE_CLIENT 托管前端）
+✅ 部署文档 — 已完成
+  → DB 迁移 + 备份文档
+    → Cookie 安全 + 上传加固 + Rate Limit
+      → 测试补充 + RSS + 站点配置
 ```
 
 核心逻辑：**先保证能发布上线（P0），再加固安全（P1），然后打磨体验（P2），最后清理债务（P3）**。

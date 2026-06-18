@@ -53,7 +53,8 @@ export const config = {
   server: {
     host: process.env.HOST ?? "127.0.0.1",
     port: readNumber("PORT", 3009),
-    clientOrigin: process.env.CLIENT_ORIGIN ?? "http://127.0.0.1:5177"
+    clientOrigin: process.env.CLIENT_ORIGIN ?? "http://127.0.0.1:5177",
+    serveClient: readBoolean("SERVE_CLIENT", false)
   },
   database: {
     url:
