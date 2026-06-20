@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* 浅色主题 - 日式安静美学 */
   --background: oklch(0.99 0.002 90);
   --foreground: oklch(0.18 0.01 260);
   --card: oklch(0.97 0.003 90);
@@ -19,6 +20,71 @@
   --input: oklch(0.95 0.004 260);
   --ring: oklch(0.18 0.01 260);
   --radius: 0.25rem;
+}
+
+/* 深色主题 - 系统偏好回退 */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --background: oklch(0.15 0.01 260);
+    --foreground: oklch(0.95 0.002 90);
+    --card: oklch(0.18 0.01 260);
+    --card-foreground: oklch(0.95 0.002 90);
+    --primary: oklch(0.95 0.002 90);
+    --primary-foreground: oklch(0.15 0.01 260);
+    --secondary: oklch(0.2 0.01 260);
+    --secondary-foreground: oklch(0.95 0.002 90);
+    --muted: oklch(0.2 0.01 260);
+    --muted-foreground: oklch(0.65 0.015 90);
+    --accent: oklch(0.22 0.015 260);
+    --accent-foreground: oklch(0.95 0.002 90);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.15 0.01 260);
+    --border: oklch(0.25 0.01 260);
+    --input: oklch(0.2 0.01 260);
+    --ring: oklch(0.95 0.002 90);
+  }
+}
+
+/* 显式浅色主题 - 覆盖系统深色偏好 */
+.light:root {
+  --background: oklch(0.99 0.002 90);
+  --foreground: oklch(0.18 0.01 260);
+  --card: oklch(0.97 0.003 90);
+  --card-foreground: oklch(0.18 0.01 260);
+  --primary: oklch(0.18 0.01 260);
+  --primary-foreground: oklch(0.99 0.002 90);
+  --secondary: oklch(0.95 0.003 90);
+  --secondary-foreground: oklch(0.18 0.01 260);
+  --muted: oklch(0.95 0.003 90);
+  --muted-foreground: oklch(0.48 0.015 90);
+  --accent: oklch(0.94 0.004 260);
+  --accent-foreground: oklch(0.18 0.01 260);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0.002 90);
+  --border: oklch(0.9 0.005 260);
+  --input: oklch(0.95 0.004 260);
+  --ring: oklch(0.18 0.01 260);
+}
+
+/* 深色主题 - 显式 .dark class（优先级高于 media query） */
+.dark:root {
+  --background: oklch(0.15 0.01 260);
+  --foreground: oklch(0.95 0.002 90);
+  --card: oklch(0.18 0.01 260);
+  --card-foreground: oklch(0.95 0.002 90);
+  --primary: oklch(0.95 0.002 90);
+  --primary-foreground: oklch(0.15 0.01 260);
+  --secondary: oklch(0.2 0.01 260);
+  --secondary-foreground: oklch(0.95 0.002 90);
+  --muted: oklch(0.2 0.01 260);
+  --muted-foreground: oklch(0.65 0.015 90);
+  --accent: oklch(0.22 0.015 260);
+  --accent-foreground: oklch(0.95 0.002 90);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.15 0.01 260);
+  --border: oklch(0.25 0.01 260);
+  --input: oklch(0.2 0.01 260);
+  --ring: oklch(0.95 0.002 90);
 }
 
 @theme inline {
@@ -73,6 +139,60 @@
 pre code.hljs {
   background: transparent;
   padding: 0;
+}
+
+/* 深色主题下的代码块和页脚样式（仅系统偏好回退） */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) pre {
+    background: oklch(0.12 0.01 260) !important;
+  }
+  :root:not(.light):not(.dark) pre code {
+    color: oklch(0.9 0.002 90);
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground {
+    background: oklch(0.12 0.01 260) !important;
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground {
+    color: oklch(0.95 0.002 90) !important;
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/50 {
+    color: oklch(0.95 0.002 90 / 0.5) !important;
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/40 {
+    color: oklch(0.95 0.002 90 / 0.4) !important;
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/30 {
+    color: oklch(0.95 0.002 90 / 0.3) !important;
+  }
+  :root:not(.light):not(.dark) footer.bg-foreground .border-primary-foreground\/10 {
+    border-color: oklch(0.95 0.002 90 / 0.1) !important;
+  }
+}
+
+/* 显式 .dark class 的代码块和页脚样式 */
+.dark:root pre {
+  background: oklch(0.12 0.01 260) !important;
+}
+.dark:root pre code {
+  color: oklch(0.9 0.002 90);
+}
+.dark:root footer.bg-foreground {
+  background: oklch(0.12 0.01 260) !important;
+}
+.dark:root footer.bg-foreground .text-primary-foreground {
+  color: oklch(0.95 0.002 90) !important;
+}
+.dark:root footer.bg-foreground .text-primary-foreground\/50 {
+  color: oklch(0.95 0.002 90 / 0.5) !important;
+}
+.dark:root footer.bg-foreground .text-primary-foreground\/40 {
+  color: oklch(0.95 0.002 90 / 0.4) !important;
+}
+.dark:root footer.bg-foreground .text-primary-foreground\/30 {
+  color: oklch(0.95 0.002 90 / 0.3) !important;
+}
+.dark:root footer.bg-foreground .border-primary-foreground\/10 {
+  border-color: oklch(0.95 0.002 90 / 0.1) !important;
 }
 
 /* KaTeX: scale down display math slightly for body text */

@@ -57,7 +57,7 @@ export function PostPage() {
       <header className="grid gap-8 border-b border-foreground/10 pb-6 relative">
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-0 lg:absolute top-0 left-0">
           <Link
-            className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground rounded-full shadow-sm hover:shadow-md p-3"
+            className="inline-flex w-fit items-center p-2.5 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground rounded-full shadow-sm hover:shadow-md border-1 border-foreground/10"
             to="/blog"
           >
             <ArrowLeftIcon className="h-4 w-4" />

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { BlogPost } from "@blogus/shared";
 import { listPosts } from "../lib/api";
 import { estimateReadingMinutes, formatPostDate, getPostSummary, sortPostsByPublishedDate } from "../lib/posts";
+import { SectionHeader } from "../components/shared/SectionHeader";
 
 export function HomePage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -28,24 +29,11 @@ export function HomePage() {
   return (
     <div className="grid gap-16">
       {/* Hero */}
-      <section className="relative grid gap-8 border-b border-foreground/10 pb-12 lg:grid-cols-12 lg:items-end">
-        <div className="lg:col-span-7">
-          <span className="mb-6 inline-flex items-center gap-3 text-sm font-mono text-muted-foreground">
-            <span className="h-px w-8 bg-foreground/30" />
-            Blogus Journal
-          </span>
-          <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
-            Journals
-            {/* <br /> */}
-            {/* <span className="text-muted-foreground">点亮灵感</span> */}
-          </h1>
-        </div>
-        <div className="lg:col-span-5 lg:pb-4">
-          <p className="m-0 text-lg leading-relaxed text-muted-foreground">
-            这里收录已经发布的内容，适合从最新一篇开始阅读。
-          </p>
-        </div>
-      </section>
+      <SectionHeader
+        eyebrow="ここから"
+        title="Journals"
+        description="这里收录已经发布的内容，适合从最新一篇开始阅读。"
+      />
 
       {loading ? <HomeSkeleton /> : null}
 
@@ -60,24 +48,24 @@ export function HomePage() {
           <FeaturedPost post={featuredPost} />
           {recentPosts.length > 0 ? (
             <div className="grid gap-6">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <span className="mb-2 inline-flex items-center gap-3 text-sm font-mono text-muted-foreground">
-                    <span className="h-px w-8 bg-foreground/30" />
-                    最近发布
-                  </span>
-                  <h2 className="m-0 font-display text-4xl tracking-tight text-foreground">全部文章</h2>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <span className="mb-2 inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
+                      <span className="h-px w-8 bg-foreground/30" />
+                      最近发布
+                    </span>
+                    <h2 className="m-0 font-display text-4xl tracking-tight text-foreground">全部文章</h2>
+                  </div>
+                  <Link
+                    className="text-sm text-foreground/70 transition-colors hover:text-foreground"
+                    to="/archive"
+                  >
+                    查看时间线 →
+                  </Link>
                 </div>
-                <Link
-                  className="text-sm text-foreground/70 transition-colors hover:text-foreground"
-                  to="/archive"
-                >
-                  查看时间线 →
-                </Link>
-              </div>
               <div className="grid gap-4">
                 {recentPosts.map((post) => (
-                  <PostListItem key={post.id} post={post} />
+                    <PostListItem key={post.id} post={post} />
                 ))}
               </div>
             </div>

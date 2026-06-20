@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router";
+import { useTheme } from "../hooks/useTheme";
 
 function useScrollHide(threshold = 80) {
   const [hidden, setHidden] = useState(false);
@@ -28,6 +29,7 @@ function useScrollHide(threshold = 80) {
 export function Navigation() {
   const hidden = useScrollHide();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme, toggle } = useTheme();
 
   return (
     <header
@@ -72,6 +74,22 @@ export function Navigation() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
+          <button
+            onClick={toggle}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
+          >
+            {theme === "dark" ? (
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <circle cx="12" cy="12" r="5" />
+                <path strokeLinecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
+            ) : (
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+              </svg>
+            )}
+          </button>
           <NavLink
             to="/admin"
             className="text-[0.85rem] text-muted-foreground transition-colors hover:text-foreground"
@@ -121,6 +139,16 @@ export function Navigation() {
                 {link.name}
               </NavLink>
             ))}
+            <button
+              onClick={toggle}
+              className={`self-start font-display text-5xl text-foreground transition-all duration-500 hover:text-muted-foreground ${
+                isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
+              style={{ transitionDelay: isMobileMenuOpen ? `${3 * 75}ms` : "0ms" }}
+              aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
+            >
+              {theme === "dark" ? "浅色" : "深色"}
+            </button>
           </div>
         </div>
       </div>

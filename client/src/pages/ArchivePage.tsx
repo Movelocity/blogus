@@ -9,6 +9,7 @@ import {
   getPostDate,
   sortPostsByPublishedDate,
 } from "../lib/posts";
+import { SectionHeader } from "../components/shared/SectionHeader";
 
 export function ArchivePage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -30,22 +31,11 @@ export function ArchivePage() {
 
   return (
     <div className="grid gap-16">
-      <header className="grid gap-6 border-b border-foreground/10 pb-10 lg:grid-cols-12 lg:items-end">
-        <div className="lg:col-span-7">
-          <span className="mb-6 inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
-            <span className="h-px w-8 bg-foreground/30" />
-            Timeline
-          </span>
-          <h1 className="m-0 font-display text-6xl leading-[0.92] tracking-tight text-foreground md:text-7xl lg:text-[96px]">
-            时间线
-          </h1>
-        </div>
-        <div className="lg:col-span-5 lg:pb-4">
-          <p className="m-0 text-lg leading-relaxed text-muted-foreground">
-            按发布时间整理所有公开文章。
-          </p>
-        </div>
-      </header>
+      <SectionHeader
+        eyebrow="時の流れ"
+        title="时间线"
+        description="按发布时间整理所有公开文章。"
+      />
 
       {loading ? <ArchiveSkeleton /> : null}
 
@@ -64,45 +54,45 @@ export function ArchivePage() {
       ) : null}
 
       {!loading && !error && groups.length > 0 ? (
-        <section className="grid gap-12">
+        <section className="grid gap-16">
           {groups.map((group) => (
-            <div className="grid gap-6 md:grid-cols-[11rem_1fr]" key={group.month}>
-              <h2 className="m-0 font-display text-2xl tracking-tight text-foreground">{group.month}</h2>
-              <div className="grid gap-4">
-                {group.posts.map((post) => (
-                  <article
-                    className="hover-lift grid gap-3 border border-foreground/10 bg-card p-6 transition-all duration-300"
-                    key={post.id}
-                  >
-                    <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
-                      <time dateTime={getPostDate(post)}>{formatPostDate(getPostDate(post))}</time>
-                      <span className="h-px w-4 bg-foreground/20" />
-                      <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
-                    </div>
-                    <h3 className="m-0 break-words font-display text-2xl leading-snug tracking-tight text-foreground">
-                      <Link
-                        className="transition-colors duration-300 hover:text-muted-foreground"
-                        to={`/posts/${post.slug}`}
-                      >
-                        {post.title}
-                      </Link>
-                    </h3>
-                    {post.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {post.tags.map((tag) => (
-                          <span
-                            className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
-                            key={tag}
+              <div key={group.month} className="grid gap-8 md:grid-cols-[12rem_1fr]">
+                <div className="relative">
+                  <h2 className="m-0 font-display text-3xl tracking-tight text-foreground">{group.month}</h2>
+                  <div className="absolute -left-4 bottom-0 top-0 w-px bg-foreground/10" />
+                </div>
+                <div className="grid gap-4">
+                  {group.posts.map((post) => (
+                      <article key={post.id} className="hover-lift grid gap-3 border border-foreground/10 bg-card p-6 transition-all duration-300">
+                        <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
+                          <time dateTime={getPostDate(post)}>{formatPostDate(getPostDate(post))}</time>
+                          <span className="h-px w-4 bg-foreground/20" />
+                          <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
+                        </div>
+                        <h3 className="m-0 break-words font-display text-2xl leading-snug tracking-tight text-foreground">
+                          <Link
+                            className="transition-colors duration-300 hover:text-muted-foreground"
+                            to={`/posts/${post.slug}`}
                           >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </article>
-                ))}
+                            {post.title}
+                          </Link>
+                        </h3>
+                        {post.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {post.tags.map((tag) => (
+                              <span
+                                className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
+                                key={tag}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </article>
+                  ))}
+                </div>
               </div>
-            </div>
           ))}
         </section>
       ) : null}
