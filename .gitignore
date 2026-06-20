@@ -10,5 +10,6 @@ uploads/
 *.log
 .DS_Store
 .pnpm-store
-taste-skill*
+.claude/skills/
+!.claude/skills/blog-skill
 ref-web

@@ -9,6 +9,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { PostPage } from "./pages/PostPage";
 import { BlogLayout } from "./components/layouts/BlogLayout";
 import { AdminLayout } from "./components/layouts/AdminLayout";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { SessionWatcher } from "./components/SessionWatcher";
 import "./tailwind.css";
 
@@ -16,6 +17,7 @@ function App() {
   return (
     <BrowserRouter>
       <SessionWatcher />
+      <ScrollToTop />
       <Routes>
         <Route element={<LandingPage />} path="/" />
         <Route element={<BlogLayout />}>

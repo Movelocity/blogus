@@ -4,6 +4,7 @@ import type { BlogPost } from "@blogus/shared";
 import { getPostBySlug } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 
 export function PostPage() {
   const { slug } = useParams();
@@ -53,23 +54,15 @@ export function PostPage() {
 
   return (
     <article className="mx-auto w-full min-w-0 max-w-304">
-      <header className="grid gap-8 border-b border-foreground/10 pb-6">
-        <div className="mx-auto w-full max-w-4xl px-4 sm:px-0">
+      <header className="grid gap-8 border-b border-foreground/10 pb-6 relative">
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0 lg:absolute top-0 left-0">
           <Link
-            className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
-            to="/archive"
+            className="inline-flex w-fit items-center gap-2 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground rounded-full shadow-sm hover:shadow-md p-3"
+            to="/blog"
           >
-            <span className="h-px w-6 bg-foreground/30" />
-            返回时间线
+            <ArrowLeftIcon className="h-4 w-4" />
           </Link>
         </div>
-        {post.coverImageUrl ? (
-          <img
-            alt=""
-            className="mx-auto max-h-[420px] w-full max-w-4xl border border-foreground/10 object-cover"
-            src={post.coverImageUrl}
-          />
-        ) : null}
         <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0">
           <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
             <span>{formatPostDate(post.publishedAt)}</span>
@@ -79,6 +72,13 @@ export function PostPage() {
           <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-5xl">
             {post.title}
           </h1>
+          {post.coverImageUrl ? (
+            <img
+              alt=""
+              className="mx-auto max-h-[420px] w-full max-w-4xl rounded-xl border border-foreground/10 object-cover"
+              src={post.coverImageUrl}
+            />
+          ) : null}
           {post.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (
