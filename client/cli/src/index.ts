@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerPostCommands } from "./commands/post.js";
 import { registerUploadCommands } from "./commands/upload.js";
+import { SessionExpiredError } from "./lib/http.js";
 
 const program = new Command();
 
@@ -15,4 +16,17 @@ registerAuthCommands(program);
 registerPostCommands(program);
 registerUploadCommands(program);
 
-await program.parseAsync();
+try {
+  await program.parseAsync();
+} catch (err) {
+  if (err instanceof SessionExpiredError) {
+    console.error("Session expired. Please log in again: blogus-cli login");
+  } else if (err instanceof TypeError && err.message.includes("fetch")) {
+    console.error("Cannot connect to server. Is it running?");
+  } else if (err instanceof Error) {
+    console.error(`Error: ${err.message}`);
+  } else {
+    console.error("An unexpected error occurred.");
+  }
+  process.exit(1);
+}
