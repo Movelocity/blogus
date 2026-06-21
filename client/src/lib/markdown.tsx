@@ -44,6 +44,16 @@ function parseAlignment(separator: string): Alignment {
 
 const TABLE_SEP_RE = /^\|?(\s*:?-{2,}:?\s*\|)+\s*:?-{2,}:?\s*\|?\s*$/;
 
+export function slugify(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, "")
+    .replace(/[`*~\[\]()!]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w一-鿿]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function parseMarkdown(source: string) {
   const blocks: Block[] = [];
   const lines = source.replace(/\r\n/g, "\n").split("\n");
@@ -179,6 +189,18 @@ function parseMarkdown(source: string) {
   return blocks;
 }
 
+export interface HeadingItem {
+  level: 1 | 2 | 3;
+  text: string;
+  slug: string;
+}
+
+export function getHeadings(source: string): HeadingItem[] {
+  return parseMarkdown(source)
+    .filter((b): b is typeof b & { type: "heading" } => b.type === "heading")
+    .map((b) => ({ level: b.level, text: b.text, slug: slugify(b.text) }));
+}
+
 function renderKatex(tex: string, displayMode: boolean): string {
   try {
     return katex.renderToString(tex, { displayMode, throwOnError: false, strict: false });
@@ -293,8 +315,9 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                 ? "mt-6 font-display text-3xl leading-tight tracking-tight text-foreground"
                 : "mt-4 font-display text-2xl leading-snug tracking-tight text-foreground";
           const Heading = `h${block.level}` as "h1" | "h2" | "h3";
+          const id = slugify(block.text);
           return (
-            <Heading className={className} key={key}>
+            <Heading className={className} id={id} key={key}>
               {renderInline(block.text)}
             </Heading>
           );

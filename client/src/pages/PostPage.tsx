@@ -5,6 +5,7 @@ import { getPostBySlug } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
+import { TableOfContents } from "../components/TableOfContents";
 
 export function PostPage() {
   const { slug } = useParams();
@@ -63,7 +64,7 @@ export function PostPage() {
             <ArrowLeftIcon className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0">
+        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0 xl:pl-20">
           <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
             <span>{formatPostDate(post.publishedAt)}</span>
             <span className="h-px w-4 bg-foreground/20" />
@@ -98,7 +99,9 @@ export function PostPage() {
       </header>
 
       <div className="relative mt-6 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
-        <aside className="max-xl:hidden">{/* reserved: TOC */}</aside>
+        <aside className="max-xl:hidden">
+          <TableOfContents content={post.content} />
+        </aside>
         <div className="mx-auto w-full min-w-0 max-w-3xl xl:max-w-none min-h-[60vh]">
           <MarkdownView content={post.content} />
         </div>
