@@ -11,9 +11,11 @@ import { BlogLayout } from "./components/layouts/BlogLayout";
 import { AdminLayout } from "./components/layouts/AdminLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { SessionWatcher } from "./components/SessionWatcher";
+import { useTheme } from "./hooks/useTheme";
 import "./tailwind.css";
 
 function App() {
+  useTheme();
   return (
     <BrowserRouter>
       <SessionWatcher />
