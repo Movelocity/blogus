@@ -18,3 +18,11 @@
 
 - 开发阶段的脚本命令可以看 [DEV.md](./DEV.md)
 - 修改脚本或推荐命令后，同步更新 `README.md`(给人看)、`AGENTS.md`(给Coding Agent看) 和 `docs/*` 系列文档。
+
+## 发版流程
+
+- push `main` 不触发部署，只有打 `v*.*.*` tag 才自动部署
+- 发版命令：`git tag v<版本号> && git push origin v<版本号>`
+- 服务器 webhook 在 9000 端口，由 pm2 管理（`blogus-webhook`）
+- 部署日志在服务器 `~/projects/blogus/deploy.log`
+- 不要手动 SSH 到服务器部署，用 tag 触发即可

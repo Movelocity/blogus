@@ -76,6 +76,22 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 - CLI token 默认保存在 `~/.blogus-cli/config.json`。
 - 生产环境必须显式设置安全的 `JWT_SECRET`；默认 `dev-secret` 会导致服务启动失败。
 
+## 自动发版
+
+打 tag 自动部署到生产，push main 不触发：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+流程：GitHub webhook → 服务器验签 → `deploy.sh v1.0.0` → checkout tag → build → pm2 restart。
+
+服务器端：
+- `scripts/webhook-server.py`：由 pm2 管理（`blogus-webhook`），监听 9000 端口
+- `scripts/deploy.sh`：带 flock 防并发，日志写入 `deploy.log`
+- GitHub Webhook Secret 存在服务器 wrapper 脚本中，不入库
+
 ## 质量门禁
 
 每个阶段完成前必须至少通过：

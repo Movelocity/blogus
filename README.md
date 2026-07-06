@@ -31,6 +31,26 @@ make start        # 启动生产服务
 
 更多部署选项（PM2、systemd、反向代理）见 [docs/deployment.md](docs/deployment.md)。
 
+## 自动发版（CI/CD）
+
+Push `main` 不触发部署。打 tag 后自动部署到生产：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub webhook → 服务器验证签名 → checkout tag → build → pm2 restart。
+
+服务器端脚本在 `scripts/`：
+
+| 文件 | 说明 |
+| --- | --- |
+| `webhook-server.py` | 监听 GitHub push 事件，匹配 `v*.*.*` tag 后触发部署 |
+| `deploy.sh` | 拉取指定 tag、构建、重启 pm2 |
+
+webhook 由 pm2 管理（`blogus-webhook`），部署日志写入 `deploy.log`。
+
 ## 项目结构
 
 ```text
@@ -38,6 +58,7 @@ client/       React + Vite 单页应用
 client/cli/   blogus-cli 命令行工具
 server/       Fastify API 服务
 shared/       前后端共享 TypeScript 类型
+scripts/      部署相关脚本
 ```
 
 ## 功能清单
