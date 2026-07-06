@@ -8,7 +8,7 @@ import os
 import re
 import subprocess
 import sys
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 PORT = int(os.environ.get("WEBHOOK_PORT", "9000"))
 SECRET = os.environ.get("WEBHOOK_SECRET", "")
@@ -109,7 +109,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    server = HTTPServer(("0.0.0.0", PORT), WebhookHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), WebhookHandler)
     print("Webhook server listening on 0.0.0.0:{}".format(PORT))
     try:
         server.serve_forever()
