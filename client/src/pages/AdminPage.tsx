@@ -4,9 +4,11 @@ import type { BlogPost, CurrentUser, PostStatus, PostVisibility } from "@blogus/
 import { createPost, deletePost, listPosts, logout, refreshSession, updatePost, uploadFile, whoami } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import {
+  HouseSimpleIcon,
   ListIcon,
   PlusIcon,
   SignOutIcon,
+  SpinnerIcon,
   UploadIcon,
   ImageIcon,
   EyeIcon,
@@ -243,12 +245,12 @@ export function AdminPage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100dvh-64px)]">
+    <div className="flex min-h-dvh">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(true)}
         type="button"
-        className="fixed left-4 top-[72px] z-30 rounded-md border border-border bg-background p-2 shadow-sm lg:hidden"
+        className="fixed left-4 top-2 z-30 rounded-md border border-border bg-background p-2 shadow-sm lg:hidden"
         aria-label="打开文章列表"
       >
         <ListIcon size={18} />
@@ -256,11 +258,16 @@ export function AdminPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-[64px] z-30 flex h-[calc(100dvh-64px)] w-[280px] flex-col border-r border-border bg-background px-4 py-4 transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
+        className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-background px-4 py-4 transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
       >
         {/* Header row */}
         <div className="flex items-center justify-between pb-4">
-          <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="text-muted-foreground transition-colors hover:text-foreground" aria-label="首页">
+              <HouseSimpleIcon size={16} />
+            </Link>
+            <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => { startNewPost(); setSidebarOpen(false); }}
@@ -343,7 +350,7 @@ export function AdminPage() {
       <div className="flex flex-1 flex-col lg:ml-[280px]">
         <form className="flex flex-col" onSubmit={handleSubmit}>
           {/* Toolbar - sticks below fixed nav */}
-          <div className="sticky top-[64px] z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background px-6 py-4 lg:px-12">
+          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background px-6 py-4 lg:px-12">
             <div className="flex items-center gap-3">
               <span className="font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
@@ -412,39 +419,34 @@ export function AdminPage() {
                   <span className="text-border">|</span>
                 </>
               ) : null}
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("edit")}
-                  className={`px-2 py-1 transition-colors ${editorMode === "edit" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <PencilSimpleIcon size={14} className="inline mr-1" />
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("preview")}
-                  className={`px-2 py-1 transition-colors ${editorMode === "preview" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <EyeIcon size={14} className="inline mr-1" />
-                  预览
-                </button>
-              </div>
               <button
-                className="rounded-md bg-foreground px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                type="button"
+                onClick={() => setEditorMode(editorMode === "edit" ? "preview" : "edit")}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {editorMode === "edit" ? (
+                  <><EyeIcon size={14} className="inline mr-1" />预览</>
+                ) : (
+                  <><PencilSimpleIcon size={14} className="inline mr-1" />编辑</>
+                )}
+              </button>
+              <button
+                className="relative inline-flex min-w-[62px] h-8 items-center justify-center rounded-md bg-foreground px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed"
                 disabled={saving}
                 type="submit"
               >
-                {saving ? "保存中..." : selectedPost ? "保存" : "创建草稿"}
+                <span className={saving || !message ? "" : "opacity-0"}>
+                  {saving ? <SpinnerIcon size={14} className="animate-spin" /> : selectedPost ? "保存" : "创建草稿"}
+                </span>
+                {saving ? null : message ? (
+                  <span className="absolute inset-0 flex items-center justify-center text-xs text-emerald-600">{message}</span>
+                ) : null}
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="mx-auto w-full max-w-3xl px-6 pt-12 pb-20 lg:px-12">
-            {message ? (
-              <div className="mb-4 rounded bg-emerald-50/60 px-3 py-2 font-mono text-sm text-emerald-700">{message}</div>
-            ) : null}
+          <div className="w-full px-6 pt-12 pb-20 lg:px-12">
             {error ? (
               <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
