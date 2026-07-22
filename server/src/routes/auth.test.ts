@@ -36,6 +36,10 @@ class InMemoryAuthRepository implements AuthRepository {
     return this.users.get(id) ?? null;
   }
 
+  async countUsers() {
+    return this.users.size;
+  }
+
   async registerUser(input: RegisterUserInput) {
     const email = input.email.toLowerCase();
     if (await this.findUserByEmail(email)) {

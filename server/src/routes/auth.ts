@@ -139,6 +139,11 @@ export function createAuthRoutes(
   return async (app) => {
     const repository = createRepository(app);
 
+  app.get("/status", async () => {
+    const userCount = await repository.countUsers();
+    return { initialized: userCount > 0 };
+  });
+
   app.post<{
     Body: unknown;
   }>("/login", async (request, reply) => {

@@ -4,16 +4,13 @@ import type { BlogPost, CurrentUser, PostStatus, PostVisibility } from "@blogus/
 import { createPost, deletePost, listPosts, logout, refreshSession, updatePost, uploadFile, whoami } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import {
+  ListIcon,
   PlusIcon,
   SignOutIcon,
   UploadIcon,
   ImageIcon,
   EyeIcon,
   PencilSimpleIcon,
-  // TrashIcon,
-  // ArchiveIcon,
-  // ArrowSquareOutIcon,
-  // FloppyDiskIcon,
 } from "@phosphor-icons/react";
 
 type EditorMode = "edit" | "preview";
@@ -46,6 +43,7 @@ export function AdminPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<PostVisibility>("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const selectedPost = useMemo(() => posts.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
   const tags = splitTags(tagsText);
 
@@ -245,15 +243,27 @@ export function AdminPage() {
   ];
 
   return (
-    <div className="grid grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
-      {/* ── Sidebar ── */}
-      <aside className="sticky top-24 flex max-h-[calc(100dvh-7rem)] flex-col self-start max-lg:static max-lg:max-h-none max-lg:border-b max-lg:pb-4">
+    <div className="flex min-h-[calc(100dvh-64px)]">
+      {/* Mobile sidebar toggle */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        type="button"
+        className="fixed left-4 top-[72px] z-30 rounded-md border border-border bg-background p-2 shadow-sm lg:hidden"
+        aria-label="打开文章列表"
+      >
+        <ListIcon size={18} />
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-[64px] z-30 flex h-[calc(100dvh-64px)] w-[280px] flex-col border-r border-border bg-background px-4 py-4 transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
+      >
         {/* Header row */}
-        <div className="flex items-center justify-between px-1 pb-4">
+        <div className="flex items-center justify-between pb-4">
           <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
           <div className="flex items-center gap-2">
             <button
-              onClick={startNewPost}
+              onClick={() => { startNewPost(); setSidebarOpen(false); }}
               type="button"
               className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -296,7 +306,7 @@ export function AdminPage() {
               {posts.map((post) => (
                 <button
                   key={post.id}
-                  onClick={() => loadPost(post)}
+                  onClick={() => { loadPost(post); setSidebarOpen(false); }}
                   type="button"
                   className={`flex flex-col gap-0.5 border-l-2 py-2.5 pl-3 text-left transition-colors ${
                     post.id === selectedId
@@ -321,19 +331,19 @@ export function AdminPage() {
         ) : null}
       </aside>
 
-      {/* ── Editor ── */}
-      <div className="flex flex-col lg:pl-8">
-        {/* Messages */}
-        {message ? (
-          <div className="mb-4 rounded bg-emerald-50/60 px-3 py-2 font-mono text-sm text-emerald-700">{message}</div>
-        ) : null}
-        {error ? (
-          <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
-        ) : null}
+      {/* Mobile backdrop */}
+      {sidebarOpen ? (
+        <div
+          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
 
+      {/* Editor area */}
+      <div className="flex flex-1 flex-col lg:ml-[280px]">
         <form className="flex flex-col" onSubmit={handleSubmit}>
-          {/* Top bar - sticks to top of viewport (just below fixed nav) */}
-          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background py-4">
+          {/* Toolbar - sticks below fixed nav */}
+          <div className="sticky top-[64px] z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background px-6 py-4 lg:px-12">
             <div className="flex items-center gap-3">
               <span className="font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
@@ -430,8 +440,15 @@ export function AdminPage() {
             </div>
           </div>
 
-          {/* Editor content - flows naturally with the page scroll */}
-          <div>
+          {/* Content */}
+          <div className="mx-auto w-full max-w-3xl px-6 pt-12 pb-20 lg:px-12">
+            {message ? (
+              <div className="mb-4 rounded bg-emerald-50/60 px-3 py-2 font-mono text-sm text-emerald-700">{message}</div>
+            ) : null}
+            {error ? (
+              <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
+            ) : null}
+
             {editorMode === "edit" ? (
               <div className="flex flex-col gap-5">
                 {/* Title - bottom border only */}
@@ -505,7 +522,7 @@ export function AdminPage() {
                 />
               </div>
             ) : (
-              <article className="mx-auto md:mx-0 max-w-3xl pb-24">
+              <article className="pb-24">
                 {coverImageUrl ? (
                   <img alt="" className="mb-6 max-h-72 w-full rounded-md object-cover" src={coverImageUrl} />
                 ) : null}
@@ -524,7 +541,6 @@ export function AdminPage() {
               </article>
             )}
           </div>
-
         </form>
       </div>
     </div>

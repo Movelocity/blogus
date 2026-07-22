@@ -32,7 +32,7 @@ export function refreshSession(): Promise<boolean> {
 }
 
 function isAuthEntryPath(path: string): boolean {
-  return path === "/auth/login" || path === "/auth/register" || path === "/auth/refresh";
+  return path === "/auth/login" || path === "/auth/register" || path === "/auth/refresh" || path === "/auth/status";
 }
 
 function emitSessionExpired() {
@@ -167,4 +167,15 @@ export function logout() {
 
 export function whoami() {
   return request<{ user: CurrentUser }>("/auth/whoami");
+}
+
+export function getSystemStatus() {
+  return fetchApi("/auth/status").then((r) => r.json() as Promise<{ initialized: boolean }>);
+}
+
+export function register(input: { email: string; password: string; name?: string }) {
+  return request<{ user: CurrentUser; accessToken: string; refreshToken: string }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }

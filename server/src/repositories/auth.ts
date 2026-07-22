@@ -55,6 +55,7 @@ export class AuthRepositoryError extends Error {
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserRecord | null>;
   findUserById(id: string): Promise<UserRecord | null>;
+  countUsers(): Promise<number>;
   registerUser(input: RegisterUserInput): Promise<UserRecord>;
   upsertDevUser(input: { email: string; name?: string }): Promise<UserRecord>;
   createSession(input: { userId: string; refreshTokenHash: string; expiresAt: Date }): Promise<AuthSession>;
@@ -139,6 +140,11 @@ export class DrizzleAuthRepository implements AuthRepository {
   async findUserById(id: string) {
     const [row] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
     return row ? toUser(row) : null;
+  }
+
+  async countUsers() {
+    const [{ value }] = await this.db.select({ value: count() }).from(users);
+    return value;
   }
 
   async registerUser(input: RegisterUserInput) {
