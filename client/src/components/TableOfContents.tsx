@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { getHeadings, type HeadingItem } from "../lib/markdown";
 
 interface TableOfContentsProps {
-  content: string;
+  content?: string;
+  headings?: HeadingItem[];
+  onNavigate?: () => void;
 }
 
-export function TableOfContents({ content }: TableOfContentsProps) {
-  const headings = getHeadings(content);
+export function TableOfContents({ content, headings: headingsProp, onNavigate }: TableOfContentsProps) {
+  const headings = headingsProp ?? getHeadings(content ?? "");
   const [activeSlug, setActiveSlug] = useState<string>("");
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -54,10 +56,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <nav
-      className="sticky top-24 max-h-[calc(100vh-8rem)] max-w-64 overflow-y-auto pr-2"
-      aria-label="目录"
-    >
+    <nav className="max-w-64" aria-label="目录">
       <p className="mb-3 font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">
         目录
       </p>
@@ -81,6 +80,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
                   const y = el.getBoundingClientRect().top + window.scrollY - 96;
                   window.scrollTo({ top: y, behavior: "smooth" });
                   history.replaceState(null, "", `#${h.slug}`);
+                  onNavigate?.();
                 }}
               >
                 {h.text}

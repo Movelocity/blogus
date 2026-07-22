@@ -2,16 +2,17 @@ import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import type { BlogPost } from "@blogus/shared";
 import { getPostBySlug } from "../lib/api";
-import { MarkdownView } from "../lib/markdown";
+import { getHeadings, MarkdownView } from "../lib/markdown";
 import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
-import { TableOfContents } from "../components/TableOfContents";
+import { useToc } from "../components/layouts/PostLayout";
 
 export function PostPage() {
   const { slug } = useParams();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { setHeadings } = useToc();
 
   useEffect(() => {
     if (!slug) {
@@ -31,6 +32,13 @@ export function PostPage() {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    if (!post) return;
+    const headings = getHeadings(post.content);
+    setHeadings(headings);
+    return () => setHeadings([]);
+  }, [post, setHeadings]);
 
   if (loading) {
     return <PostSkeleton />;
@@ -54,17 +62,9 @@ export function PostPage() {
   }
 
   return (
-    <article className="mx-auto w-full min-w-0 max-w-304">
-      <header className="grid gap-8 border-b border-foreground/10 pb-6 relative">
-        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0 lg:absolute top-0 left-0">
-          <Link
-            className="inline-flex w-fit items-center p-2.5 font-mono text-sm text-muted-foreground transition-colors hover:text-foreground rounded-full shadow-sm hover:shadow-md border-1 border-foreground/10"
-            to="/blog"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0 xl:pl-20">
+    <article className="mx-auto w-full min-w-0 max-w-3xl">
+      <header className="grid gap-8 border-b border-foreground/10 pb-6">
+        <div className="grid w-full gap-5 px-4 sm:px-0">
           <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
             <span>{formatPostDate(post.publishedAt)}</span>
             <span className="h-px w-4 bg-foreground/20" />
@@ -98,14 +98,8 @@ export function PostPage() {
         </div>
       </header>
 
-      <div className="relative mt-6 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
-        <aside className="max-xl:hidden">
-          <TableOfContents content={post.content} />
-        </aside>
-        <div className="mx-auto w-full min-w-0 max-w-3xl xl:max-w-none min-h-[60vh]">
-          <MarkdownView content={post.content} />
-        </div>
-        <aside className="max-xl:hidden">{/* reserved: related */}</aside>
+      <div className="mt-6 mx-auto w-full min-w-0 min-h-[60vh]">
+        <MarkdownView content={post.content} />
       </div>
     </article>
   );
@@ -113,29 +107,25 @@ export function PostPage() {
 
 function PostSkeleton() {
   return (
-    <article className="mx-auto w-full min-w-0 max-w-304" aria-label="文章正在加载">
+    <article className="mx-auto w-full min-w-0 max-w-3xl" aria-label="文章正在加载">
       <header className="grid gap-8 border-b border-foreground/10 pb-10">
-        <div className="mx-auto w-full max-w-3xl px-4 sm:px-0">
+        <div className="px-4 sm:px-0">
           <div className="h-4 w-20 animate-pulse rounded bg-muted" />
         </div>
-        <div className="mx-auto h-72 w-full max-w-5xl animate-pulse bg-muted" />
-        <div className="mx-auto grid w-full max-w-3xl gap-5 px-4 sm:px-0">
+        <div className="mx-auto h-72 w-full max-w-4xl animate-pulse rounded-xl bg-muted" />
+        <div className="grid w-full gap-5 px-4 sm:px-0">
           <div className="h-4 w-44 animate-pulse rounded bg-muted" />
           <div className="h-16 w-5/6 animate-pulse rounded bg-muted" />
           <div className="h-20 w-full animate-pulse rounded bg-secondary" />
         </div>
       </header>
-      <div className="relative mt-6 xl:grid xl:grid-cols-[1fr_minmax(0,48rem)_1fr] xl:gap-x-10">
-        <div className="max-xl:hidden" />
-        <div className="mx-auto grid w-full max-w-3xl gap-4 xl:max-w-none">
-          {[0, 1, 2, 3].map((item) => (
-            <div className="grid gap-2" key={item}>
-              <div className="h-4 w-full animate-pulse rounded bg-muted" />
-              <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-            </div>
-          ))}
-        </div>
-        <div className="max-xl:hidden" />
+      <div className="mt-6 mx-auto grid w-full max-w-3xl gap-4">
+        {[0, 1, 2, 3].map((item) => (
+          <div className="grid gap-2" key={item}>
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
+          </div>
+        ))}
       </div>
     </article>
   );

@@ -8,6 +8,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PostPage } from "./pages/PostPage";
 import { BlogLayout } from "./components/layouts/BlogLayout";
+import { PostLayout } from "./components/layouts/PostLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { SessionWatcher } from "./components/SessionWatcher";
 import { useTheme } from "./hooks/useTheme";
@@ -24,8 +25,10 @@ function App() {
         <Route element={<BlogLayout />}>
           <Route element={<HomePage />} path="/blog" />
           <Route element={<ArchivePage />} path="/archive" />
-          <Route element={<PostPage />} path="/posts/:slug" />
           <Route element={<LoginPage />} path="/login" />
+        </Route>
+        <Route element={<PostLayout />}>
+          <Route element={<PostPage />} path="/posts/:slug" />
         </Route>
         <Route element={<AdminPage />} path="/admin" />
       </Routes>
