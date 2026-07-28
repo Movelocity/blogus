@@ -136,7 +136,7 @@ export function AdminPage() {
           {message ? <p className="m-0 text-sm text-muted-foreground">{message}</p> : null}
           {error ? <p className="m-0 font-mono text-sm text-destructive">{error}</p> : null}
           <Link
-            className="inline-flex items-center justify-center rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-foreground/90"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             to="/login"
           >
             去登录
@@ -431,7 +431,7 @@ export function AdminPage() {
                 )}
               </button>
               <button
-                className="relative inline-flex min-w-[62px] h-8 items-center justify-center rounded-md bg-foreground px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed"
+                className="relative inline-flex min-w-[62px] h-8 items-center justify-center rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed"
                 disabled={saving}
                 type="submit"
               >

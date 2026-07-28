@@ -102,7 +102,7 @@ export function LoginPage() {
           />
         </label>
         <button
-          className="rounded-full bg-foreground px-6 py-3 font-medium text-primary-foreground transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           disabled={loading}
           type="submit"
         >

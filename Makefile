@@ -8,7 +8,7 @@ BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server build start build-start typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
+.PHONY: help install dev dev-client dev-server build start serve typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -31,7 +31,7 @@ build: ## Build all workspace packages
 start: ## Start production server (run `make build` first)
 	cd server && node --env-file=../.env dist/index.js
 
-build-start: build start ## Build and start production server
+serve: build start ## Build and start production server
 
 typecheck: ## Typecheck all workspace packages
 	$(PNPM) typecheck

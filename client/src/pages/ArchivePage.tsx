@@ -32,7 +32,7 @@ export function ArchivePage() {
   return (
     <div className="grid gap-16">
       <SectionHeader
-        eyebrow="時の流れ"
+        eyebrow="所有公开文章"
         title="时间线"
         description="按发布时间整理所有公开文章。"
       />

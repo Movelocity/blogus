@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* 浅色主题 - 日式安静美学 */
+  /* 浅色主题 */
   --background: oklch(0.99 0.002 90);
   --foreground: oklch(0.18 0.01 260);
   --card: oklch(0.97 0.003 90);
   --card-foreground: oklch(0.18 0.01 260);
-  --primary: oklch(0.18 0.01 260);
+  --primary: oklch(0.34 0.035 28);
   --primary-foreground: oklch(0.99 0.002 90);
   --secondary: oklch(0.95 0.003 90);
   --secondary-foreground: oklch(0.18 0.01 260);
   --muted: oklch(0.95 0.003 90);
   --muted-foreground: oklch(0.48 0.015 90);
-  --accent: oklch(0.94 0.004 260);
-  --accent-foreground: oklch(0.18 0.01 260);
+  --accent: oklch(0.57 0.21 25.9);
+  --accent-foreground: oklch(0.99 0.002 90);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0.002 90);
   --border: oklch(0.9 0.005 260);
@@ -25,40 +25,40 @@
 /* 深色主题 - 系统偏好回退 */
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not(.dark) {
-    --background: oklch(0.15 0.01 260);
-    --foreground: oklch(0.95 0.002 90);
-    --card: oklch(0.18 0.01 260);
-    --card-foreground: oklch(0.95 0.002 90);
-    --primary: oklch(0.95 0.002 90);
-    --primary-foreground: oklch(0.15 0.01 260);
-    --secondary: oklch(0.2 0.01 260);
-    --secondary-foreground: oklch(0.95 0.002 90);
-    --muted: oklch(0.2 0.01 260);
-    --muted-foreground: oklch(0.65 0.015 90);
-    --accent: oklch(0.22 0.015 260);
-    --accent-foreground: oklch(0.95 0.002 90);
+    --background: rgb(31, 31, 34);
+    --foreground: rgb(226, 226, 230);
+    --card: oklch(0.18 0.008 255);
+    --card-foreground: rgb(226, 226, 230);
+    --primary: rgb(226, 226, 230);
+    --primary-foreground: rgb(31, 31, 34);
+    --secondary: oklch(0.22 0.008 255);
+    --secondary-foreground: rgb(226, 226, 230);
+    --muted: oklch(0.22 0.008 255);
+    --muted-foreground: rgb(205, 205, 211);
+    --accent: oklch(0.62 0.2 28);
+    --accent-foreground: rgb(226, 226, 230);
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.15 0.01 260);
-    --border: oklch(0.25 0.01 260);
-    --input: oklch(0.2 0.01 260);
-    --ring: oklch(0.95 0.002 90);
+    --border: oklch(0.28 0.008 255);
+    --input: oklch(0.22 0.008 255);
+    --ring: oklch(0.62 0.2 28);
   }
 }
 
 /* 显式浅色主题 - 覆盖系统深色偏好 */
 .light:root {
   --background: oklch(0.99 0.002 90);
-  --foreground: oklch(0.18 0.01 260);
+  --foreground: rgb(31, 35, 41);
   --card: oklch(0.97 0.003 90);
   --card-foreground: oklch(0.18 0.01 260);
-  --primary: oklch(0.18 0.01 260);
+  --primary: oklch(0.34 0.035 28);
   --primary-foreground: oklch(0.99 0.002 90);
   --secondary: oklch(0.95 0.003 90);
   --secondary-foreground: oklch(0.18 0.01 260);
   --muted: oklch(0.95 0.003 90);
   --muted-foreground: oklch(0.48 0.015 90);
-  --accent: oklch(0.94 0.004 260);
-  --accent-foreground: oklch(0.18 0.01 260);
+  --accent: oklch(0.57 0.21 25.9);
+  --accent-foreground: oklch(0.99 0.002 90);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0.002 90);
   --border: oklch(0.9 0.005 260);
@@ -68,23 +68,23 @@
 
 /* 深色主题 - 显式 .dark class（优先级高于 media query） */
 .dark:root {
-  --background: oklch(0.15 0.01 260);
-  --foreground: oklch(0.95 0.002 90);
-  --card: oklch(0.18 0.01 260);
-  --card-foreground: oklch(0.95 0.002 90);
-  --primary: oklch(0.95 0.002 90);
-  --primary-foreground: oklch(0.15 0.01 260);
-  --secondary: oklch(0.2 0.01 260);
-  --secondary-foreground: oklch(0.95 0.002 90);
-  --muted: oklch(0.2 0.01 260);
-  --muted-foreground: oklch(0.65 0.015 90);
-  --accent: oklch(0.22 0.015 260);
-  --accent-foreground: oklch(0.95 0.002 90);
+  --background: rgb(31, 31, 34);
+  --foreground: rgb(226, 226, 230);
+  --card: oklch(0.18 0.008 255);
+  --card-foreground: rgb(226, 226, 230);
+  --primary: rgb(226, 226, 230);
+  --primary-foreground: rgb(31, 31, 34);
+  --secondary: oklch(0.22 0.008 255);
+  --secondary-foreground: rgb(226, 226, 230);
+  --muted: oklch(0.22 0.008 255);
+  --muted-foreground: rgb(205, 205, 211);
+  --accent: oklch(0.62 0.2 28);
+  --accent-foreground: rgb(226, 226, 230);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.15 0.01 260);
-  --border: oklch(0.25 0.01 260);
-  --input: oklch(0.2 0.01 260);
-  --ring: oklch(0.95 0.002 90);
+  --border: oklch(0.28 0.008 255);
+  --input: oklch(0.22 0.008 255);
+  --ring: oklch(0.62 0.2 28);
 }
 
 @theme inline {
@@ -141,58 +141,37 @@ pre code.hljs {
   padding: 0;
 }
 
-/* 深色主题下的代码块和页脚样式（仅系统偏好回退） */
+.markdown-content {
+  --markdown-text: var(--foreground);
+  color: var(--markdown-text);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not(.light):not(.dark) pre {
-    background: oklch(0.12 0.01 260) !important;
-  }
-  :root:not(.light):not(.dark) pre code {
-    color: oklch(0.9 0.002 90);
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground {
-    background: oklch(0.12 0.01 260) !important;
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground {
-    color: oklch(0.95 0.002 90) !important;
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/50 {
-    color: oklch(0.95 0.002 90 / 0.5) !important;
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/40 {
-    color: oklch(0.95 0.002 90 / 0.4) !important;
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground .text-primary-foreground\/30 {
-    color: oklch(0.95 0.002 90 / 0.3) !important;
-  }
-  :root:not(.light):not(.dark) footer.bg-foreground .border-primary-foreground\/10 {
-    border-color: oklch(0.95 0.002 90 / 0.1) !important;
+  :root:not(.light):not(.dark) .markdown-content {
+    --markdown-text: rgb(255, 255, 255);
   }
 }
 
-/* 显式 .dark class 的代码块和页脚样式 */
+.dark:root .markdown-content {
+  --markdown-text: rgb(255, 255, 255);
+}
+
+/* 深色主题下的代码块样式（仅系统偏好回退） */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) pre {
+    background: oklch(0.115 0.006 255) !important;
+  }
+  :root:not(.light):not(.dark) pre code {
+    color: oklch(0.9 0.004 70);
+  }
+}
+
+/* 显式 .dark class 的代码块样式 */
 .dark:root pre {
-  background: oklch(0.12 0.01 260) !important;
+  background: oklch(0.115 0.006 255) !important;
 }
 .dark:root pre code {
-  color: oklch(0.9 0.002 90);
-}
-.dark:root footer.bg-foreground {
-  background: oklch(0.12 0.01 260) !important;
-}
-.dark:root footer.bg-foreground .text-primary-foreground {
-  color: oklch(0.95 0.002 90) !important;
-}
-.dark:root footer.bg-foreground .text-primary-foreground\/50 {
-  color: oklch(0.95 0.002 90 / 0.5) !important;
-}
-.dark:root footer.bg-foreground .text-primary-foreground\/40 {
-  color: oklch(0.95 0.002 90 / 0.4) !important;
-}
-.dark:root footer.bg-foreground .text-primary-foreground\/30 {
-  color: oklch(0.95 0.002 90 / 0.3) !important;
-}
-.dark:root footer.bg-foreground .border-primary-foreground\/10 {
-  border-color: oklch(0.95 0.002 90 / 0.1) !important;
+  color: oklch(0.9 0.004 70);
 }
 
 /* KaTeX: scale down display math slightly for body text */
@@ -219,6 +198,22 @@ pre code.hljs {
     animation: fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
+  .landing-marquee {
+    animation: landing-marquee 22s linear infinite;
+  }
+
+  .landing-highlight::after {
+    position: absolute;
+    bottom: 0.05em;
+    left: 0;
+    right: 0;
+    height: 0.12em;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+    opacity: 0.28;
+  }
+
   button {
     @apply cursor-pointer;
   }
@@ -231,6 +226,21 @@ pre code.hljs {
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes landing-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-marquee {
+      animation: none;
     }
   }
 }

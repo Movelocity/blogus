@@ -43,11 +43,10 @@ export function PostLayout() {
         {hasToc && !drawerOpen && (
           <button
             aria-label="打开目录"
-            className="fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:bg-foreground/90 active:translate-y-px xl:hidden"
+            className="fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full bg-primary p-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:bg-primary/90 active:translate-y-px xl:hidden"
             onClick={() => setDrawerOpen(true)}
           >
             <ListBullets className="h-4 w-4" weight="bold" />
-            目录
           </button>
         )}
 

@@ -120,7 +120,7 @@ make build        # 构建前端 + 后端
 make start        # 启动生产服务
 
 # 或一步到位
-make build-start
+make serve
 ```
 
 `SERVE_CLIENT=true` 时 Fastify 同时提供 API 和前端静态文件（含 SPA fallback），单端口 `:3009` 搞定。

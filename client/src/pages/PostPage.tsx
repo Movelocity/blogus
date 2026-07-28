@@ -52,7 +52,7 @@ export function PostPage() {
           <p className="m-0 leading-relaxed text-muted-foreground">{error ?? "文章不存在，或尚未发布。"}</p>
         </div>
         <Link
-          className="inline-flex w-fit items-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-primary-foreground transition hover:bg-foreground/90 active:translate-y-px"
+          className="inline-flex w-fit items-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 active:translate-y-px"
           to="/"
         >
           返回首页

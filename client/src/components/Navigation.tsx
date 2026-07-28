@@ -40,9 +40,10 @@ export function Navigation() {
       }}
     >
       <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
-        <NavLink to="/" className="flex items-center gap-2">
-          <span className="text-base font-bold tracking-tight text-foreground">Blogus</span>
-        </NavLink>
+        <Link className="flex items-center gap-2 text-lg font-bold text-foreground" to="/">
+          <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+          Blogus
+        </Link>
 
         <div className="hidden items-center gap-10 md:flex">
           {[

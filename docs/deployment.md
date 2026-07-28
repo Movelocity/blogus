@@ -24,7 +24,7 @@ cp .env.example .env
 #   SERVE_CLIENT=true
 
 # 3. 构建并启动
-make build-start
+make serve
 ```
 
 服务启动后访问 `http://<host>:3009`，API 和前端由同一端口提供。

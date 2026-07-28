@@ -257,7 +257,7 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(
         isSafeUrl(url) ? (
           <a
-            className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+            className="font-medium underline underline-offset-4 transition-colors hover:text-accent"
             href={url}
             key={key}
           >
@@ -269,7 +269,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (code !== undefined) {
       nodes.push(
-        <code className="bg-secondary px-1.5 py-0.5 font-mono text-[0.92em] text-foreground" key={key}>
+        <code className="bg-secondary px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
           {code}
         </code>,
       );
@@ -299,21 +299,21 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
   const blocks = parseMarkdown(content);
 
   if (blocks.length === 0) {
-    return <p className="m-0 text-muted-foreground">{emptyText}</p>;
+    return <p className="markdown-content m-0">{emptyText}</p>;
   }
 
   return (
-    <div className="grid gap-3 *:min-w-0 text-base leading-8 text-foreground/80">
+    <div className="markdown-content grid gap-3 *:min-w-0 text-base leading-8">
       {blocks.map((block, idx) => {
         const key = `${block.type}-${idx}`;
 
         if (block.type === "heading") {
           const className =
             block.level === 1
-              ? "mt-6 font-display text-4xl leading-tight tracking-tight text-foreground"
+              ? "mt-6 font-display text-4xl leading-tight tracking-tight"
               : block.level === 2
-                ? "mt-6 font-display text-3xl leading-tight tracking-tight text-foreground"
-                : "mt-4 font-display text-2xl leading-snug tracking-tight text-foreground";
+                ? "mt-6 font-display text-3xl leading-tight tracking-tight"
+                : "mt-4 font-display text-2xl leading-snug tracking-tight";
           const Heading = `h${block.level}` as "h1" | "h2" | "h3";
           const id = slugify(block.text);
           return (
@@ -360,7 +360,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                   <tr className="border-b-2 border-foreground/15">
                     {block.headers.map((header, hi) => (
                       <th
-                        className="px-4 py-3 text-left font-semibold text-foreground min-w-32"
+                        className="px-4 py-3 text-left font-semibold min-w-32"
                         key={hi}
                         style={{ textAlign: block.alignments[hi] ?? "left" }}
                       >
@@ -374,7 +374,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                     <tr className="border-b border-foreground/8 transition-colors hover:bg-secondary/50" key={ri}>
                       {row.map((cell, ci) => (
                         <td
-                          className="px-4 py-3 text-foreground/70"
+                          className="px-4 py-3"
                           key={ci}
                           style={{ textAlign: block.alignments[ci] ?? "left" }}
                         >
@@ -403,7 +403,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         if (block.type === "blockquote") {
           return (
             <blockquote
-              className="border-l-2 border-foreground/20 bg-secondary px-5 py-4 text-muted-foreground"
+              className="border-l-2 border-foreground/20 bg-secondary px-5 py-4"
               key={key}
             >
               {renderInline(block.text)}
@@ -412,7 +412,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
 
         return (
-          <p className="m-0 leading-8 text-foreground/70 break-all" key={key}>
+          <p className="m-0 leading-8 break-all" key={key}>
             {renderInline(block.text)}
           </p>
         );

@@ -1,444 +1,194 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+// import { useState } from "react";
+import { useTheme } from "../hooks/useTheme";
 
-const words = ["探索", "发现", "spark", "相遇"];
+// const marqueeItems = ["个人博客", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
 
-function BlurWord({ word, trigger }: { word: string; trigger: number }) {
-  const chars = [...word];
-  const STAGGER = 80;
-  const DURATION = 500;
-  const GRADIENT_HOLD = STAGGER * chars.length + DURATION + 200;
+const bentoItems = [
+  {
+    className: "bg-[#264653] text-white md:col-span-6",
+    label: "Tab1",
+    title: "1",
+    description: "1111",
+  },
+  {
+    className: "bg-accent text-accent-foreground md:col-span-6",
+    label: "Tab2",
+    title: "22",
+    description: "22222",
+  },
+  {
+    className: "bg-[#e9c46a] text-[#1a1408] md:col-span-4",
+    label: "Tab3",
+    title: "333",
+    description: "3333333",
+  },
+  {
+    className: "bg-card text-card-foreground md:col-span-4",
+    label: "Tab4",
+    title: "4444",
+    description: "4444444444",
+  },
+  {
+    className: "bg-[#2a9d8f] text-white md:col-span-4",
+    label: "Tab5",
+    title: "55555",
+    description: "5555555555555",
+  },
+];
 
-  const [states, setStates] = useState<{ opacity: number; blur: number }[]>(
-    chars.map(() => ({ opacity: 0, blur: 20 }))
-  );
-  const [showGradient, setShowGradient] = useState(true);
-  const framesRef = useRef<number[]>([]);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  useEffect(() => {
-    framesRef.current.forEach(cancelAnimationFrame);
-    timersRef.current.forEach(clearTimeout);
-    framesRef.current = [];
-    timersRef.current = [];
-
-    setStates(chars.map(() => ({ opacity: 0, blur: 20 })));
-    setShowGradient(true);
-
-    chars.forEach((_, i) => {
-      const t = setTimeout(() => {
-        const start = performance.now();
-        const tick = (now: number) => {
-          const progress = Math.min((now - start) / DURATION, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setStates((prev) => {
-            const next = [...prev];
-            next[i] = { opacity: eased, blur: 20 * (1 - eased) };
-            return next;
-          });
-          if (progress < 1) {
-            framesRef.current.push(requestAnimationFrame(tick));
-          }
-        };
-        framesRef.current.push(requestAnimationFrame(tick));
-      }, i * STAGGER);
-      timersRef.current.push(t);
-    });
-
-    timersRef.current.push(setTimeout(() => setShowGradient(false), GRADIENT_HOLD));
-
-    return () => {
-      framesRef.current.forEach(cancelAnimationFrame);
-      timersRef.current.forEach(clearTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trigger]);
-
-  const gradientColors = ["#eca8d6", "#a78bfa", "#67e8f9", "#fbbf24", "#eca8d6"];
-
-  return (
-    <>
-      {chars.map((char, i) => {
-        const colorIndex = (i / Math.max(chars.length - 1, 1)) * (gradientColors.length - 1);
-        const lo = Math.floor(colorIndex);
-        const hi = Math.min(lo + 1, gradientColors.length - 1);
-        const t = colorIndex - lo;
-        const hex2rgb = (hex: string) => [
-          parseInt(hex.slice(1, 3), 16),
-          parseInt(hex.slice(3, 5), 16),
-          parseInt(hex.slice(5, 7), 16),
-        ];
-        const [r1, g1, b1] = hex2rgb(gradientColors[lo]);
-        const [r2, g2, b2] = hex2rgb(gradientColors[hi]);
-        const r = Math.round(r1 + (r2 - r1) * t);
-        const g = Math.round(g1 + (g2 - g1) * t);
-        const b = Math.round(b1 + (b2 - b1) * t);
-
-        return (
-          <span
-            key={i}
-            style={{
-              display: "inline-block",
-              opacity: states[i]?.opacity ?? 0,
-              filter: `blur(${states[i]?.blur ?? 20}px)`,
-              color: showGradient ? `rgb(${r},${g},${b})` : "var(--foreground)",
-              transition: "color 0.4s ease",
-            }}
-          >
-            {char}
-          </span>
-        );
-      })}
-    </>
-  );
-}
-
-function useInView(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, visible };
-}
-
-function useScrollHide(threshold = 80) {
-  const [hidden, setHidden] = useState(false);
-  const lastY = useRef(0);
-  const ticking = useRef(false);
-
-  const onScroll = useCallback(() => {
-    if (ticking.current) return;
-    ticking.current = true;
-    requestAnimationFrame(() => {
-      const y = window.scrollY;
-      setHidden(y > threshold && y > lastY.current);
-      lastY.current = y;
-      ticking.current = false;
-    });
-  }, [threshold]);
-
-  useEffect(() => {
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onScroll]);
-
-  return hidden;
-}
+const noteCards = [
+  {
+    title: "最近文章",
+    tags: ["Blog", "Notes"],
+    description: "从最新发布开始读。",
+    to: "/blog",
+  },
+  {
+    title: "时间线",
+    tags: ["Archive", "History"],
+    description: "按月份回看所有公开文章。",
+    to: "/archive",
+  },
+];
 
 export function LandingPage() {
-  const [heroReady, setHeroReady] = useState(false);
-  const [wordIndex, setWordIndex] = useState(0);
-  const navHidden = useScrollHide();
-  const philosophy = useInView();
-  const quote = useInView();
-  const cta = useInView();
-
-  useEffect(() => {
-    setHeroReady(true);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWordIndex((prev) => (prev + 1) % words.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
+  const { theme, toggle } = useTheme();
   return (
-    <div className="bg-background text-foreground">
-      {/* ── Nav (scroll-hide) ── */}
-      <header
-        className="fixed inset-x-0 top-0 z-50 border-b border-foreground/6 bg-background/88 backdrop-blur-xl backdrop-saturate-[1.8] transition-transform duration-500"
-        style={{
-          transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-          transform: navHidden ? "translateY(-100%)" : "translateY(0)",
-        }}
-      >
-        <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
-          <span className="text-base font-bold tracking-tight text-foreground">Blogus</span>
-          <div className="flex items-center gap-8">
-            <Link
-              to="/blog"
-              className="text-[0.85rem] text-muted-foreground transition-colors hover:text-foreground"
-            >
+    <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
+      <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur-xl">
+        <nav className="flex h-16 items-center justify-between px-6 border-b border-border">
+          <Link className="flex items-center gap-2 text-lg font-bold text-foreground" to="/">
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+            Blogus
+          </Link>
+          <div className="items-center gap-7 text-sm font-medium flex">
+            {/* <Link className="text-muted-foreground transition-colors hover:text-foreground" to="/blog">
               文章
-            </Link>
-            <Link
-              to="/archive"
-              className="hidden text-[0.85rem] text-muted-foreground transition-colors hover:text-foreground sm:block"
+            </Link> */}
+            <button
+              onClick={toggle}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
             >
-              时间线
-            </Link>
-            <Link
-              to="/blog"
-              className="bg-foreground px-5 py-2 text-[0.82rem] font-medium tracking-wide text-primary-foreground transition hover:opacity-85"
-            >
+              {theme === "dark" ? (
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <circle cx="12" cy="12" r="5" />
+                  <path strokeLinecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+              ) : (
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+                </svg>
+              )}
+            </button>
+            <Link className="rounded-full bg-accent px-5 py-2.5 text-accent-foreground transition-transform hover:scale-[1.03] active:scale-[0.98]" to="/blog">
               开始阅读
             </Link>
           </div>
         </nav>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="relative flex min-h-dvh flex-col items-start justify-center overflow-hidden pt-[72px]">
-        {/* Grid lines */}
-        <div className="pointer-events-none absolute inset-0 z-2 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={`h-${i}`}
-              className="absolute h-px bg-foreground/6"
-              style={{ top: `${12.5 * (i + 1)}%`, left: 0, right: 0 }}
-            />
-          ))}
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={`v-${i}`}
-              className="absolute w-px bg-foreground/6"
-              style={{ left: `${8.33 * (i + 1)}%`, top: 0, bottom: 0 }}
-            />
-          ))}
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 py-32 lg:px-12 lg:py-40">
-          <div className="lg:max-w-[65%]">
-            {/* Eyebrow */}
-            <div
-              className={`mb-8 transition-all duration-700 ${
-                heroReady ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-              }`}
-            >
-                <span className="inline-flex items-center gap-3 font-mono text-sm text-muted-foreground">
-                <span className="h-px w-8 bg-foreground/30" />
-                somewhere brighter
-              </span>
-            </div>
-
-            {/* Headline */}
-            <div className="mb-12">
-              <h1
-                className={`text-left font-display leading-[0.92] tracking-tight text-foreground transition-all duration-1000 text-[clamp(2.5rem,7vw,7rem)] ${
-                  heroReady ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-                }`}
-              >
-                <span className="block">ちょっとだけ、</span>
-                <span className="block">
-                  <span className="relative inline-block">
-                    <BlurWord word={words[wordIndex]} trigger={wordIndex} />
-                  </span>
-                  。
-                </span>
-              </h1>
-            </div>
-
-            {/* Sub */}
-            <p
-              className={`max-w-xl text-lg leading-relaxed text-muted-foreground transition-all delay-300 duration-700 md:text-xl ${
-                heroReady ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-              }`}
-            >
-              好的文字让人忘记自己在阅读，就像好的门窗让人忘记墙壁的存在。
+      <main>
+        <section className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col justify-center px-6 py-20 lg:px-10">
+          <h1 className="m-0 max-w-5xl font-display text-[clamp(3.5rem,5vw,6rem)] font-bold leading-[0.92] text-foreground">
+            Keep it simple,
+            <br />
+            keep it 
+            <span className="landing-highlight relative inline-block text-accent ml-6"> runnable</span>
+            .
+          </h1>
+          <div className="mt-10 flex flex-wrap items-end justify-between gap-8">
+            <p className="m-0 max-w-md text-lg leading-8 text-muted-foreground">
+              记录产品开发、工具实践、阅读和生活里的具体记录。
             </p>
+            <Link
+              className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground shadow-[0_16px_44px_rgba(26,20,8,0.18)] transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"
+              to="/blog"
+            >
+              Start
+            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Bottom stats */}
-        <div
-          className={`absolute bottom-12 left-0 right-0 px-6 transition-all delay-500 duration-700 lg:px-12 ${
-            heroReady ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="mx-auto flex max-w-[1400px] items-start gap-10 lg:gap-20">
-            {[
-              { value: "0", label: "边界" },
-              { value: "0", label: "限制" },
-              { value: "∞", label: "可能" },
-            ].map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-2">
-                <span className="font-display text-3xl text-foreground lg:text-4xl">{stat.value}</span>
-                <span className="text-xs leading-tight text-muted-foreground">{stat.label}</span>
-              </div>
+        <section className="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
+            <h2 className="m-0 max-w-xl font-display text-[clamp(2.2rem,5vw,4rem)] font-bold leading-none text-foreground">
+              Collections
+            </h2>
+            <span className="rounded-full border border-foreground/10 px-4 py-2 text-sm font-semibold text-muted-foreground">
+              personal operating log
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            {bentoItems.map((item) => (
+              <article
+                className={`group flex min-h-60 flex-col justify-between rounded-[8px] p-7 transition-transform duration-300 hover:-translate-y-1 ${item.className}`}
+                key={item.title}
+              >
+                <span className="text-xs font-bold uppercase opacity-70">{item.label}</span>
+                <div className="mt-10">
+                  <h3 className="m-0 font-display text-2xl font-bold leading-tight">{item.title}</h3>
+                  <p className="m-0 mt-3 text-sm leading-7 opacity-80">{item.description}</p>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Scroll hint */}
-        <div
-          className={`absolute bottom-12 right-6 transition-all delay-700 duration-700 lg:right-12 ${
-            heroReady ? "opacity-60" : "opacity-0"
-          }`}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">探索</span>
-            <div className="h-8 w-px animate-pulse bg-foreground/30" />
+        <section className="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
+            <h2 className="m-0 font-display text-[clamp(2.2rem,5vw,4rem)] font-bold leading-none text-foreground">
+              Ready to read?
+            </h2>
+            <Link className="text-sm font-bold text-accent transition-opacity hover:opacity-75" to="/archive">
+              查看全部 →
+            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* ── Philosophy ── */}
-      <section
-        ref={philosophy.ref}
-        className="relative border-t border-foreground/10 py-24 lg:py-32"
-      >
-        <div className="mx-auto max-w-[1400px] px-6 lg:px-12">
-          <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
-            <div className="lg:col-span-4">
-              <span
-                className={`inline-flex items-center gap-3 font-mono text-sm text-muted-foreground transition-all duration-700 ${
-                  philosophy.visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-                }`}
+          <div className="grid gap-6 md:grid-cols-2">
+            {noteCards.map((card) => (
+              <Link
+                className="group overflow-hidden rounded-[8px] bg-card text-card-foreground transition-transform duration-300 hover:-translate-y-1"
+                key={card.title}
+                to={card.to}
               >
-                <span className="h-px w-12 bg-foreground/30" />
-                ここについて
-              </span>
-            </div>
-            <div className="lg:col-span-8">
-              <h2
-                className={`mb-8 font-display text-5xl leading-[1.05] tracking-tight text-foreground transition-all duration-1000 md:text-6xl lg:text-7xl ${
-                  philosophy.visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-                }`}
-              >
-                像推开一扇未知的窗，
-                <br />
-                <span className="text-muted-foreground">每次都有新的风景。</span>
-              </h2>
-              <div className="grid gap-8 md:grid-cols-2">
-                {[
-                  {
-                    number: "01",
-                    title: "发现",
-                    desc: "随手捕捉闪烁的念头，让灵感自然流淌。",
-                  },
-                  {
-                    number: "02",
-                    title: "碰撞",
-                    desc: "不看标签，不听定义。只在意那一刻的灵感与悸动。"
-                  },
-                  {
-                    number: "03",
-                    title: "延伸",
-                    desc: "没有最终答案，只有不断生长的视角。昨天的想法，今天依然有趣。"
-                  },
-                  {
-                    number: "04",
-                    title: "开阔",
-                    desc: "不设围墙。每一次回访，都像踏入一片新领地。",
-                  },
-                ].map((item, i) => (
-                  <div
-                    key={item.number}
-                    className={`border border-foreground/10 bg-card p-8 transition-all duration-700 ${
-                      philosophy.visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
-                    }`}
-                    style={{ transitionDelay: philosophy.visible ? `${(i + 1) * 100}ms` : "0ms" }}
-                  >
-                    <span className="font-mono text-sm text-muted-foreground">{item.number}</span>
-                    <h3 className="mb-3 mt-4 font-display text-2xl tracking-tight text-foreground">{item.title}</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                <div className="grid aspect-[16/8] place-items-center bg-secondary">
+                  <span className="font-display text-[clamp(4rem,12vw,8rem)] font-bold leading-none text-foreground/10 transition-transform duration-500 group-hover:scale-105">
+                    {card.title.slice(0, 2)}
+                  </span>
+                </div>
+                <div className="p-7">
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {card.tags.map((tag) => (
+                      <span className="rounded-full bg-background px-3 py-1 text-xs font-bold uppercase text-muted-foreground" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Pull Quote ── */}
-      <section ref={quote.ref} className="border-t border-foreground/10 py-24 lg:py-32">
-        <div className="mx-auto max-w-3xl px-6 text-center lg:px-12">
-          <blockquote
-            className={`mb-6 font-display text-4xl leading-[1.2] tracking-tight text-foreground transition-all duration-1000 md:text-5xl lg:text-6xl ${
-              quote.visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-          >
-            探索不是赶路，而是让每一个路口都值得驻足。
-          </blockquote>
-          <cite
-            className={`font-mono text-sm not-italic text-muted-foreground transition-all delay-200 duration-700 ${
-              quote.visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
-          >
-            — 关于这个小角落
-          </cite>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section ref={cta.ref} className="border-t border-foreground/10 py-24 lg:py-32">
-        <div className="mx-auto max-w-[1400px] px-6 lg:px-12">
-          <div
-            className={`relative border border-foreground transition-all duration-1000 ${
-              cta.visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-          >
-            <div className="absolute right-0 top-0 h-32 w-32 border-b border-l border-foreground/10" />
-            <div className="absolute bottom-0 left-0 h-32 w-32 border-r border-t border-foreground/10" />
-            <div className="relative z-10 px-8 py-16 lg:px-16 lg:py-24">
-              <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto]">
-                <div>
-                  <h2 className="mb-6 font-display text-5xl tracking-tight text-foreground md:text-6xl lg:text-7xl lg:leading-[0.95]">
-                    准备好了吗？
-                    <br />
-                    现在就启程。
-                  </h2>
-                  <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-                    永远有新东西，永远有下一段风景。翻到哪里，都是出发。
-                  </p>
+                  <h3 className="m-0 font-display text-2xl font-bold text-foreground">{card.title}</h3>
+                  <p className="m-0 mt-2 text-sm leading-7 text-muted-foreground">{card.description}</p>
                 </div>
-                <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
-                  <Link
-                    to="/blog"
-                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-8 py-4 text-base font-medium text-primary-foreground transition hover:bg-foreground/90"
-                  >
-                    立即探索
-                    <svg
-                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
-            </div>
+              </Link>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Footer ── */}
-      <footer className="bg-foreground text-primary-foreground">
-        <div className="mx-auto max-w-[1400px] px-6 lg:px-12">
-          <div className="flex flex-col items-center justify-between gap-6 py-12 md:flex-row">
-            <div className="flex items-center gap-3">
-              <span className="font-display text-xl text-primary-foreground">Blogus</span>
-              <span className="font-mono text-xs text-primary-foreground/40">さあ、出かけよう</span>
-            </div>
-            <div className="flex items-center gap-8">
-              <Link to="/blog" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
-                文章
-              </Link>
-              <Link to="/archive" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
-                时间线
-              </Link>
-              <Link to="/admin" className="text-sm text-primary-foreground/40 transition-colors hover:text-primary-foreground">
-                管理
-              </Link>
-            </div>
-            <p className="text-sm text-primary-foreground/30">&copy; {new Date().getFullYear()} Blogus</p>
+      </main>
+
+      <footer className="border-t border-foreground/10 px-6 py-10 lg:px-10">
+        <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 font-bold text-foreground">
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+            Blogus
+          </div>
+          <span>&copy; {new Date().getFullYear()} 自托管写作站</span>
+          <div className="flex gap-6">
+            <Link className="transition-colors hover:text-foreground" to="/blog">
+              文章
+            </Link>
+            <Link className="transition-colors hover:text-foreground" to="/admin">
+              管理
+            </Link>
           </div>
         </div>
       </footer>
