@@ -1,8 +1,14 @@
 import type { PostVisibility } from "@blogus/shared";
 import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { sendApiError } from "../http/errors.js";
+import { PostDateEventsRepository } from "../repositories/post-date-events.js";
 import { DrizzlePostRepository, type PostRepository } from "../repositories/posts.js";
-import { createPostSchema, listPostsQuerySchema, updatePostSchema } from "../schema/posts.js";
+import {
+  calendarQuerySchema,
+  createPostSchema,
+  listPostsQuerySchema,
+  updatePostSchema
+} from "../schema/posts.js";
 
 type PostRepositoryFactory = (app: FastifyInstance) => PostRepository;
 
@@ -11,6 +17,7 @@ export function createPostRoutes(
 ): FastifyPluginAsync {
   return async (app) => {
     const repository = createRepository(app);
+    const dateEventsRepository = new PostDateEventsRepository(app.db);
 
     app.get<{
       Querystring: unknown;
@@ -26,6 +33,13 @@ export function createPostRoutes(
       return {
         posts: await repository.listPosts({ visibility: query.visibility as PostVisibility })
       };
+    });
+
+    app.get<{
+      Querystring: unknown;
+    }>("/calendar", async (request) => {
+      const query = calendarQuerySchema.parse(request.query);
+      return dateEventsRepository.listDateEventsByMonth(query.year, query.month);
     });
 
     app.get<{

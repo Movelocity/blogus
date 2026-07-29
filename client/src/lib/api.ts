@@ -103,6 +103,19 @@ export function getPostBySlug(slug: string, options: { visibility?: PostVisibili
   return request<{ post: BlogPost }>(`/posts/${encodeURIComponent(slug)}${params.size ? `?${params.toString()}` : ""}`);
 }
 
+export interface CalendarPostSummary {
+  id: string;
+  title: string;
+  slug: string;
+  publishedAt: string;
+}
+
+export function getCalendarPosts(year: number, month: number) {
+  return request<{ index: Record<string, CalendarPostSummary[]> }>(
+    `/posts/calendar?year=${year}&month=${month}`
+  );
+}
+
 export function createPost(input: CreatePostInput) {
   return request<{ post: BlogPost }>("/posts", {
     method: "POST",

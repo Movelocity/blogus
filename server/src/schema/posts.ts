@@ -21,3 +21,8 @@ export const updatePostSchema = z.object({
 export const listPostsQuerySchema = z.object({
   visibility: z.enum(["published", "archived", "draft", "all"]).optional().default("published")
 });
+
+export const calendarQuerySchema = z.object({
+  year: z.coerce.number().int().min(1970).max(2100),
+  month: z.coerce.number().int().min(1).max(12)
+});

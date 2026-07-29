@@ -49,6 +49,7 @@ export function Navigation() {
           {[
             { name: "文章", to: "/blog" },
             { name: "时间线", to: "/archive" },
+            { name: "日历", to: "/calendar" },
           ].map((link) => (
             <NavLink
               key={link.to}
@@ -126,6 +127,7 @@ export function Navigation() {
             {[
               { name: "文章", to: "/blog" },
               { name: "时间线", to: "/archive" },
+              { name: "日历", to: "/calendar" },
               { name: "管理", to: "/admin" },
             ].map((link, i) => (
               <NavLink

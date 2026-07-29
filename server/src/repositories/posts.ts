@@ -4,6 +4,7 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../db/schema.js";
 import { posts } from "../db/schema.js";
+import { PostDateEventsRepository } from "./post-date-events.js";
 
 export type PostsDatabase = PostgresJsDatabase<typeof schema>;
 
@@ -51,7 +52,11 @@ function isUniqueViolation(error: unknown) {
 }
 
 export class DrizzlePostRepository implements PostRepository {
-  constructor(private readonly db: PostsDatabase) {}
+  private readonly dateEvents: PostDateEventsRepository;
+
+  constructor(private readonly db: PostsDatabase) {
+    this.dateEvents = new PostDateEventsRepository(db);
+  }
 
   async listPosts(options: { visibility?: PostVisibility } = {}) {
     const visibility = options.visibility ?? "published";
@@ -111,7 +116,9 @@ export class DrizzlePostRepository implements PostRepository {
           })
           .returning();
 
-        return toBlogPost(row);
+        const post = toBlogPost(row);
+        await this.dateEvents.syncPostDateEvent(post);
+        return post;
       } catch (error) {
         if (!isUniqueViolation(error)) {
           throw error;
@@ -160,7 +167,12 @@ export class DrizzlePostRepository implements PostRepository {
       .where(eq(posts.id, id))
       .returning();
 
-    return row ? toBlogPost(row) : null;
+    const post = row ? toBlogPost(row) : null;
+    if (post) {
+      await this.dateEvents.syncPostDateEvent(post);
+    }
+
+    return post;
   }
 
   async deletePost(id: string) {

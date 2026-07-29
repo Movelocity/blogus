@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { AdminPage } from "./pages/AdminPage";
 import { ArchivePage } from "./pages/ArchivePage";
+import { CalendarPage } from "./pages/CalendarPage";
 import { HomePage } from "./pages/HomePage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -25,6 +26,7 @@ function App() {
         <Route element={<BlogLayout />}>
           <Route element={<HomePage />} path="/blog" />
           <Route element={<ArchivePage />} path="/archive" />
+          <Route element={<CalendarPage />} path="/calendar" />
           <Route element={<LoginPage />} path="/login" />
         </Route>
         <Route element={<PostLayout />}>

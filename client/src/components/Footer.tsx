@@ -20,6 +20,7 @@ export function Footer() {
               {[
                 { name: "全部文章", to: "/blog" },
                 { name: "时间线", to: "/archive" },
+                { name: "日历", to: "/calendar" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
