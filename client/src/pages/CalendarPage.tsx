@@ -63,14 +63,14 @@ export function CalendarPage() {
   }
 
   return (
-    <div className="grid gap-12">
-      <SectionHeader
+    <div className="">
+      {/* <SectionHeader
         eyebrow="按日期浏览"
         title="日历"
         description="在日历中查看农历、节日与文章发布日期。"
-      />
+      /> */}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
         <div className="flex items-center gap-3">
           <button
             onClick={goToPrevMonth}
@@ -197,7 +197,7 @@ function DateDetailPanel({ day, posts, onClose }: DateDetailPanelProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50"
       onClick={onClose}
       role="presentation"
     >

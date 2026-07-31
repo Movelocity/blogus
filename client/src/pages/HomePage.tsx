@@ -38,16 +38,7 @@ export function HomePage() {
               Blog
             </span>
           </div>
-          <Link
-            className="rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"
-            to="/archive"
-          >
-            时间线
-          </Link>
         </div>
-        <p className="m-0 max-w-xl text-lg leading-8 text-muted-foreground">
-          产品开发、工具实践、阅读和复盘。先读最新一篇，也可以按时间线慢慢翻。
-        </p>
       </section>
 
       {loading ? <HomeSkeleton /> : null}

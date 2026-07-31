@@ -351,7 +351,7 @@ export function AdminPage() {
         <form className="flex flex-col" onSubmit={handleSubmit}>
           {/* Toolbar - sticks below fixed nav */}
           <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background px-6 py-4 lg:px-12">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ml-12 lg:ml-0">
               <span className="font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
               </span>
