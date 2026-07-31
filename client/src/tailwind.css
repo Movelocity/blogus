@@ -133,6 +133,19 @@
   textarea {
     font: inherit;
   }
+  /* 浏览器自动填充：覆盖 WebKit 注入的默认底色与文字色，
+     保持透明下划线输入框观感；只改样式，不阻止填充行为 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    transition: background-color 600000s ease-out;
+  }
 }
 
 /* highlight.js: let our container own background/padding */
@@ -239,7 +252,8 @@ pre code.hljs {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .landing-marquee {
+    .landing-marquee,
+    .fade-in {
       animation: none;
     }
   }
