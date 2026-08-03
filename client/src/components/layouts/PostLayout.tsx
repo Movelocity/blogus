@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Outlet } from "react-router";
-import { ListBullets, X } from "@phosphor-icons/react";
+import { ListBulletsIcon, XIcon } from "@phosphor-icons/react";
 import { Navigation } from "../Navigation";
 import { Footer } from "../Footer";
 import { TableOfContents } from "../TableOfContents";
@@ -46,15 +46,14 @@ export function PostLayout() {
             className="fixed bottom-6 right-6 z-30 flex items-center gap-2 rounded-full bg-primary p-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:bg-primary/90 active:translate-y-px xl:hidden"
             onClick={() => setDrawerOpen(true)}
           >
-            <ListBullets className="h-4 w-4" weight="bold" />
+            <ListBulletsIcon className="h-4 w-4" weight="bold" />
           </button>
         )}
 
         {drawerOpen && (
           <div className="fixed inset-0 z-40 xl:hidden" onClick={() => setDrawerOpen(false)}>
-            <div className="absolute inset-0 bg-black/50" />
             <aside
-              className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto bg-background shadow-2xl"
+              className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto overflow-x-hidden rounded-r-2xl bg-background shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-foreground/10 bg-background px-5 py-4">
@@ -66,10 +65,10 @@ export function PostLayout() {
                   className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   onClick={() => setDrawerOpen(false)}
                 >
-                  <X className="h-4 w-4" weight="bold" />
+                  <XIcon className="h-4 w-4" weight="bold" />
                 </button>
               </div>
-              <div className="px-3 py-4">{tocContent}</div>
+              <div className="min-w-0 px-3 py-4">{tocContent}</div>
             </aside>
           </div>
         )}
@@ -78,7 +77,7 @@ export function PostLayout() {
           <div className="relative flex gap-8 xl:gap-10">
             {hasToc && (
               <aside className="max-xl:hidden w-44 2xl:w-56 shrink-0">
-                <div className="sticky top-28 max-h-[calc(100dvh-7rem)] overflow-y-auto pr-2">
+                <div className="sticky top-28 max-h-[calc(100dvh-7rem)] min-w-0 overflow-x-hidden overflow-y-auto pr-2">
                   {tocContent}
                 </div>
               </aside>

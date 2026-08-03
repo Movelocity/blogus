@@ -30,7 +30,7 @@ export function HomePage() {
   return (
     <div className="grid gap-14">
 
-      <section className="grid gap-8">
+      {/* <section className="grid gap-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-4xl">
             <span className="mb-4 inline-flex items-center gap-3 text-sm font-bold text-accent">
@@ -39,7 +39,7 @@ export function HomePage() {
             </span>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {loading ? <HomeSkeleton /> : null}
 
@@ -51,10 +51,10 @@ export function HomePage() {
 
       {!loading && !error && featuredPost ? (
         <section className="grid gap-12">
-          <FeaturedPost post={featuredPost} />
+          {/* <FeaturedPost post={featuredPost} /> */}
           {recentPosts.length > 0 ? (
             <div className="grid gap-6">
-              <div className="flex items-end justify-between gap-4">
+              {/* <div className="flex items-end justify-between gap-4">
                 <div>
                   <span className="mb-2 inline-flex items-center gap-3 text-sm font-bold text-accent">
                     <span className="h-px w-8 bg-accent" />
@@ -65,7 +65,7 @@ export function HomePage() {
                 <Link className="text-sm font-bold text-accent transition-opacity hover:opacity-75" to="/archive">
                   查看时间线 →
                 </Link>
-              </div>
+              </div> */}
               <div className="grid gap-4">
                 {recentPosts.map((post) => (
                   <PostListItem key={post.id} post={post} />

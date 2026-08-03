@@ -82,9 +82,9 @@ export function LandingPage() {
                 </svg>
               )}
             </button>
-            <Link className="rounded-full bg-accent px-5 py-2.5 text-accent-foreground transition-transform hover:scale-[1.03] active:scale-[0.98]" to="/blog">
+            {/* <Link className="rounded-full bg-accent px-5 py-2.5 text-accent-foreground transition-transform hover:scale-[1.03] active:scale-[0.98]" to="/blog">
               开始阅读
-            </Link>
+            </Link> */}
           </div>
         </nav>
       </header>
@@ -106,7 +106,7 @@ export function LandingPage() {
               className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground shadow-[0_16px_44px_rgba(26,20,8,0.18)] transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"
               to="/blog"
             >
-              Start
+              开始阅读
             </Link>
           </div>
         </section>
@@ -136,7 +136,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
+        {/* <section className="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
             <h2 className="m-0 font-display text-[clamp(2.2rem,5vw,4rem)] font-bold leading-none text-foreground">
               Ready to read?
@@ -171,7 +171,7 @@ export function LandingPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </section> */}
 
       </main>
 

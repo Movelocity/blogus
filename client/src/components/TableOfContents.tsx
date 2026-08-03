@@ -56,23 +56,24 @@ export function TableOfContents({ content, headings: headingsProp, onNavigate }:
   if (headings.length === 0) return null;
 
   return (
-    <nav className="max-w-64" aria-label="目录">
+    <nav className="w-full min-w-0" aria-label="目录">
       <p className="mb-3 font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">
         目录
       </p>
-      <ul className="grid gap-0.5 border-l border-foreground/10">
+      <ul className="grid min-w-0 gap-0.5 border-l border-foreground/10">
         {headings.map((h) => {
           const isActive = h.slug === activeSlug;
           const indent = h.level === 1 ? 0 : h.level === 2 ? 0 : 1;
           return (
-            <li key={h.slug}>
+            <li key={h.slug} className="min-w-0">
               <a
-                className={`block truncate py-1 text-sm leading-snug transition-colors ${
+                className={`block min-w-0 truncate py-1 text-sm leading-snug transition-colors ${
                   isActive
                     ? "border-l-2 border-foreground font-medium text-foreground -ml-px"
                     : "text-muted-foreground hover:text-foreground"
                 } ${indent === 1 ? "pl-5" : "pl-3"}`}
                 href={`#${h.slug}`}
+                title={h.text}
                 onClick={(e) => {
                   e.preventDefault();
                   const el = document.getElementById(h.slug);

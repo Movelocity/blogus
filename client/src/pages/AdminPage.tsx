@@ -1,5 +1,5 @@
-import { Link } from "react-router";
-import { type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { type ReactNode, type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogFolder, BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
 import {
   createFolder as createFolderApi,
@@ -31,12 +31,59 @@ import {
   FolderIcon,
   FolderPlusIcon,
   DotsThreeIcon,
+  ArrowSquareOutIcon,
+  ArrowUUpLeftIcon,
+  ArchiveIcon,
+  TrashIcon,
+  PaperPlaneTiltIcon,
   SunIcon,
   MoonIcon,
 } from "@phosphor-icons/react";
 import { useTheme } from "../hooks/useTheme";
 
 type EditorMode = "edit" | "preview";
+type MetaDialogKind = "excerpt" | "tags";
+
+function MetaDialog({
+  open,
+  onClose,
+  label,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  label: string;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/10 p-4 sm:items-center"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border bg-background p-4 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function splitTags(input: string) {
   return input.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 12);
@@ -51,6 +98,7 @@ function statusDotClass(s: PostStatus) {
 }
 
 export function AdminPage() {
+  const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [title, setTitle] = useState("");
@@ -69,7 +117,9 @@ export function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null);
-  const [folderText, setFolderText] = useState("");
+  const [draftFolderId, setDraftFolderId] = useState<string | null>(null);
+  const [metaDialog, setMetaDialog] = useState<MetaDialogKind | null>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [folders, setFolders] = useState<BlogFolder[]>([]);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState("");
@@ -87,8 +137,25 @@ export function AdminPage() {
   });
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const folderMenuRef = useRef<HTMLDivElement | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedPost = useMemo(() => posts.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
   const tags = splitTags(tagsText);
+  const isDirty = useMemo(() => {
+    const currentTags = splitTags(tagsText);
+    if (!selectedPost) {
+      return Boolean(title || content || excerpt || coverImageUrl || tagsText);
+    }
+    const tagsChanged =
+      currentTags.length !== selectedPost.tags.length ||
+      currentTags.some((tag, index) => tag !== selectedPost.tags[index]);
+    return (
+      title !== selectedPost.title ||
+      content !== selectedPost.content ||
+      excerpt !== (selectedPost.excerpt ?? "") ||
+      coverImageUrl !== (selectedPost.coverImageUrl ?? "") ||
+      tagsChanged
+    );
+  }, [selectedPost, title, content, excerpt, coverImageUrl, tagsText]);
 
   // 目录是独立实体（folders 表）：空目录也展示；folderId 指向他人目录的文章按未收录处理
   const groupedPosts = useMemo(() => {
@@ -134,17 +201,29 @@ export function AdminPage() {
     return () => document.removeEventListener("click", onDocumentClick);
   }, [folderMenuOpenId]);
 
-  function loadPost(post: BlogPost, folderList: BlogFolder[] = folders) {
+  useEffect(() => {
+    if (!actionMenuOpen) return;
+    const onDocumentClick = (e: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setActionMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, [actionMenuOpen]);
+
+  function loadPost(post: BlogPost) {
     setSelectedId(post.id);
     setTitle(post.title);
     setContent(post.content);
     setExcerpt(post.excerpt ?? "");
     setCoverImageUrl(post.coverImageUrl ?? "");
     setTagsText(post.tags.join(", "));
-    setFolderText(post.folderId ? (folderList.find((f) => f.id === post.folderId)?.name ?? "") : "");
+    setDraftFolderId(null);
     setEditorMode("edit");
     setMessage(null);
     setError(null);
+    setActionMenuOpen(false);
   }
 
   function startNewPost() {
@@ -154,15 +233,16 @@ export function AdminPage() {
     setExcerpt("");
     setCoverImageUrl("");
     setTagsText("");
-    setFolderText("");
+    setDraftFolderId(null);
     setEditorMode("edit");
     setMessage(null);
     setError(null);
+    setActionMenuOpen(false);
   }
 
   function startNewPostInFolder(folder: BlogFolder) {
     startNewPost();
-    setFolderText(folder.name);
+    setDraftFolderId(folder.id);
   }
 
   async function refreshPosts(nextSelectedId = selectedId) {
@@ -191,7 +271,7 @@ export function AdminPage() {
           setUser(cu.user);
           setFolders(folderResult.folders);
           setPosts(result.posts);
-          if (result.posts[0]) loadPost(result.posts[0], folderResult.folders);
+          if (result.posts[0]) loadPost(result.posts[0]);
         })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : "加载失败"))
         .finally(() => setAuthChecked(true));
@@ -232,29 +312,17 @@ export function AdminPage() {
     );
   }
 
-  // 目录名 → folderId：已存在直接用；新名字顺手创建；空表示根目录
-  async function resolveFolderIdForSave() {
-    const name = folderText.trim();
-    if (!name) return null;
-    const existing = folders.find((f) => f.name === name);
-    if (existing) return existing.id;
-    const created = await createFolderApi(name);
-    setFolders((prev) => [...prev, created.folder].sort((a, b) => a.name.localeCompare(b.name, "zh")));
-    return created.folder.id;
-  }
-
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     setError(null);
     setSaving(true);
     try {
-      const folderId = await resolveFolderIdForSave();
       if (selectedPost) {
-        const r = await updatePost(selectedPost.id, { title, content, excerpt, coverImageUrl, tags, folderId });
+        const r = await updatePost(selectedPost.id, { title, content, excerpt, coverImageUrl, tags });
         setMessage(`已保存：${r.post.title}`);
         await refreshPosts(r.post.id);
       } else {
-        const r = await createPost({ title, content, excerpt, coverImageUrl, tags, folderId, status: "draft" });
+        const r = await createPost({ title, content, excerpt, coverImageUrl, tags, folderId: draftFolderId, status: "draft" });
         setMessage(`草稿已创建：${r.post.title}`);
         await refreshPosts(r.post.id);
       }
@@ -292,6 +360,7 @@ export function AdminPage() {
     const post = posts.find((p) => p.id === id);
     setError(null);
     if (!window.confirm(`确认删除「${post?.title ?? "这篇文章"}」？`)) return;
+    setActionMenuOpen(false);
     try {
       await deletePost(id);
       setMessage("文章已删除");
@@ -300,6 +369,16 @@ export function AdminPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "删除失败");
     }
+  }
+
+  function handleViewFrontend() {
+    if (!selectedPost) return;
+    if (isDirty) {
+      window.alert("有未保存的修改，请先保存后再查看前台。");
+      return;
+    }
+    setActionMenuOpen(false);
+    navigate(`/posts/${selectedPost.slug}`);
   }
 
   async function handleInlineUpload(file: File | undefined) {
@@ -446,7 +525,7 @@ export function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex h-dvh overflow-x-hidden">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(true)}
@@ -483,7 +562,7 @@ export function AdminPage() {
         </nav>
 
         {/* Section label */}
-        <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
+        <div className="flex items-center justify-between px-3 pb-1.5 pt-2 group">
           <span className="text-sm text-muted-foreground">文章</span>
           <div className="flex items-center gap-1.5">
             <button
@@ -491,7 +570,7 @@ export function AdminPage() {
               aria-label="新建目录"
               title="新建目录"
               onClick={() => { setCreatingFolder(true); setNewFolderText(""); }}
-              className="rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+              className="rounded-sm p-0.5 text-muted-foreground/60 transition-colors hover:text-muted-foreground invisible group-hover:visible"
             >
               <FolderPlusIcon size={18} />
             </button>
@@ -585,7 +664,7 @@ export function AdminPage() {
                   ) : (
                     <div
                       className={`group relative flex w-full items-center rounded-lg transition-colors hover:bg-muted mb-1 ${
-                        dropTargetFolderId === folder.id ? "bg-muted ring-1 ring-inset ring-foreground/50" : ""
+                        dropTargetFolderId === folder.id ? "bg-muted ring-1 ring-inset ring-foreground/20" : ""
                       }`}
                     >
                       <button
@@ -608,12 +687,12 @@ export function AdminPage() {
                             aria-label={`目录菜单 ${folder.name}`}
                             aria-expanded={folderMenuOpenId === folder.id}
                             onClick={() => setFolderMenuOpenId((id) => (id === folder.id ? null : folder.id))}
-                            className="rounded-sm p-1 text-muted-foreground/60 transition-colors hover:bg-background/80 hover:text-foreground"
+                            className="rounded-md p-1 text-muted-foreground/60 transition-colors hover:text-muted-foreground"
                           >
-                            <DotsThreeIcon size={14} weight="bold" />
+                            <DotsThreeIcon size={18} weight="bold" />
                           </button>
                           {folderMenuOpenId === folder.id ? (
-                            <div className="absolute right-0 top-full z-50 mt-0.5 min-w-[7rem] rounded-md border border-border bg-background p-1 shadow-lg">
+                            <div className="absolute right-0 top-full z-50 mt-1 min-w-[10.5rem] rounded-lg border border-border bg-background p-1 shadow-lg">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -621,8 +700,9 @@ export function AdminPage() {
                                   setRenamingFolderId(folder.id);
                                   setRenameText(folder.name);
                                 }}
-                                className="flex w-full rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               >
+                                <PencilSimpleIcon size={15} className="shrink-0" />
                                 重命名
                               </button>
                               <button
@@ -631,8 +711,9 @@ export function AdminPage() {
                                   setFolderMenuOpenId(null);
                                   void removeFolder(folder);
                                 }}
-                                className="flex w-full rounded-sm px-2 py-1.5 text-left text-sm text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               >
+                                <TrashIcon size={15} className="shrink-0" />
                                 删除
                               </button>
                             </div>
@@ -645,9 +726,9 @@ export function AdminPage() {
                             startNewPostInFolder(folder);
                             setSidebarOpen(false);
                           }}
-                          className="rounded-sm p-1 text-muted-foreground/60 transition-colors hover:bg-background/80 hover:text-foreground"
+                          className="rounded-sm p-1 text-muted-foreground/60 transition-colors hover:text-muted-foreground"
                         >
-                          <NotePencilIcon size={14} />
+                          <NotePencilIcon size={18} />
                         </button>
                       </div>
                     </div>
@@ -680,7 +761,7 @@ export function AdminPage() {
               <span className="min-w-0 flex-1 truncate text-sm">{user.email}</span>
             </button>
             {userMenuOpen ? (
-              <div className="absolute bottom-full left-0 z-50 mb-2 m-[5px] w-[calc(100%-10px)] rounded-lg border border-border bg-background p-1.5 shadow-lg">
+              <div className="absolute bottom-full left-0 z-50 mb-2 m-[5px] w-[calc(100%-10px)] rounded-xl border border-border bg-background p-1.5 shadow-lg">
                 <div className="flex items-center gap-2 border-b border-border px-2 pb-2 pt-1">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary font-mono text-[10px] uppercase text-gray-50">
                     {user.email.slice(0, 1)}
@@ -691,7 +772,7 @@ export function AdminPage() {
                   type="button"
                   onClick={toggleTheme}
                   aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
-                  className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   {theme === "dark" ? (
                     <SunIcon size={15} className="shrink-0" />
@@ -703,7 +784,7 @@ export function AdminPage() {
                 <button
                   type="button"
                   onClick={() => { setUserMenuOpen(false); void handleLogout(); }}
-                  className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <SignOutIcon size={15} className="shrink-0" />
                   退出登录
@@ -723,59 +804,32 @@ export function AdminPage() {
       ) : null}
 
       {/* Editor area */}
-      <div className="flex flex-1 flex-col lg:ml-[280px]">
-        <form className="flex flex-col" onSubmit={handleSubmit}>
-          {/* Toolbar - sticks below fixed nav */}
-          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-6 py-2.5 lg:px-8">
+      <div className="flex h-full min-w-0 flex-1 flex-col lg:ml-[280px]">
+        <form className="flex h-full min-h-0 min-w-0 flex-col" onSubmit={handleSubmit}>
+          {/* Toolbar - fixed at top while content scrolls */}
+          <div className="z-20 flex shrink-0 min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-6 py-2.5 lg:px-8">
             <div className="flex min-w-0 items-center gap-2.5 ml-12 lg:ml-0">
               <span className="shrink-0 font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
               </span>
               {selectedPost ? (
                 <>
+                  <span className="truncate font-mono text-muted-foreground">
+                    {selectedPost.slug}
+                  </span>
                   <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                     <span className={`size-1.5 rounded-full ${statusDotClass(selectedPost.status)}`} />
                     {statusLabel(selectedPost.status)}
                   </span>
-                  <span className="truncate font-mono text-xs text-muted-foreground/50">
-                    {selectedPost.slug}
-                  </span>
                 </>
               ) : null}
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               {message ? (
                 <span className="max-w-[220px] truncate text-xs text-emerald-600" title={message}>{message}</span>
               ) : null}
               {selectedPost ? (
                 <>
-                  {selectedPost.status !== "published" ? (
-                    <button
-                      className="text-muted-foreground transition-colors hover:text-foreground"
-                      onClick={() => void changeStatus(selectedPost.id, "published")}
-                      type="button"
-                    >
-                      发布
-                    </button>
-                  ) : null}
-                  {selectedPost.status === "published" ? (
-                    <>
-                      <button
-                        className="text-muted-foreground transition-colors hover:text-foreground"
-                        onClick={() => void changeStatus(selectedPost.id, "draft")}
-                        type="button"
-                      >
-                        撤回
-                      </button>
-                      <button
-                        className="text-muted-foreground transition-colors hover:text-foreground"
-                        onClick={() => void changeStatus(selectedPost.id, "archived")}
-                        type="button"
-                      >
-                        归档
-                      </button>
-                    </>
-                  ) : null}
                   {selectedPost.status === "archived" ? (
                     <button
                       className="text-muted-foreground transition-colors hover:text-foreground"
@@ -784,21 +838,6 @@ export function AdminPage() {
                     >
                       取消归档
                     </button>
-                  ) : null}
-                  <button
-                    className="text-destructive/70 transition-colors hover:text-destructive"
-                    onClick={() => void remove(selectedPost.id)}
-                    type="button"
-                  >
-                    删除
-                  </button>
-                  {selectedPost.status === "published" ? (
-                    <Link
-                      className="text-muted-foreground transition-colors hover:text-foreground"
-                      to={`/posts/${selectedPost.slug}`}
-                    >
-                      查看前台
-                    </Link>
                   ) : null}
                 </>
               ) : null}
@@ -813,8 +852,80 @@ export function AdminPage() {
                   <><PencilSimpleIcon size={14} className="inline mr-1" />编辑</>
                 )}
               </button>
+              {selectedPost ? (
+                <div ref={actionMenuOpen ? actionMenuRef : undefined} className="relative">
+                  <button
+                    type="button"
+                    aria-label="更多操作"
+                    aria-expanded={actionMenuOpen}
+                    onClick={() => setActionMenuOpen((open) => !open)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <DotsThreeIcon size={18} weight="bold" />
+                  </button>
+                  {actionMenuOpen ? (
+                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[10.5rem] rounded-lg border border-border bg-background p-1 shadow-lg">
+                      {selectedPost.status !== "published" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActionMenuOpen(false);
+                            void changeStatus(selectedPost.id, "published");
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <PaperPlaneTiltIcon size={15} className="shrink-0" />
+                          发布
+                        </button>
+                      ) : null}
+                      {selectedPost.status === "published" ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleViewFrontend}
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <ArrowSquareOutIcon size={15} className="shrink-0" />
+                            查看前台
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              void changeStatus(selectedPost.id, "draft");
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <ArrowUUpLeftIcon size={15} className="shrink-0" />
+                            撤回
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActionMenuOpen(false);
+                              void changeStatus(selectedPost.id, "archived");
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <ArchiveIcon size={15} className="shrink-0" />
+                            归档
+                          </button>
+                        </>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => void remove(selectedPost.id)}
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <TrashIcon size={15} className="shrink-0" />
+                        删除
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               <button
-                className="inline-flex h-8 min-w-[72px] items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-8 min-w-[72px] items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={saving}
                 type="submit"
               >
@@ -824,7 +935,7 @@ export function AdminPage() {
           </div>
 
           {/* Content */}
-          <div className="w-full px-6 pt-5 pb-12 lg:px-8">
+          <div className="min-h-0 flex-1 overflow-y-auto min-w-0 w-full px-6 pt-5 pb-12 lg:px-8">
             {error ? (
               <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
@@ -841,53 +952,8 @@ export function AdminPage() {
                   onChange={(e) => setTitle(e.target.value)}
                 />
 
-                {/* Excerpt + Folder + Tags side by side */}
-                <div className="grid grid-cols-[1fr_160px_200px] gap-5 max-lg:grid-cols-1">
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground/50">摘要</span>
-                    <textarea
-                      className="min-h-[56px] resize-y border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40"
-                      maxLength={1000}
-                      value={excerpt}
-                      onChange={(e) => setExcerpt(e.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground/50">目录</span>
-                    <input
-                      className="border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40"
-                      list="folder-options"
-                      maxLength={120}
-                      placeholder="未收录"
-                      value={folderText}
-                      onChange={(e) => setFolderText(e.target.value)}
-                    />
-                    <datalist id="folder-options">
-                      {folders.map((f) => (
-                        <option key={f.id} value={f.name} />
-                      ))}
-                    </datalist>
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground/50">标签</span>
-                    <input
-                      className="border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40"
-                      placeholder="逗号分隔"
-                      value={tagsText}
-                      onChange={(e) => setTagsText(e.target.value)}
-                    />
-                    {tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {tags.map((t) => (
-                          <span key={t} className="text-xs text-muted-foreground/50">#{t}</span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </label>
-                </div>
-
                 {/* Cover + inline upload - minimal row */}
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <label className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground">
                     <UploadIcon size={14} />
                     封面
@@ -898,6 +964,20 @@ export function AdminPage() {
                     插图
                     <input accept="image/*" className="hidden" type="file" onChange={(e) => void handleInlineUpload(e.target.files?.[0])} />
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => setMetaDialog("excerpt")}
+                    className={`flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground ${excerpt ? "text-foreground" : ""}`}
+                  >
+                    摘要
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMetaDialog("tags")}
+                    className={`flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground ${tags.length > 0 ? "text-foreground" : ""}`}
+                  >
+                    标签{tags.length > 0 ? ` (${tags.length})` : ""}
+                  </button>
                   <input
                     className="ml-auto min-w-0 flex-1 border-b border-transparent bg-transparent text-right text-xs text-muted-foreground/40 outline-none transition-colors focus:border-border focus:text-muted-foreground"
                     placeholder="封面 URL"
@@ -908,10 +988,8 @@ export function AdminPage() {
 
                 {/* Markdown body */}
                 <textarea
-                  className="w-full resize-none overflow-hidden border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                  className="min-h-[50dvh] w-full resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
                   ref={textareaRef}
-                  rows={1}
-                  style={{ fieldSizing: "content" } as React.CSSProperties}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="正文 (Markdown)"
@@ -938,6 +1016,42 @@ export function AdminPage() {
             )}
           </div>
         </form>
+
+        <MetaDialog
+          open={metaDialog === "excerpt"}
+          onClose={() => setMetaDialog(null)}
+          label="编辑摘要"
+        >
+          <textarea
+            autoFocus
+            className="min-h-[120px] w-full resize-y border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/40"
+            maxLength={1000}
+            placeholder="摘要"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+          />
+        </MetaDialog>
+
+        <MetaDialog
+          open={metaDialog === "tags"}
+          onClose={() => setMetaDialog(null)}
+          label="编辑标签"
+        >
+          <input
+            autoFocus
+            className="w-full border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/40"
+            placeholder="标签，逗号分隔"
+            value={tagsText}
+            onChange={(e) => setTagsText(e.target.value)}
+          />
+          {tags.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {tags.map((t) => (
+                <span key={t} className="text-xs text-muted-foreground/60">#{t}</span>
+              ))}
+            </div>
+          ) : null}
+        </MetaDialog>
       </div>
     </div>
   );

@@ -269,7 +269,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (code !== undefined) {
       nodes.push(
-        <code className="bg-secondary px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
+        <code className="bg-secondary/30 px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
           {code}
         </code>,
       );
@@ -371,7 +371,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
                 </thead>
                 <tbody>
                   {block.rows.map((row, ri) => (
-                    <tr className="border-b border-foreground/8 transition-colors hover:bg-secondary/50" key={ri}>
+                    <tr className="border-b border-foreground/8 transition-colors hover:bg-secondary/10" key={ri}>
                       {row.map((cell, ci) => (
                         <td
                           className="px-4 py-3"

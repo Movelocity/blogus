@@ -37,8 +37,8 @@ export function Footer() {
             <h3 className="mb-6 text-sm font-medium text-foreground">管理</h3>
             <ul className="space-y-4">
               {[
-                { name: "写作后台", to: "/admin" },
-                { name: "登录", to: "/login" },
+                { name: "编辑文章", to: "/admin" },
+                // { name: "登录", to: "/login" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
