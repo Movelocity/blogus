@@ -13,6 +13,8 @@ import {
   ImageIcon,
   EyeIcon,
   PencilSimpleIcon,
+  GearSixIcon,
+  CaretUpIcon,
 } from "@phosphor-icons/react";
 
 type EditorMode = "edit" | "preview";
@@ -27,6 +29,15 @@ function splitTags(input: string) {
 
 function statusLabel(s: PostStatus) {
   return s === "published" ? "已发布" : s === "archived" ? "已归档" : "草稿";
+}
+
+function statusDotClass(s: PostStatus) {
+  return s === "published" ? "bg-emerald-500" : s === "archived" ? "bg-muted-foreground/30" : "bg-amber-500";
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 export function AdminPage() {
@@ -46,8 +57,36 @@ export function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<PostVisibility>("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedPost = useMemo(() => posts.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
   const tags = splitTags(tagsText);
+
+  const statusCounts = useMemo(() => {
+    const c: Record<PostVisibility, number> = { all: posts.length, published: 0, draft: 0, archived: 0 };
+    for (const p of posts) c[p.status] += 1;
+    return c;
+  }, [posts]);
+
+  const filteredPosts = useMemo(
+    () => (filter === "all" ? posts : posts.filter((p) => p.status === filter)),
+    [posts, filter],
+  );
+
+  // 用户菜单打开时，点击菜单外部关闭。
+  // 注意：真实鼠标事件在监听器之间会跑微任务，React 可能在同一次点击的
+  // 冒泡途中就挂上了 document 监听，所以必须判断点击目标是否在菜单内部，
+  // 不能用“任意点击都关闭”的写法（否则打开菜单的那次点击会立即把它关掉）。
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const onDocumentClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, [userMenuOpen]);
 
   function loadPost(post: BlogPost) {
     setSelectedId(post.id);
@@ -74,7 +113,7 @@ export function AdminPage() {
   }
 
   async function refreshPosts(nextSelectedId = selectedId) {
-    const result = await listPosts({ visibility: filter });
+    const result = await listPosts({ visibility: "all" });
     setPosts(result.posts);
     if (nextSelectedId) {
       const next = result.posts.find((p) => p.id === nextSelectedId);
@@ -99,18 +138,6 @@ export function AdminPage() {
         .finally(() => setAuthChecked(true));
     })();
   }, []);
-
-  useEffect(() => {
-    if (authChecked && user) {
-      listPosts({ visibility: filter })
-        .then((r) => {
-          setPosts(r.posts);
-          if (r.posts[0]) loadPost(r.posts[0]);
-          else startNewPost();
-        })
-        .catch(() => {});
-    }
-  }, [filter, authChecked, user]);
 
   async function handleLogout() {
     setError(null);
@@ -261,70 +288,75 @@ export function AdminPage() {
         className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-background px-4 py-4 transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
       >
         {/* Header row */}
-        <div className="flex items-center justify-between pb-4">
+        <div className="flex items-center justify-between pb-3">
+          <Link
+            to="/"
+            className="-ml-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="回到首页"
+          >
+            <HouseSimpleIcon size={15} />
+            首页
+          </Link>
           <div className="flex items-center gap-2">
-            <Link to="/" className="text-muted-foreground transition-colors hover:text-foreground" aria-label="首页">
-              <HouseSimpleIcon size={16} />
-            </Link>
             <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { startNewPost(); setSidebarOpen(false); }}
-              type="button"
-              className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <PlusIcon size={15} />
-              新建
-            </button>
-            <span className="text-border">|</span>
-            <button
-              onClick={handleLogout}
-              type="button"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <SignOutIcon size={15} />
-            </button>
+            <span className="font-mono text-xs text-muted-foreground/50">{posts.length}</span>
           </div>
         </div>
 
+        {/* New post */}
+        <button
+          onClick={() => { startNewPost(); setSidebarOpen(false); }}
+          type="button"
+          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <PlusIcon size={14} />
+          新建文章
+        </button>
+
         {/* Filter row */}
-        <div className="flex gap-3 border-b border-border pb-3 mb-3">
+        <div className="flex gap-3 border-b border-border pb-2.5 mb-1">
           {filterTabs.map(([value, label]) => (
             <button
               key={value}
               onClick={() => setFilter(value)}
               type="button"
-              className={`text-sm transition-colors ${
+              className={`flex items-baseline gap-1 text-sm transition-colors ${
                 filter === value ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
+              <span className="font-mono text-[10px] text-muted-foreground/50">{statusCounts[value]}</span>
             </button>
           ))}
         </div>
 
         {/* Post list */}
-        <div className="flex-1 overflow-y-auto">
-          {posts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">暂无文章</p>
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
+          {filteredPosts.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {posts.length === 0 ? "暂无文章" : "没有匹配的文章"}
+            </p>
           ) : (
             <div className="flex flex-col">
-              {posts.map((post) => (
+              {filteredPosts.map((post) => (
                 <button
                   key={post.id}
                   onClick={() => { loadPost(post); setSidebarOpen(false); }}
                   type="button"
-                  className={`flex flex-col gap-0.5 border-l-2 py-2.5 pl-3 text-left transition-colors ${
+                  className={`flex flex-col gap-0.5 rounded-sm border-l-2 px-2.5 py-2 text-left transition-colors ${
                     post.id === selectedId
-                      ? "border-foreground"
-                      : "border-transparent hover:border-border"
+                      ? "border-foreground bg-muted"
+                      : "border-transparent hover:bg-muted/60"
                   }`}
                 >
-                  <span className="line-clamp-1 text-[15px] text-foreground">{post.title || "未命名文章"}</span>
-                  <span className="font-mono text-xs text-muted-foreground/60 line-clamp-1">
-                    {statusLabel(post.status)}
-                    {postExcerpt(post) ? ` · ${postExcerpt(post)}` : ""}
+                  <span className="line-clamp-1 text-sm text-foreground">{post.title || "未命名文章"}</span>
+                  <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground/60">
+                    <span className={`size-1.5 shrink-0 rounded-full ${statusDotClass(post.status)}`} />
+                    <span className="shrink-0">{statusLabel(post.status)}</span>
+                    <span className="shrink-0 text-muted-foreground/40">{formatDate(post.updatedAt)}</span>
+                    {postExcerpt(post) ? (
+                      <span className="min-w-0 flex-1 line-clamp-1 text-muted-foreground/40">{postExcerpt(post)}</span>
+                    ) : null}
                   </span>
                 </button>
               ))}
@@ -332,9 +364,38 @@ export function AdminPage() {
           )}
         </div>
 
-        {/* User */}
+        {/* User settings */}
         {user ? (
-          <p className="mt-3 truncate border-t border-border pt-3 text-xs text-muted-foreground/50">{user.email}</p>
+          <div ref={userMenuRef} className="relative mt-2 border-t border-border pt-2">
+            <button
+              type="button"
+              onClick={() => setUserMenuOpen((v) => !v)}
+              aria-label="用户设置"
+              aria-expanded={userMenuOpen}
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
+                userMenuOpen ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <GearSixIcon size={15} className="shrink-0" />
+              <span className="min-w-0 flex-1 truncate text-xs">{user.email}</span>
+              <CaretUpIcon
+                size={12}
+                className={`shrink-0 transition-transform ${userMenuOpen ? "" : "rotate-180"}`}
+              />
+            </button>
+            {userMenuOpen ? (
+              <div className="absolute bottom-full left-0 z-50 mb-1 w-full rounded-md border border-border bg-background py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => { setUserMenuOpen(false); void handleLogout(); }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <SignOutIcon size={14} />
+                  退出登录
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </aside>
 
@@ -350,18 +411,27 @@ export function AdminPage() {
       <div className="flex flex-1 flex-col lg:ml-[280px]">
         <form className="flex flex-col" onSubmit={handleSubmit}>
           {/* Toolbar - sticks below fixed nav */}
-          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-background px-6 py-4 lg:px-12">
-            <div className="flex items-center gap-3 ml-12 lg:ml-0">
-              <span className="font-display text-base font-medium text-foreground">
+          <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-6 py-2.5 lg:px-8">
+            <div className="flex min-w-0 items-center gap-2.5 ml-12 lg:ml-0">
+              <span className="shrink-0 font-display text-base font-medium text-foreground">
                 {selectedPost ? "编辑" : "新建"}
               </span>
               {selectedPost ? (
-                <span className="font-mono text-xs text-muted-foreground/50">
-                  {selectedPost.slug}
-                </span>
+                <>
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                    <span className={`size-1.5 rounded-full ${statusDotClass(selectedPost.status)}`} />
+                    {statusLabel(selectedPost.status)}
+                  </span>
+                  <span className="truncate font-mono text-xs text-muted-foreground/50">
+                    {selectedPost.slug}
+                  </span>
+                </>
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              {message ? (
+                <span className="max-w-[220px] truncate text-xs text-emerald-600" title={message}>{message}</span>
+              ) : null}
               {selectedPost ? (
                 <>
                   {selectedPost.status !== "published" ? (
@@ -400,7 +470,6 @@ export function AdminPage() {
                       取消归档
                     </button>
                   ) : null}
-                  <span className="text-border">|</span>
                   <button
                     className="text-destructive/70 transition-colors hover:text-destructive"
                     onClick={() => void remove(selectedPost.id)}
@@ -416,7 +485,6 @@ export function AdminPage() {
                       查看前台
                     </Link>
                   ) : null}
-                  <span className="text-border">|</span>
                 </>
               ) : null}
               <button
@@ -431,28 +499,23 @@ export function AdminPage() {
                 )}
               </button>
               <button
-                className="relative inline-flex min-w-[62px] h-8 items-center justify-center rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed"
+                className="inline-flex h-8 min-w-[72px] items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={saving}
                 type="submit"
               >
-                <span className={saving || !message ? "" : "opacity-0"}>
-                  {saving ? <SpinnerIcon size={14} className="animate-spin" /> : selectedPost ? "保存" : "创建草稿"}
-                </span>
-                {saving ? null : message ? (
-                  <span className="absolute inset-0 flex items-center justify-center text-xs text-emerald-600">{message}</span>
-                ) : null}
+                {saving ? <SpinnerIcon size={14} className="animate-spin" /> : selectedPost ? "保存" : "创建草稿"}
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="w-full px-6 pt-12 pb-20 lg:px-12">
+          <div className="w-full px-6 pt-5 pb-12 lg:px-8">
             {error ? (
               <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
 
             {editorMode === "edit" ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 {/* Title - bottom border only */}
                 <input
                   className="w-full border-b border-border bg-transparent pb-3 font-display text-2xl font-semibold tracking-tight text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/30"
@@ -524,7 +587,7 @@ export function AdminPage() {
                 />
               </div>
             ) : (
-              <article className="pb-24">
+              <article className="pb-12">
                 {coverImageUrl ? (
                   <img alt="" className="mb-6 max-h-72 w-full rounded-md object-cover" src={coverImageUrl} />
                 ) : null}
