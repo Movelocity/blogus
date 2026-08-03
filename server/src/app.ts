@@ -9,6 +9,7 @@ import { dbPlugin } from "./plugins/db.js";
 import { serveClientPlugin } from "./plugins/serve-client.js";
 import { storagePlugin } from "./plugins/storage.js";
 import { authRoutes } from "./routes/auth.js";
+import { folderRoutes } from "./routes/folders.js";
 import { postRoutes } from "./routes/posts.js";
 import { uploadRoutes } from "./routes/upload.js";
 
@@ -22,7 +23,7 @@ export async function buildApp() {
 
   await app.register(cors, {
     credentials: true,
-    origin: config.server.clientOrigin
+    origin: config.nodeEnv === "development" ? true : config.server.clientOrigin
   });
   await app.register(multipart, {
     limits: {
@@ -54,6 +55,7 @@ export async function buildApp() {
   });
 
   await app.register(authRoutes, { prefix: "/api/auth" });
+  await app.register(folderRoutes, { prefix: "/api/folders" });
   await app.register(postRoutes, { prefix: "/api/posts" });
   await app.register(uploadRoutes, { prefix: "/api/upload" });
 

@@ -9,10 +9,18 @@ export interface BlogPost {
   excerpt?: string;
   coverImageUrl?: string;
   tags: string[];
+  folderId?: string;
   status: PostStatus;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
+}
+
+export interface BlogFolder {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ApiErrorResponse {
@@ -29,6 +37,7 @@ export interface CreatePostInput {
   excerpt?: string;
   coverImageUrl?: string;
   tags?: string[];
+  folderId?: string | null;
   status?: PostStatus;
 }
 
@@ -38,6 +47,7 @@ export interface UpdatePostInput {
   excerpt?: string;
   coverImageUrl?: string;
   tags?: string[];
+  folderId?: string | null;
   status?: PostStatus;
 }
 

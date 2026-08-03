@@ -35,6 +35,7 @@ function toBlogPost(row: PostRow): BlogPost {
     excerpt: row.excerpt ?? undefined,
     coverImageUrl: row.coverImageUrl ?? undefined,
     tags: row.tags ?? [],
+    folderId: row.folderId ?? undefined,
     status: row.status as PostStatus,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -109,6 +110,7 @@ export class DrizzlePostRepository implements PostRepository {
             excerpt: input.excerpt?.trim() || null,
             coverImageUrl: input.coverImageUrl?.trim() || null,
             tags: input.tags ?? [],
+            folderId: input.folderId ?? null,
             status,
             createdAt: now,
             updatedAt: now,
@@ -160,6 +162,7 @@ export class DrizzlePostRepository implements PostRepository {
           ? {}
           : { coverImageUrl: input.coverImageUrl.trim() || null }),
         ...(input.tags === undefined ? {} : { tags: input.tags }),
+        ...(input.folderId === undefined ? {} : { folderId: input.folderId }),
         ...(input.status === undefined ? {} : { status: input.status }),
         updatedAt: now,
         publishedAt

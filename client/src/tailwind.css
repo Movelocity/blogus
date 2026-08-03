@@ -8,9 +8,9 @@
   --card-foreground: oklch(0.18 0.01 260);
   --primary: oklch(0.34 0.035 28);
   --primary-foreground: oklch(0.99 0.002 90);
-  --secondary: oklch(0.95 0.003 90);
+  --secondary: #a1a1a1;
   --secondary-foreground: oklch(0.18 0.01 260);
-  --muted: oklch(0.95 0.003 90);
+  --muted: #dfdfdf;
   --muted-foreground: oklch(0.48 0.015 90);
   --accent: oklch(0.57 0.21 25.9);
   --accent-foreground: oklch(0.99 0.002 90);
@@ -31,10 +31,10 @@
     --card-foreground: rgb(226, 226, 230);
     --primary: rgb(226, 226, 230);
     --primary-foreground: rgb(31, 31, 34);
-    --secondary: oklch(0.22 0.008 255);
+    --secondary: #6A7282;
     --secondary-foreground: rgb(226, 226, 230);
-    --muted: oklch(0.22 0.008 255);
-    --muted-foreground: rgb(205, 205, 211);
+    --muted: #3A3F4B;
+    --muted-foreground: rgb(5, 5, 7);
     --accent: oklch(0.62 0.2 28);
     --accent-foreground: rgb(226, 226, 230);
     --destructive: oklch(0.577 0.245 27.325);
@@ -51,11 +51,11 @@
   --foreground: rgb(31, 35, 41);
   --card: oklch(0.97 0.003 90);
   --card-foreground: oklch(0.18 0.01 260);
-  --primary: oklch(0.34 0.035 28);
+  --primary: #d7272d;
   --primary-foreground: oklch(0.99 0.002 90);
-  --secondary: oklch(0.95 0.003 90);
+  --secondary: #a1a1a1;
   --secondary-foreground: oklch(0.18 0.01 260);
-  --muted: oklch(0.95 0.003 90);
+  --muted: #f2f2f2;
   --muted-foreground: oklch(0.48 0.015 90);
   --accent: oklch(0.57 0.21 25.9);
   --accent-foreground: oklch(0.99 0.002 90);
@@ -74,9 +74,9 @@
   --card-foreground: rgb(226, 226, 230);
   --primary: rgb(226, 226, 230);
   --primary-foreground: rgb(31, 31, 34);
-  --secondary: oklch(0.22 0.008 255);
+  --secondary: #6A7282;
   --secondary-foreground: rgb(226, 226, 230);
-  --muted: oklch(0.22 0.008 255);
+  --muted: #3A3F4B;
   --muted-foreground: rgb(205, 205, 211);
   --accent: oklch(0.62 0.2 28);
   --accent-foreground: rgb(226, 226, 230);
@@ -108,10 +108,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* --radius-sm: calc(var(--radius) - 4px); */
+  /* --radius-md: calc(var(--radius) - 2px); */
+  /* --radius-lg: var(--radius); */
+  /* --radius-xl: calc(var(--radius) + 4px); */
 }
 
 @layer base {

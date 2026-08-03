@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import type { BlogPost, PostStatus, UpdatePostInput } from "@blogus/shared";
 import type { Command } from "commander";
 import { apiRequest } from "../lib/http.js";
+import { fetchFolders, resolveFolderId } from "./folder.js";
 
 const allowedStatuses = new Set<PostStatus>(["draft", "published", "archived"]);
 const allowedVisibility = new Set<string>(["draft", "published", "archived", "all"]);
@@ -40,8 +41,16 @@ export function registerPostCommands(program: Command) {
     .action(async (options: { status?: string }) => {
       const visibility = options.status ? parseVisibility(options.status) : "all";
       const result = await apiRequest<{ posts: BlogPost[] }>(`/api/posts?visibility=${visibility}`);
+      const folderNames = new Map<string, string>();
+      if (result.posts.some((item) => item.folderId)) {
+        for (const folder of await fetchFolders()) {
+          folderNames.set(folder.id, folder.name);
+        }
+      }
       for (const item of result.posts) {
-        console.log(`${item.id}\t${item.status}\t${item.slug}\t${item.title}`);
+        const folderName = item.folderId ? (folderNames.get(item.folderId) ?? "?") : "";
+        const folder = folderName ? `[${folderName}]\t` : "";
+        console.log(`${item.id}\t${item.status}\t${folder}${item.slug}\t${item.title}`);
       }
     });
 
@@ -53,8 +62,9 @@ export function registerPostCommands(program: Command) {
     .option("-e, --excerpt <excerpt>", "Post excerpt")
     .option("-c, --cover <url>", "Cover image URL")
     .option("--tags <tags>", "Comma-separated tags")
+    .option("--folder <folder>", "Folder to file the post under (one level)")
     .option("-p, --publish", "Create the post as published")
-    .action(async (options: { title: string; file?: string; excerpt?: string; cover?: string; tags?: string; publish?: boolean }) => {
+    .action(async (options: { title: string; file?: string; excerpt?: string; cover?: string; tags?: string; folder?: string; publish?: boolean }) => {
       const content = options.file ? await readFile(options.file, "utf8") : "";
       const result = await apiRequest<{ post: BlogPost }>("/api/posts", {
         method: "POST",
@@ -64,6 +74,7 @@ export function registerPostCommands(program: Command) {
           excerpt: options.excerpt,
           coverImageUrl: options.cover,
           tags: options.tags ? parseTags(options.tags) : undefined,
+          folderId: options.folder ? await resolveFolderId(options.folder) : undefined,
           status: options.publish ? "published" : "draft"
         })
       });
@@ -79,8 +90,9 @@ export function registerPostCommands(program: Command) {
     .option("-e, --excerpt <excerpt>", "Post excerpt")
     .option("-c, --cover <url>", "Cover image URL")
     .option("--tags <tags>", "Comma-separated tags")
+    .option("--folder <folder>", "Folder to file the post under; pass an empty string to remove it")
     .option("-s, --status <status>", "Post status: draft, published, archived")
-    .action(async (id: string, options: { title?: string; file?: string; excerpt?: string; cover?: string; tags?: string; status?: string }) => {
+    .action(async (id: string, options: { title?: string; file?: string; excerpt?: string; cover?: string; tags?: string; folder?: string; status?: string }) => {
       const input: UpdatePostInput = {};
 
       if (options.title) {
@@ -98,11 +110,14 @@ export function registerPostCommands(program: Command) {
       if (options.tags !== undefined) {
         input.tags = parseTags(options.tags);
       }
+      if (options.folder !== undefined) {
+        input.folderId = options.folder ? await resolveFolderId(options.folder) : null;
+      }
       if (options.status) {
         input.status = parseStatus(options.status);
       }
       if (Object.keys(input).length === 0) {
-        throw new Error("Provide at least one of --title, --file, --excerpt, --cover, --tags, or --status");
+        throw new Error("Provide at least one of --title, --file, --excerpt, --cover, --tags, --folder, or --status");
       }
 
       await apiRequest(`/api/posts/${id}`, {

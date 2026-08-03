@@ -71,7 +71,7 @@ export function LoginPage() {
           {isRegister ? "首次设置" : "管理后台"}
         </span>
         <h1 className="m-0 max-w-md font-display text-[clamp(2.75rem,5vw,4.5rem)] font-bold leading-[1.02] tracking-tight">
-          {isRegister ? "从这里开始。" : "继续写。"}
+          {isRegister ? "从这里开始。" : "Login"}
         </h1>
         <p className="m-0 hidden max-w-xs font-mono text-sm leading-6 opacity-80 lg:block">
           Keep it simple, keep it runnable.

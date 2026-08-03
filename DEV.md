@@ -25,8 +25,13 @@ make services-logs   # 查看容器日志
 make install-cli
 
 blogus-cli post list
-blogus-cli post create -t "Hello Blogus" -f ./draft.md -e "短摘要" --tags "blogus,release"
-blogus-cli post edit <post-id> --cover /uploads/2026/06/cover.png --tags "blogus,release"
+blogus-cli post create -t "Hello Blogus" -f ./draft.md -e "短摘要" --tags "blogus,release" --folder "项目札记"
+blogus-cli post edit <post-id> --cover /uploads/2026/06/cover.png --tags "blogus,release" --folder "项目札记"
+blogus-cli post edit <post-id> --folder ""   # 传空串把文章移回根目录
+blogus-cli folder list
+blogus-cli folder create "项目札记"          # post --folder 按目录名解析，需先创建
+blogus-cli folder rename <folder-id> "新名字"
+blogus-cli folder delete <folder-id>         # 组内文章自动移回根目录
 blogus-cli post publish <post-id>
 blogus-cli upload ./cover.png
 blogus-cli register -e admin@example.com -p blogus-dev-password
@@ -36,12 +41,18 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 
 修改 CLI 源码后重新执行 `make install-cli` 即可更新。
 
+## 局域网访问
+
+`make dev` 启动后，Vite 会监听 `0.0.0.0:5177`，终端里除 `Local` 外还会显示 `Network` 地址（如 `http://192.168.x.x:5177`）。同一局域网内的手机或其它设备可直接用该地址访问；API 请求仍经 Vite 代理到本机后端，无需额外暴露 `3009` 端口。
+
+开发模式下 CORS 会回显实际请求来源，因此无论用 `127.0.0.1` 还是局域网 IP 打开前端都能正常登录。
+
 ## 端口和依赖服务
 
 | 项目 | 默认值 | 说明 |
 | --- | --- | --- |
-| Web 开发服务 | `http://127.0.0.1:5177` | Vite dev server；`/api` 代理到 API 服务 |
-| API 服务 | `http://127.0.0.1:3009` | Fastify；由 `HOST`、`PORT` 配置 |
+| Web 开发服务 | `http://127.0.0.1:5177` | Vite dev server；`/api` 代理到 API 服务；启动时会同时输出局域网地址（`Network`） |
+| API 服务 | `http://127.0.0.1:3009` | Fastify；由 `HOST`、`PORT` 配置；开发模式下仅本机访问即可（浏览器经 Vite 代理） |
 | PostgreSQL | `localhost:5633` | Docker Compose 暴露；`DATABASE_URL` 默认连接这里 |
 | Redis | `localhost:6379` | 当前只记录配置，后续阶段接入更多会话/队列能力 |
 | MinIO API | `localhost:9010` | 可选；仅 `STORAGE_DRIVER=minio` 且启用 `minio` profile 时使用 |

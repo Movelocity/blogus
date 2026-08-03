@@ -1,5 +1,6 @@
 import type {
   ApiErrorResponse,
+  BlogFolder,
   BlogPost,
   CreatePostInput,
   CurrentUser,
@@ -132,6 +133,30 @@ export function updatePost(id: string, input: UpdatePostInput) {
 
 export function deletePost(id: string) {
   return request<{ ok: true }>(`/posts/${id}`, {
+    method: "DELETE"
+  });
+}
+
+export function listFolders() {
+  return request<{ folders: BlogFolder[] }>("/folders");
+}
+
+export function createFolder(name: string) {
+  return request<{ folder: BlogFolder }>("/folders", {
+    method: "POST",
+    body: JSON.stringify({ name })
+  });
+}
+
+export function renameFolder(id: string, name: string) {
+  return request<{ folder: BlogFolder }>(`/folders/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name })
+  });
+}
+
+export function deleteFolder(id: string) {
+  return request<{ ok: true }>(`/folders/${id}`, {
     method: "DELETE"
   });
 }

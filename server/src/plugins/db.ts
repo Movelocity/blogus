@@ -80,6 +80,22 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
     ALTER TABLE posts ADD COLUMN IF NOT EXISTS tags text[]
   `;
   await client`
+    CREATE TABLE IF NOT EXISTS folders (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      parent_id uuid REFERENCES folders(id) ON DELETE CASCADE,
+      name varchar(120) NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE UNIQUE INDEX IF NOT EXISTS folders_user_name_idx ON folders(user_id, name)
+  `;
+  await client`
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS folder_id uuid REFERENCES folders(id) ON DELETE SET NULL
+  `;
+  await client`
     CREATE TABLE IF NOT EXISTS post_date_events (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       post_id uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
@@ -113,7 +129,8 @@ async function seedDefaultInviteCode(client: postgres.Sql) {
 export const dbPlugin = fp(async (app) => {
   const client = postgres(config.database.url, {
     max: 10,
-    idle_timeout: 20
+    idle_timeout: 20,
+    onnotice: () => {}
   });
 
   await ensureDatabaseSchema(client);

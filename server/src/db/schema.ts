@@ -1,4 +1,5 @@
-import { date, index, integer, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { date, index, integer, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -41,6 +42,21 @@ export const authSessions = pgTable(
 );
 
 
+export const folders = pgTable(
+  "folders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id").references((): AnyPgColumn => folders.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 120 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [uniqueIndex("folders_user_name_idx").on(table.userId, table.name)]
+);
+
 export const posts = pgTable("posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: varchar("title", { length: 240 }).notNull(),
@@ -49,6 +65,7 @@ export const posts = pgTable("posts", {
   excerpt: text("excerpt"),
   coverImageUrl: text("cover_image_url"),
   tags: text("tags").array(),
+  folderId: uuid("folder_id").references(() => folders.id, { onDelete: "set null" }),
   status: varchar("status", { length: 24 }).default("draft").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

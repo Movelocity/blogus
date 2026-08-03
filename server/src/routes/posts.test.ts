@@ -36,6 +36,7 @@ class InMemoryPostRepository implements PostRepository {
       excerpt: input.excerpt,
       coverImageUrl: input.coverImageUrl,
       tags: input.tags ?? [],
+      folderId: input.folderId ?? undefined,
       status,
       createdAt: now,
       updatedAt: now,
@@ -56,6 +57,7 @@ class InMemoryPostRepository implements PostRepository {
     const updated: BlogPost = {
       ...existing,
       ...input,
+      folderId: input.folderId === undefined ? existing.folderId : input.folderId ?? undefined,
       status,
       slug:
         input.title && input.title !== existing.title
@@ -252,6 +254,31 @@ test("updates, publishes, and deletes posts", async (t) => {
   const deleteResponse = await app.inject({ method: "DELETE", url: `/api/posts/${created.id}` });
   assert.equal(deleteResponse.statusCode, 200);
   assert.deepEqual(deleteResponse.json(), { ok: true });
+});
+
+test("assigns and clears the folder of a post", async (t) => {
+  const { app } = await buildTestApp();
+  t.after(async () => app.close());
+
+  const folderId = randomUUID();
+  const createResponse = await app.inject({
+    method: "POST",
+    url: "/api/posts",
+    payload: { title: "Grouped note", folderId }
+  });
+  assert.equal(createResponse.statusCode, 201);
+  assert.equal(createResponse.json<{ post: BlogPost }>().post.folderId, folderId);
+
+  const created = createResponse.json<{ post: BlogPost }>().post;
+  const clearResponse = await app.inject({
+    method: "PATCH",
+    url: `/api/posts/${created.id}`,
+    payload: { folderId: null }
+  });
+  assert.equal(clearResponse.json<{ post: BlogPost }>().post.folderId, undefined);
+
+  const adminList = await app.inject({ method: "GET", url: "/api/posts?visibility=all" });
+  assert.equal(adminList.json<{ posts: BlogPost[] }>().posts[0]?.folderId, undefined);
 });
 
 test("returns clear 400 and 404 errors", async (t) => {

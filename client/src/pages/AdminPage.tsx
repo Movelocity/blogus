@@ -1,27 +1,42 @@
 import { Link } from "react-router";
 import { type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { BlogPost, CurrentUser, PostStatus, PostVisibility } from "@blogus/shared";
-import { createPost, deletePost, listPosts, logout, refreshSession, updatePost, uploadFile, whoami } from "../lib/api";
+import type { BlogFolder, BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
+import {
+  createFolder as createFolderApi,
+  createPost,
+  deleteFolder as deleteFolderApi,
+  deletePost,
+  listFolders,
+  listPosts,
+  logout,
+  refreshSession,
+  renameFolder as renameFolderApi,
+  updatePost,
+  uploadFile,
+  whoami,
+} from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
 import {
-  HouseSimpleIcon,
   ListIcon,
-  PlusIcon,
+  NotePencilIcon,
   SignOutIcon,
   SpinnerIcon,
   UploadIcon,
   ImageIcon,
   EyeIcon,
   PencilSimpleIcon,
-  GearSixIcon,
   CaretUpIcon,
+  CaretDownIcon,
+  CaretRightIcon,
+  FolderIcon,
+  FolderPlusIcon,
+  DotsThreeIcon,
+  SunIcon,
+  MoonIcon,
 } from "@phosphor-icons/react";
+import { useTheme } from "../hooks/useTheme";
 
 type EditorMode = "edit" | "preview";
-
-function postExcerpt(post: BlogPost) {
-  return post.excerpt ?? (post.content.slice(0, 60) || "");
-}
 
 function splitTags(input: string) {
   return input.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 12);
@@ -35,12 +50,8 @@ function statusDotClass(s: PostStatus) {
   return s === "published" ? "bg-emerald-500" : s === "archived" ? "bg-muted-foreground/30" : "bg-amber-500";
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
-}
-
 export function AdminPage() {
+  const { theme, toggle: toggleTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -55,23 +66,47 @@ export function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [filter, setFilter] = useState<PostVisibility>("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [folderMenuOpenId, setFolderMenuOpenId] = useState<string | null>(null);
+  const [folderText, setFolderText] = useState("");
+  const [folders, setFolders] = useState<BlogFolder[]>([]);
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderText, setNewFolderText] = useState("");
+  const [draggingPostId, setDraggingPostId] = useState<string | null>(null);
+  const [dropTargetFolderId, setDropTargetFolderId] = useState<string | null>(null);
+  const [rootDropActive, setRootDropActive] = useState(false);
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("blogus-admin-folders") ?? "{}");
+    } catch {
+      return {};
+    }
+  });
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const folderMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedPost = useMemo(() => posts.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
   const tags = splitTags(tagsText);
 
-  const statusCounts = useMemo(() => {
-    const c: Record<PostVisibility, number> = { all: posts.length, published: 0, draft: 0, archived: 0 };
-    for (const p of posts) c[p.status] += 1;
-    return c;
-  }, [posts]);
-
-  const filteredPosts = useMemo(
-    () => (filter === "all" ? posts : posts.filter((p) => p.status === filter)),
-    [posts, filter],
-  );
+  // 目录是独立实体（folders 表）：空目录也展示；folderId 指向他人目录的文章按未收录处理
+  const groupedPosts = useMemo(() => {
+    const byFolder = new Map<string, BlogPost[]>();
+    const unfiled: BlogPost[] = [];
+    const knownIds = new Set(folders.map((f) => f.id));
+    for (const p of posts) {
+      if (p.folderId && knownIds.has(p.folderId)) {
+        const list = byFolder.get(p.folderId) ?? [];
+        list.push(p);
+        byFolder.set(p.folderId, list);
+      } else {
+        unfiled.push(p);
+      }
+    }
+    const groups = folders.map((f) => ({ folder: f, posts: byFolder.get(f.id) ?? [] }));
+    return { groups, unfiled };
+  }, [posts, folders]);
 
   // 用户菜单打开时，点击菜单外部关闭。
   // 注意：真实鼠标事件在监听器之间会跑微任务，React 可能在同一次点击的
@@ -88,13 +123,25 @@ export function AdminPage() {
     return () => document.removeEventListener("click", onDocumentClick);
   }, [userMenuOpen]);
 
-  function loadPost(post: BlogPost) {
+  useEffect(() => {
+    if (!folderMenuOpenId) return;
+    const onDocumentClick = (e: MouseEvent) => {
+      if (folderMenuRef.current && !folderMenuRef.current.contains(e.target as Node)) {
+        setFolderMenuOpenId(null);
+      }
+    };
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, [folderMenuOpenId]);
+
+  function loadPost(post: BlogPost, folderList: BlogFolder[] = folders) {
     setSelectedId(post.id);
     setTitle(post.title);
     setContent(post.content);
     setExcerpt(post.excerpt ?? "");
     setCoverImageUrl(post.coverImageUrl ?? "");
     setTagsText(post.tags.join(", "));
+    setFolderText(post.folderId ? (folderList.find((f) => f.id === post.folderId)?.name ?? "") : "");
     setEditorMode("edit");
     setMessage(null);
     setError(null);
@@ -107,9 +154,15 @@ export function AdminPage() {
     setExcerpt("");
     setCoverImageUrl("");
     setTagsText("");
+    setFolderText("");
     setEditorMode("edit");
     setMessage(null);
     setError(null);
+  }
+
+  function startNewPostInFolder(folder: BlogFolder) {
+    startNewPost();
+    setFolderText(folder.name);
   }
 
   async function refreshPosts(nextSelectedId = selectedId) {
@@ -121,6 +174,11 @@ export function AdminPage() {
     }
   }
 
+  async function refreshFolders() {
+    const result = await listFolders();
+    setFolders(result.folders);
+  }
+
   useEffect(() => {
     (async () => {
       const refreshed = await refreshSession();
@@ -128,11 +186,12 @@ export function AdminPage() {
         setAuthChecked(true);
         return;
       }
-      Promise.all([whoami(), listPosts({ visibility: "all" })])
-        .then(([cu, result]) => {
+      Promise.all([whoami(), listPosts({ visibility: "all" }), listFolders()])
+        .then(([cu, result, folderResult]) => {
           setUser(cu.user);
+          setFolders(folderResult.folders);
           setPosts(result.posts);
-          if (result.posts[0]) loadPost(result.posts[0]);
+          if (result.posts[0]) loadPost(result.posts[0], folderResult.folders);
         })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : "加载失败"))
         .finally(() => setAuthChecked(true));
@@ -173,17 +232,29 @@ export function AdminPage() {
     );
   }
 
+  // 目录名 → folderId：已存在直接用；新名字顺手创建；空表示根目录
+  async function resolveFolderIdForSave() {
+    const name = folderText.trim();
+    if (!name) return null;
+    const existing = folders.find((f) => f.name === name);
+    if (existing) return existing.id;
+    const created = await createFolderApi(name);
+    setFolders((prev) => [...prev, created.folder].sort((a, b) => a.name.localeCompare(b.name, "zh")));
+    return created.folder.id;
+  }
+
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     setError(null);
     setSaving(true);
     try {
+      const folderId = await resolveFolderIdForSave();
       if (selectedPost) {
-        const r = await updatePost(selectedPost.id, { title, content, excerpt, coverImageUrl, tags });
+        const r = await updatePost(selectedPost.id, { title, content, excerpt, coverImageUrl, tags, folderId });
         setMessage(`已保存：${r.post.title}`);
         await refreshPosts(r.post.id);
       } else {
-        const r = await createPost({ title, content, excerpt, coverImageUrl, tags, status: "draft" });
+        const r = await createPost({ title, content, excerpt, coverImageUrl, tags, folderId, status: "draft" });
         setMessage(`草稿已创建：${r.post.title}`);
         await refreshPosts(r.post.id);
       }
@@ -264,12 +335,115 @@ export function AdminPage() {
     }
   }
 
-  const filterTabs: [PostVisibility, string][] = [
-    ["all", "全部"],
-    ["published", "已发布"],
-    ["draft", "草稿"],
-    ["archived", "已归档"],
-  ];
+  function persistCollapsed(next: Record<string, boolean>) {
+    localStorage.setItem("blogus-admin-folders", JSON.stringify(next));
+    return next;
+  }
+
+  function toggleFolder(id: string) {
+    setCollapsedFolders((prev) => persistCollapsed({ ...prev, [id]: !prev[id] }));
+  }
+
+  async function submitNewFolder() {
+    const name = newFolderText.trim();
+    setCreatingFolder(false);
+    setNewFolderText("");
+    if (!name) return;
+    setError(null);
+    try {
+      await createFolderApi(name);
+      setMessage(`目录已创建：${name}`);
+      await refreshFolders();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "创建目录失败");
+    }
+  }
+
+  async function submitRenameFolder(id: string) {
+    const folder = folders.find((f) => f.id === id);
+    const next = renameText.trim();
+    setRenamingFolderId(null);
+    if (!folder || !next || next === folder.name) return;
+    setError(null);
+    try {
+      await renameFolderApi(id, next);
+      setMessage(`目录已重命名为：${next}`);
+      await refreshFolders();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "重命名失败");
+    }
+  }
+
+  async function removeFolder(folder: BlogFolder) {
+    const count = posts.filter((p) => p.folderId === folder.id).length;
+    const hint = count > 0 ? `，其中 ${count} 篇文章将移回根目录` : "";
+    if (!window.confirm(`确认删除目录「${folder.name}」${hint}？`)) return;
+    setError(null);
+    try {
+      await deleteFolderApi(folder.id);
+      setMessage(`目录已删除：${folder.name}`);
+      await Promise.all([refreshFolders(), refreshPosts()]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "删除目录失败");
+    }
+  }
+
+  // 拖拽收录：拖到目录行 = 移入该目录；拖到列表其他位置 = 移回根目录。
+  // 用自定义 MIME 类型标识内部文章拖拽，避免和文本/文件拖拽互相干扰
+  const POST_DRAG_TYPE = "application/x-blogus-post";
+
+  function isPostDrag(e: React.DragEvent) {
+    return e.dataTransfer.types.includes(POST_DRAG_TYPE);
+  }
+
+  async function movePostToFolder(postId: string, folderId: string | null) {
+    const post = posts.find((p) => p.id === postId);
+    if (!post || (post.folderId ?? null) === folderId) return;
+    setError(null);
+    try {
+      await updatePost(postId, { folderId });
+      const name = folderId ? folders.find((f) => f.id === folderId)?.name : null;
+      setMessage(name ? `已移动到：${name}` : `已移回根目录：${post.title}`);
+      await refreshPosts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "移动失败");
+    }
+  }
+
+  function renderPostRow(post: BlogPost, indent = false) {
+    return (
+      <button
+        key={post.id}
+        onClick={() => { loadPost(post); setSidebarOpen(false); }}
+        type="button"
+        draggable
+        title={post.title || "未命名文章"}
+        onDragStart={(e) => {
+          e.dataTransfer.setData(POST_DRAG_TYPE, post.id);
+          e.dataTransfer.effectAllowed = "move";
+          setDraggingPostId(post.id);
+        }}
+        onDragEnd={() => {
+          setDraggingPostId(null);
+          setDropTargetFolderId(null);
+          setRootDropActive(false);
+        }}
+        className={`flex items-center gap-2 mb-1 rounded-md py-1.5 pr-2.5 text-left transition-colors ${indent ? "pl-7" : "pl-2.5"} ${
+          draggingPostId === post.id ? "opacity-40" : ""
+        } ${
+          post.id === selectedId
+            ? "bg-muted text-foreground"
+            : "text-foreground/80 hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <span className="min-w-0 flex-1 truncate text-sm">{post.title || "未命名文章"}</span>
+        <span
+          className={`size-1.5 shrink-0 rounded-full ${statusDotClass(post.status)}`}
+          title={statusLabel(post.status)}
+        />
+      </button>
+    );
+  }
 
   return (
     <div className="flex min-h-dvh">
@@ -277,7 +451,7 @@ export function AdminPage() {
       <button
         onClick={() => setSidebarOpen(true)}
         type="button"
-        className="fixed left-4 top-2 z-30 rounded-md border border-border bg-background p-2 shadow-sm lg:hidden"
+        className="fixed left-4 top-2 z-30 rounded-md  bg-background px-3 py-2 lg:hidden"
         aria-label="打开文章列表"
       >
         <ListIcon size={18} />
@@ -285,112 +459,253 @@ export function AdminPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-background px-4 py-4 transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
+        className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-background transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
       >
-        {/* Header row */}
-        <div className="flex items-center justify-between pb-3">
-          <Link
-            to="/"
-            className="-ml-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="回到首页"
+        {/* Brand - 点击回首页 */}
+        <Link
+          to="/"
+          className="mb-1.5 flex items-center rounded-md px-4 py-3 transition-colors w-fit"
+          aria-label="回到首页"
+        >
+          <span className="font-display text-lg font-semibold tracking-tight text-foreground">Blogus</span>
+        </Link>
+
+        {/* Nav */}
+        <nav className="flex flex-col pb-2">
+          <button
+            onClick={() => { startNewPost(); setSidebarOpen(false); }}
+            type="button"
+            className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
           >
-            <HouseSimpleIcon size={15} />
-            首页
-          </Link>
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-base font-semibold tracking-tight text-foreground">文章</h1>
-            <span className="font-mono text-xs text-muted-foreground/50">{posts.length}</span>
+            <NotePencilIcon size={17} className="shrink-0" />
+            新建文章
+          </button>
+        </nav>
+
+        {/* Section label */}
+        <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
+          <span className="text-sm text-muted-foreground">文章</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              aria-label="新建目录"
+              title="新建目录"
+              onClick={() => { setCreatingFolder(true); setNewFolderText(""); }}
+              className="rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <FolderPlusIcon size={18} />
+            </button>
+            {/* <span className="font-mono text-xs text-muted-foreground/50">{posts.length}</span> */}
           </div>
         </div>
 
-        {/* New post */}
-        <button
-          onClick={() => { startNewPost(); setSidebarOpen(false); }}
-          type="button"
-          className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        {/* Post list - 按目录分组（空目录也展示），未收录的扁平排列在组后；拖到空白处移回根目录 */}
+        <div
+          className={`flex-1 overflow-y-auto transition-colors ${
+            rootDropActive && draggingPostId ? "rounded-md bg-muted/30" : ""
+          }`}
+          onDragOver={(e) => {
+            if (!isPostDrag(e)) return;
+            e.preventDefault();
+            setRootDropActive(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setRootDropActive(false);
+          }}
+          onDrop={(e) => {
+            if (!isPostDrag(e)) return;
+            e.preventDefault();
+            const postId = e.dataTransfer.getData(POST_DRAG_TYPE);
+            setRootDropActive(false);
+            setDraggingPostId(null);
+            void movePostToFolder(postId, null);
+          }}
         >
-          <PlusIcon size={14} />
-          新建文章
-        </button>
-
-        {/* Filter row */}
-        <div className="flex gap-3 border-b border-border pb-2.5 mb-1">
-          {filterTabs.map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              type="button"
-              className={`flex items-baseline gap-1 text-sm transition-colors ${
-                filter === value ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-              <span className="font-mono text-[10px] text-muted-foreground/50">{statusCounts[value]}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Post list */}
-        <div className="-mx-1 flex-1 overflow-y-auto px-1">
-          {filteredPosts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {posts.length === 0 ? "暂无文章" : "没有匹配的文章"}
-            </p>
+          {creatingFolder ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground">
+              <FolderPlusIcon size={14} className="shrink-0" />
+              <input
+                autoFocus
+                className="min-w-0 flex-1 border-b border-foreground/40 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
+                placeholder="目录名"
+                value={newFolderText}
+                onChange={(e) => setNewFolderText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void submitNewFolder();
+                  if (e.key === "Escape") setCreatingFolder(false);
+                }}
+                onBlur={() => setCreatingFolder(false)}
+              />
+            </div>
+          ) : null}
+          {posts.length === 0 && folders.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">暂无文章</p>
           ) : (
-            <div className="flex flex-col">
-              {filteredPosts.map((post) => (
-                <button
-                  key={post.id}
-                  onClick={() => { loadPost(post); setSidebarOpen(false); }}
-                  type="button"
-                  className={`flex flex-col gap-0.5 rounded-sm border-l-2 px-2.5 py-2 text-left transition-colors ${
-                    post.id === selectedId
-                      ? "border-foreground bg-muted"
-                      : "border-transparent hover:bg-muted/60"
-                  }`}
+            <div className="flex flex-col px-3">
+              {groupedPosts.groups.map(({ folder, posts: groupPosts }) => (
+                <div
+                  key={folder.id}
+                  className="flex flex-col"
+                  onDragOver={(e) => {
+                    if (!isPostDrag(e)) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDropTargetFolderId(folder.id);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      setDropTargetFolderId((cur) => (cur === folder.id ? null : cur));
+                    }
+                  }}
+                  onDrop={(e) => {
+                    if (!isPostDrag(e)) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const postId = e.dataTransfer.getData(POST_DRAG_TYPE);
+                    setDropTargetFolderId(null);
+                    setDraggingPostId(null);
+                    void movePostToFolder(postId, folder.id);
+                  }}
                 >
-                  <span className="line-clamp-1 text-sm text-foreground">{post.title || "未命名文章"}</span>
-                  <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground/60">
-                    <span className={`size-1.5 shrink-0 rounded-full ${statusDotClass(post.status)}`} />
-                    <span className="shrink-0">{statusLabel(post.status)}</span>
-                    <span className="shrink-0 text-muted-foreground/40">{formatDate(post.updatedAt)}</span>
-                    {postExcerpt(post) ? (
-                      <span className="min-w-0 flex-1 line-clamp-1 text-muted-foreground/40">{postExcerpt(post)}</span>
-                    ) : null}
-                  </span>
-                </button>
+                  {renamingFolderId === folder.id ? (
+                    <div className="flex w-full items-center gap-1.5 px-2 py-1.5 text-muted-foreground">
+                      <FolderIcon size={14} className="shrink-0" />
+                      <input
+                        autoFocus
+                        className="min-w-0 flex-1 border-b border-foreground/40 bg-transparent text-sm text-foreground outline-none"
+                        value={renameText}
+                        onChange={(e) => setRenameText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void submitRenameFolder(folder.id);
+                          if (e.key === "Escape") setRenamingFolderId(null);
+                        }}
+                        onBlur={() => setRenamingFolderId(null)}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={`group relative flex w-full items-center rounded-lg transition-colors hover:bg-muted mb-1 ${
+                        dropTargetFolderId === folder.id ? "bg-muted ring-1 ring-inset ring-foreground/50" : ""
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleFolder(folder.id)}
+                        className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 pr-14 text-left text-foreground/80 transition-colors"
+                      >
+                        <FolderIcon size={15} className="shrink-0" />
+                        <span className="min-w-0 flex-1 truncate text-sm">{folder.name}</span>
+                      </button>
+                      <div
+                        ref={folderMenuOpenId === folder.id ? folderMenuRef : undefined}
+                        className={`absolute right-1 flex items-center gap-0.5 transition-opacity ${
+                          folderMenuOpenId === folder.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        <div className="relative">
+                          <button
+                            type="button"
+                            aria-label={`目录菜单 ${folder.name}`}
+                            aria-expanded={folderMenuOpenId === folder.id}
+                            onClick={() => setFolderMenuOpenId((id) => (id === folder.id ? null : folder.id))}
+                            className="rounded-sm p-1 text-muted-foreground/60 transition-colors hover:bg-background/80 hover:text-foreground"
+                          >
+                            <DotsThreeIcon size={14} weight="bold" />
+                          </button>
+                          {folderMenuOpenId === folder.id ? (
+                            <div className="absolute right-0 top-full z-50 mt-0.5 min-w-[7rem] rounded-md border border-border bg-background p-1 shadow-lg">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFolderMenuOpenId(null);
+                                  setRenamingFolderId(folder.id);
+                                  setRenameText(folder.name);
+                                }}
+                                className="flex w-full rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              >
+                                重命名
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFolderMenuOpenId(null);
+                                  void removeFolder(folder);
+                                }}
+                                className="flex w-full rounded-sm px-2 py-1.5 text-left text-sm text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                删除
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          aria-label={`在 ${folder.name} 中新建文章`}
+                          onClick={() => {
+                            startNewPostInFolder(folder);
+                            setSidebarOpen(false);
+                          }}
+                          className="rounded-sm p-1 text-muted-foreground/60 transition-colors hover:bg-background/80 hover:text-foreground"
+                        >
+                          <NotePencilIcon size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!collapsedFolders[folder.id] ? (
+                    <div className="flex flex-col">{groupPosts.map((post) => renderPostRow(post, true))}</div>
+                  ) : null}
+                </div>
               ))}
+              {groupedPosts.unfiled.map((post) => renderPostRow(post))}
             </div>
           )}
         </div>
 
         {/* User settings */}
         {user ? (
-          <div ref={userMenuRef} className="relative mt-2 border-t border-border pt-2">
+          <div ref={userMenuRef} className="relative border-t border-border">
             <button
               type="button"
               onClick={() => setUserMenuOpen((v) => !v)}
-              aria-label="用户设置"
+              aria-label="用户菜单"
               aria-expanded={userMenuOpen}
-              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${
+              className={`flex w-full items-center gap-2 px-4 py-3 text-left transition-colors ${
                 userMenuOpen ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <GearSixIcon size={15} className="shrink-0" />
-              <span className="min-w-0 flex-1 truncate text-xs">{user.email}</span>
-              <CaretUpIcon
-                size={12}
-                className={`shrink-0 transition-transform ${userMenuOpen ? "" : "rotate-180"}`}
-              />
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary font-mono text-xs uppercase text-gray-50">
+                {user.email.slice(0, 1)}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm">{user.email}</span>
             </button>
             {userMenuOpen ? (
-              <div className="absolute bottom-full left-0 z-50 mb-1 w-full rounded-md border border-border bg-background py-1 shadow-lg">
+              <div className="absolute bottom-full left-0 z-50 mb-2 m-[5px] w-[calc(100%-10px)] rounded-lg border border-border bg-background p-1.5 shadow-lg">
+                <div className="flex items-center gap-2 border-b border-border px-2 pb-2 pt-1">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary font-mono text-[10px] uppercase text-gray-50">
+                    {user.email.slice(0, 1)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{user.email}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
+                  className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {theme === "dark" ? (
+                    <SunIcon size={15} className="shrink-0" />
+                  ) : (
+                    <MoonIcon size={15} className="shrink-0" />
+                  )}
+                  {theme === "dark" ? "浅色模式" : "深色模式"}
+                </button>
                 <button
                   type="button"
                   onClick={() => { setUserMenuOpen(false); void handleLogout(); }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <SignOutIcon size={14} />
+                  <SignOutIcon size={15} className="shrink-0" />
                   退出登录
                 </button>
               </div>
@@ -402,7 +717,7 @@ export function AdminPage() {
       {/* Mobile backdrop */}
       {sidebarOpen ? (
         <div
-          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-20 bg-black/10 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
@@ -526,8 +841,8 @@ export function AdminPage() {
                   onChange={(e) => setTitle(e.target.value)}
                 />
 
-                {/* Excerpt + Tags side by side */}
-                <div className="grid grid-cols-[1fr_200px] gap-5 max-md:grid-cols-1">
+                {/* Excerpt + Folder + Tags side by side */}
+                <div className="grid grid-cols-[1fr_160px_200px] gap-5 max-lg:grid-cols-1">
                   <label className="flex flex-col gap-1">
                     <span className="text-xs text-muted-foreground/50">摘要</span>
                     <textarea
@@ -536,6 +851,22 @@ export function AdminPage() {
                       value={excerpt}
                       onChange={(e) => setExcerpt(e.target.value)}
                     />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground/50">目录</span>
+                    <input
+                      className="border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40"
+                      list="folder-options"
+                      maxLength={120}
+                      placeholder="未收录"
+                      value={folderText}
+                      onChange={(e) => setFolderText(e.target.value)}
+                    />
+                    <datalist id="folder-options">
+                      {folders.map((f) => (
+                        <option key={f.id} value={f.name} />
+                      ))}
+                    </datalist>
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className="text-xs text-muted-foreground/50">标签</span>

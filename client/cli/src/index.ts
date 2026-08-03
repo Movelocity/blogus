@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerFolderCommands } from "./commands/folder.js";
 import { registerPostCommands } from "./commands/post.js";
 import { registerUploadCommands } from "./commands/upload.js";
 import { SessionExpiredError } from "./lib/http.js";
@@ -13,6 +14,7 @@ program
   .version("0.1.0");
 
 registerAuthCommands(program);
+registerFolderCommands(program);
 registerPostCommands(program);
 registerUploadCommands(program);
 
