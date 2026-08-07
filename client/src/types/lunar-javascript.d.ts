@@ -16,6 +16,8 @@ declare module "lunar-javascript" {
     getMonthInChinese(): string;
     getDayInChinese(): string;
     getJieQi(): string;
+    getFestivals(): string[];
+    getOtherFestivals(): string[];
     toString(): string;
     toFullString(): string;
   }

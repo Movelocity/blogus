@@ -47,20 +47,36 @@ export function getLunarInfo(date: Date): LunarInfo {
 export function getFestivals(date: Date): FestivalInfo[] {
   const solar = Solar.fromDate(date);
   const holiday = HolidayUtil.getHoliday(solar.getYear(), solar.getMonth(), solar.getDay());
-  const festivals: FestivalInfo[] = [];
-
-  if (holiday) {
-    festivals.push({
-      name: holiday.getName(),
-      isWork: holiday.isWork()
-    });
-  }
-
   const lunar = solar.getLunar();
-  const term = lunar.getJieQi();
-  if (term) {
-    festivals.push({ name: term, isWork: false });
+  const festivals: FestivalInfo[] = [];
+  const seen = new Set<string>();
+
+  // 法定假日（调休/放假）
+  if (holiday) {
+    const name = holiday.getName();
+    seen.add(name);
+    festivals.push({ name, isWork: holiday.isWork() });
   }
+
+  // 农历传统节日（春节、中秋、端午等）
+  const lunarFestivals: string[] = lunar.getFestivals();
+  for (const name of lunarFestivals) {
+    if (!seen.has(name)) {
+      seen.add(name);
+      festivals.push({ name, isWork: false });
+    }
+  }
+
+  // 其他农历节日（元宵、七夕、重阳等）
+  const otherFestivals: string[] = lunar.getOtherFestivals();
+  for (const name of otherFestivals) {
+    if (!seen.has(name)) {
+      seen.add(name);
+      festivals.push({ name, isWork: false });
+    }
+  }
+
+  // 节气已通过 LunarInfo.term 单独展示，不再加入 festivals 避免重复
 
   return festivals;
 }
