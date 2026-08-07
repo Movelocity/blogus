@@ -1,8 +1,19 @@
-import type { ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import hljs from "highlight.js/lib/common";
 import "highlight.js/styles/github-dark.min.css";
-import katex from "katex";
-import "katex/dist/katex.min.css";
+
+// Lazy KaTeX loader - caches the import promise
+let katexPromise: Promise<typeof import("katex").default> | null = null;
+
+async function loadKaTeX() {
+  if (!katexPromise) {
+    katexPromise = Promise.all([
+      import("katex").then((mod) => mod.default),
+      import("katex/dist/katex.min.css"),
+    ]).then(([katex]) => katex);
+  }
+  return katexPromise;
+}
 
 type Alignment = "left" | "center" | "right" | null;
 
@@ -201,12 +212,51 @@ export function getHeadings(source: string): HeadingItem[] {
     .map((b) => ({ level: b.level, text: b.text, slug: slugify(b.text) }));
 }
 
-function renderKatex(tex: string, displayMode: boolean): string {
-  try {
-    return katex.renderToString(tex, { displayMode, throwOnError: false, strict: false });
-  } catch {
-    return tex;
+// KaTeX renderer component with lazy loading
+function KaTeXRenderer({ tex, displayMode }: { tex: string; displayMode: boolean }) {
+  const [html, setHtml] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    
+    loadKaTeX()
+      .then((katex) => {
+        if (cancelled) return;
+        try {
+          const rendered = katex.renderToString(tex, { 
+            displayMode, 
+            throwOnError: false, 
+            strict: false 
+          });
+          setHtml(rendered);
+        } catch {
+          setError(true);
+        } finally {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError(true);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tex, displayMode]);
+
+  if (loading) {
+    return <span className="animate-pulse bg-secondary/30 px-2 py-1 rounded">Loading...</span>;
   }
+
+  if (error) {
+    return <span className="text-destructive">{tex}</span>;
+  }
+
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function escapeHtml(text: string): string {
@@ -275,7 +325,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (inlineMath !== undefined) {
       nodes.push(
-        <span dangerouslySetInnerHTML={{ __html: renderKatex(inlineMath, false) }} key={key} />,
+        <KaTeXRenderer key={key} tex={inlineMath} displayMode={false} />,
       );
     } else if (bold !== undefined) {
       nodes.push(<strong key={key}>{bold}</strong>);
@@ -344,11 +394,9 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
 
         if (block.type === "math") {
           return (
-            <div
-              className="my-2 overflow-x-auto py-2 text-center"
-              dangerouslySetInnerHTML={{ __html: renderKatex(block.text, true) }}
-              key={key}
-            />
+            <div className="my-2 overflow-x-auto py-2 text-center" key={key}>
+              <KaTeXRenderer tex={block.text} displayMode={true} />
+            </div>
           );
         }
 
