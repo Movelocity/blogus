@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-// import { useState } from "react";
+import { IcpLink } from "../components/IcpLink";
 import { useTheme } from "../hooks/useTheme";
 
 // const marqueeItems = ["个人博客", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
@@ -182,6 +182,7 @@ export function LandingPage() {
             Blogus
           </div>
           <span>&copy; {new Date().getFullYear()} Blogus · 个人主页</span>
+          <IcpLink />
           <div className="flex gap-6">
             <Link className="transition-colors hover:text-foreground" to="/blog">
               文章
