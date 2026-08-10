@@ -58,18 +58,10 @@ export function getFestivals(date: Date): FestivalInfo[] {
     festivals.push({ name, isWork: holiday.isWork() });
   }
 
-  // 农历传统节日（春节、中秋、端午等）
+  // 农历传统节日（春节、中秋、端午、七夕、重阳等主流节日）
+  // 注意：不用 lunar.getOtherFestivals()，它包含大量冷门节日（驱傩日、天穿节、秋社等），日历上太噪
   const lunarFestivals: string[] = lunar.getFestivals();
   for (const name of lunarFestivals) {
-    if (!seen.has(name)) {
-      seen.add(name);
-      festivals.push({ name, isWork: false });
-    }
-  }
-
-  // 其他农历节日（元宵、七夕、重阳等）
-  const otherFestivals: string[] = lunar.getOtherFestivals();
-  for (const name of otherFestivals) {
     if (!seen.has(name)) {
       seen.add(name);
       festivals.push({ name, isWork: false });

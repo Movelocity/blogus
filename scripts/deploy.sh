@@ -20,9 +20,9 @@ git checkout "$TAG" >> "$LOG" 2>&1
 
 echo "Checked out $TAG ($(git rev-parse --short HEAD))" >> "$LOG"
 
-pnpm install --frozen-lockfile >> "$LOG" 2>&1
-pnpm build >> "$LOG" 2>&1
+pnpm install --frozen-lockfile >> "$LOG" 2>&1 || { echo "!!! INSTALL FAILED for $TAG at $(date)" >> "$LOG"; exit 1; }
+pnpm build >> "$LOG" 2>&1 || { echo "!!! BUILD FAILED for $TAG at $(date)" >> "$LOG"; exit 1; }
 
-pm2 restart blogus >> "$LOG" 2>&1
+pm2 restart blogus >> "$LOG" 2>&1 || { echo "!!! PM2 RESTART FAILED for $TAG at $(date)" >> "$LOG"; exit 1; }
 
 echo "=== Deploy $TAG finished at $(date) ===" >> "$LOG"

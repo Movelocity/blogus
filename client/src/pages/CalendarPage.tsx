@@ -240,13 +240,13 @@ function CalendarCell({ day, posts, isSelected, onSelect }: CalendarCellProps) {
   const isFaded = !day.isCurrentMonth;
 
   // 节假日：直接替换农历文字显示（像老黄历）
-  // 法定假日用红色，传统节日/节气用强调色
+  // 法定假日/传统节日用强调色；调休上班日不显示节日名（避免"9月20显示国庆节"的误导），只显示农历
   const legalHoliday = day.festivals.find((f) => !f.isWork);
-  const traditional = day.festivals.find((f) => f.isWork);
-  const subText = legalHoliday?.name ?? traditional?.name ?? day.lunar.term ?? day.lunar.display;
+  const workday = day.festivals.find((f) => f.isWork);
+  const subText = legalHoliday?.name ?? day.lunar.term ?? day.lunar.display;
   const subTextClass = legalHoliday
     ? "text-accent"
-    : traditional || day.lunar.term
+    : day.lunar.term
       ? "text-accent/70"
       : "text-muted-foreground";
 
