@@ -15,7 +15,13 @@ echo "=== Deploy $TAG started at $(date) ===" >> "$LOG"
 
 cd "$DEPLOY_DIR"
 
-git fetch origin --tags >> "$LOG" 2>&1
+# git fetch 在 webhook 非交互环境下反复挂死（TCP 建立但数据停滞），
+# 加超时 + 浅拉单 tag 兜底，避免 flock 卡死后续所有部署
+if ! timeout 120 git fetch origin --tags >> "$LOG" 2>&1; then
+  echo "!!! FETCH timeout/failed for $TAG, fallback to shallow tag fetch" >> "$LOG"
+  timeout 120 git fetch --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG" >> "$LOG" 2>&1 \
+    || { echo "!!! FETCH FAILED (after fallback) for $TAG at $(date)" >> "$LOG"; exit 1; }
+fi
 git checkout "$TAG" >> "$LOG" 2>&1
 
 echo "Checked out $TAG ($(git rev-parse --short HEAD))" >> "$LOG"
