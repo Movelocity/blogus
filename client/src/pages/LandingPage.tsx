@@ -7,33 +7,33 @@ import { useTheme } from "../hooks/useTheme";
 const bentoItems = [
   {
     className: "bg-[#264653] text-white md:col-span-6",
-    label: "Tab1",
-    title: "1",
-    description: "1111",
+    label: "Projects",
+    title: "个人项目",
+    description: "正在做和做完的独立开发项目，以及背后的取舍记录。",
   },
   {
     className: "bg-accent text-accent-foreground md:col-span-6",
-    label: "Tab2",
-    title: "22",
-    description: "22222",
+    label: "Notes",
+    title: "学习笔记",
+    description: "边学边记的技术笔记，主要给自己看，能帮到别人更好。",
   },
   {
     className: "bg-[#e9c46a] text-[#1a1408] md:col-span-4",
-    label: "Tab3",
-    title: "333",
-    description: "3333333",
+    label: "Toolbox",
+    title: "工具折腾",
+    description: "编辑器、CLI、自托管服务的配置与踩坑记录。",
   },
   {
     className: "bg-card text-card-foreground md:col-span-4",
-    label: "Tab4",
-    title: "4444",
-    description: "4444444444",
+    label: "Reading",
+    title: "阅读记录",
+    description: "读过的书和值得回看的文章摘记。",
   },
   {
     className: "bg-[#2a9d8f] text-white md:col-span-4",
-    label: "Tab5",
-    title: "55555",
-    description: "5555555555555",
+    label: "Timeline",
+    title: "时间线",
+    description: "按月份回看所有公开记录。",
   },
 ];
 
@@ -100,7 +100,7 @@ export function LandingPage() {
           </h1>
           <div className="mt-10 flex flex-wrap items-end justify-between gap-8">
             <p className="m-0 max-w-md text-lg leading-8 text-muted-foreground">
-              记录产品开发、工具实践、阅读和生活里的具体记录。
+              收录独立开发的作品、学习笔记和工具折腾记录。
             </p>
             <Link
               className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground shadow-[0_16px_44px_rgba(26,20,8,0.18)] transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"
@@ -117,7 +117,7 @@ export function LandingPage() {
               Collections
             </h2>
             <span className="rounded-full border border-foreground/10 px-4 py-2 text-sm font-semibold text-muted-foreground">
-              personal operating log
+              个人作品与笔记
             </span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -181,7 +181,7 @@ export function LandingPage() {
             <span className="h-2.5 w-2.5 rounded-full bg-accent" />
             Blogus
           </div>
-          <span>&copy; {new Date().getFullYear()} 自托管写作站</span>
+          <span>&copy; {new Date().getFullYear()} Blogus · 个人主页</span>
           <div className="flex gap-6">
             <Link className="transition-colors hover:text-foreground" to="/blog">
               文章
