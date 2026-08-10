@@ -1,5 +1,7 @@
 import { Link } from "react-router";
 
+const ICP_NUMBER = import.meta.env.VITE_ICP;
+
 export function Footer() {
   return (
     <footer className="border-t border-foreground/10 bg-background text-muted-foreground">
@@ -54,6 +56,16 @@ export function Footer() {
         </div>
         <div className="flex flex-col items-center justify-between gap-4 border-t border-foreground/10 py-8 md:flex-row">
           <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Blogus</p>
+          {ICP_NUMBER && (
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {ICP_NUMBER}
+            </a>
+          )}
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-accent" />
             Self-hosted
