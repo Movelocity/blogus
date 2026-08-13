@@ -365,7 +365,11 @@ function DateDetailPanel({ day, posts, onClose }: DateDetailPanelProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
-      onClick={onClose}
+      // 用 mousedown 而非 click：避免在面板内按下鼠标、拖到遮罩上松开时
+      // click 在公共祖先（遮罩）上触发导致误关面板
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       role="presentation"
     >
       {/* 遮罩 */}

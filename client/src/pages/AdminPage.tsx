@@ -69,7 +69,11 @@ function MetaDialog({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/10 p-4 sm:items-center"
-      onClick={onClose}
+      // 用 mousedown 而非 click：避免在输入框里拖选文字、松手时鼠标已在遮罩上，
+      // click 会在公共祖先（遮罩）上触发导致误关弹窗
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       role="presentation"
     >
       <div
