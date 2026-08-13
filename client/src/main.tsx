@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, lazy } from "react";
+import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { BlogLayout } from "./components/layouts/BlogLayout";
@@ -31,7 +31,20 @@ const AdminPage = lazy(() =>
   import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })),
 );
 
+// 延迟显示加载提示：chunk 在 250ms 内就绪则不显示任何 fallback，
+// 避免「加载中」一闪而过造成的视觉跳动（本地开发按需编译时尤其明显）。
+// 超过阈值才出现。fallback 一旦卸载直接消失，不做最小停留——
+// 需要它出现的场景（慢网络）本身加载就慢，再闪一次的概率很低。
 function PageLoader() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 250);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!visible) return null;
+
   return (
     <div
       aria-label="页面加载中"

@@ -110,20 +110,20 @@ function PostSkeleton() {
     <article className="mx-auto w-full min-w-0 max-w-3xl" aria-label="文章正在加载">
       <header className="grid gap-8 border-b border-foreground/10 pb-10">
         <div className="px-4 sm:px-0">
-          <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-20 animate-pulse rounded bg-muted/50" />
         </div>
-        <div className="mx-auto h-72 w-full max-w-4xl animate-pulse rounded-xl bg-muted" />
+        <div className="mx-auto h-72 w-full max-w-4xl animate-pulse rounded-xl bg-muted/50" />
         <div className="grid w-full gap-5 px-4 sm:px-0">
-          <div className="h-4 w-44 animate-pulse rounded bg-muted" />
-          <div className="h-16 w-5/6 animate-pulse rounded bg-muted" />
-          <div className="h-20 w-full animate-pulse rounded bg-secondary" />
+          <div className="h-4 w-44 animate-pulse rounded bg-muted/50" />
+          <div className="h-16 w-5/6 animate-pulse rounded bg-muted/50" />
+          <div className="h-20 w-full animate-pulse rounded bg-muted/50" />
         </div>
       </header>
       <div className="mt-6 mx-auto grid w-full max-w-3xl gap-4">
         {[0, 1, 2, 3].map((item) => (
           <div className="grid gap-2" key={item}>
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+            <div className="h-4 w-11/12 animate-pulse rounded bg-muted/50" />
           </div>
         ))}
       </div>

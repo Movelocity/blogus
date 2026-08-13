@@ -188,20 +188,20 @@ function HomeSkeleton() {
   return (
     <section className="grid gap-4" aria-label="文章正在加载">
       <div className="grid overflow-hidden border border-foreground/10 bg-card md:grid-cols-[0.95fr_1.05fr]">
-        <div className="h-64 animate-pulse bg-muted" />
+        <div className="h-64 animate-pulse bg-muted/50" />
         <div className="grid gap-4 p-8 lg:p-12">
-          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-          <div className="h-10 w-4/5 animate-pulse rounded bg-muted" />
-          <div className="h-20 w-full animate-pulse rounded bg-secondary" />
-          <div className="h-10 w-28 animate-pulse rounded-full bg-muted" />
+          <div className="h-4 w-40 animate-pulse rounded bg-muted/50" />
+          <div className="h-10 w-4/5 animate-pulse rounded bg-muted/50" />
+          <div className="h-20 w-full animate-pulse rounded bg-muted/50" />
+          <div className="h-10 w-28 animate-pulse rounded-full bg-muted/50" />
         </div>
       </div>
       <div className="grid gap-3">
         {[0, 1].map((item) => (
           <div className="border border-foreground/10 bg-card p-6" key={item}>
-            <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted" />
-            <div className="mb-3 h-7 w-2/3 animate-pulse rounded bg-muted" />
-            <div className="h-14 w-full animate-pulse rounded bg-secondary" />
+            <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted/50" />
+            <div className="mb-3 h-7 w-2/3 animate-pulse rounded bg-muted/50" />
+            <div className="h-14 w-full animate-pulse rounded bg-muted/50" />
           </div>
         ))}
       </div>

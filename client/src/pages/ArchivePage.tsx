@@ -116,12 +116,12 @@ function ArchiveSkeleton() {
     <section className="grid gap-8" aria-label="时间线正在加载">
       {[0, 1, 2].map((group) => (
         <div className="grid gap-6 md:grid-cols-[11rem_1fr]" key={group}>
-          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-32 animate-pulse rounded bg-muted/50" />
           <div className="grid gap-4">
             {[0, 1].map((item) => (
               <div className="border border-foreground/10 bg-card p-6" key={item}>
-                <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted" />
-                <div className="h-8 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="mb-3 h-4 w-36 animate-pulse rounded bg-muted/50" />
+                <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
               </div>
             ))}
           </div>
