@@ -314,6 +314,12 @@ export function AdminPage() {
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
+    await savePost();
+  }
+
+  // Ctrl/Cmd+S 快捷保存也会走这里；saving 期间重入直接忽略
+  async function savePost() {
+    if (saving) return;
     setError(null);
     setSaving(true);
     try {
@@ -332,6 +338,20 @@ export function AdminPage() {
       setSaving(false);
     }
   }
+
+  // Ctrl/Cmd+S 保存：挂在 window 上，编辑器内任何焦点位置都生效
+  const saveRef = useRef(savePost);
+  saveRef.current = savePost;
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveRef.current();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   async function changeStatus(id: string, status: PostStatus) {
     const post = posts.find((p) => p.id === id);
@@ -538,7 +558,7 @@ export function AdminPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-background transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
+        className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-sidebar transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
       >
         {/* Brand - 点击回首页 */}
         <Link
@@ -929,22 +949,22 @@ export function AdminPage() {
                 disabled={saving}
                 type="submit"
               >
-                {saving ? <SpinnerIcon size={14} className="animate-spin" /> : selectedPost ? "保存" : "创建草稿"}
+                {saving ? <SpinnerIcon size={14} className="animate-spin" /> : selectedPost ? "保存 (⌘S)" : "创建草稿"}
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto min-w-0 w-full px-6 pt-5 pb-12 lg:px-8">
+          <div className={`min-h-0 flex-1 min-w-0 w-full px-6 pt-5 lg:px-8 ${editorMode === "edit" ? "flex flex-col pb-5" : "overflow-y-auto pb-12"}`}>
             {error ? (
-              <div className="mb-4 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
+              <div className="mb-4 shrink-0 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
 
             {editorMode === "edit" ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex min-h-0 flex-1 flex-col gap-4">
                 {/* Title - bottom border only */}
                 <input
-                  className="w-full border-b border-border bg-transparent pb-3 font-display text-2xl font-semibold tracking-tight text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/30"
+                  className="w-full shrink-0 border-b border-border bg-transparent pb-3 font-display text-2xl font-semibold tracking-tight text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/30"
                   maxLength={240}
                   placeholder="标题"
                   required
@@ -953,7 +973,7 @@ export function AdminPage() {
                 />
 
                 {/* Cover + inline upload - minimal row */}
-                <div className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <label className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground">
                     <UploadIcon size={14} />
                     封面
@@ -986,9 +1006,9 @@ export function AdminPage() {
                   />
                 </div>
 
-                {/* Markdown body */}
+                {/* Markdown body：flex-1 自动填满剩余屏幕高度，内容超长时内部滚动，仍保留右下角手动拖拽 */}
                 <textarea
-                  className="min-h-[50dvh] w-full resize-y border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                  className="min-h-[120px] w-full flex-1 resize-y overflow-y-auto border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
                   ref={textareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
