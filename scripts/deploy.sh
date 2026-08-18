@@ -10,6 +10,10 @@ flock -n 200 || { echo "Deploy already in progress"; exit 0; }
 export PATH=~/.local/node/bin:$PATH
 # 禁用 pnpm 升级提示：webhook 非交互环境下 update-notifier 曾致"install 成功但退出码非 0"（v0.2.0/v0.2.1，见 docs/webhook-install-failure-triage.md）
 export NO_UPDATE_NOTIFIER=1
+# 根治：pm2 注入的 IPC channel 变量污染 deploy 子进程——NODE_CHANNEL_FD=3 指向已被 close_fds 关闭的 fd，
+# Node 启动时将其当 IPC channel 使用，fd 无效直接 abort()（SIGABRT，exit 134），install 被误判失败。
+# 实测复现：带 NODE_CHANNEL_FD=3 时 EXIT=134，unset 后 EXIT=0（v0.2.0~v0.2.2 三次 webhook 失败均因此）。
+unset NODE_CHANNEL_FD NODE_CHANNEL_SERIALIZATION_MODE NODE_APP_INSTANCE
 DEPLOY_DIR=~/projects/blogus
 LOG=~/projects/blogus/deploy.log
 
