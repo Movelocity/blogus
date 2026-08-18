@@ -1,7 +1,7 @@
 # Webhook 自动部署 install 步骤偶发失败 —— 排查交接文档
 
-> 状态：**修复已落地，待下一次真实部署验证**（根因高度收敛于 H1，deploy.sh 已上双保险）
-> 最后更新：2026-08-18（本地复核补充，见第十一节）
+> 状态：**已根治**（根因 = pm2 环境变量污染致 SIGABRT，v0.2.2 部署验证通过）
+> 最后更新：2026-08-18（根因确认，见第十二节）
 > 涉及版本：v0.2.0（首次记录）、v0.2.1（再次复现）
 > 服务器：`hollway@175.178.197.203`
 
@@ -93,6 +93,8 @@ Done in 1.8s
 | H3 | pnpm 在进程组隔离（`start_new_session=True`）+ 无 TTY 下向 stderr 写提示时被中断，退出码异常 | 与 H1 相关，机制略有不同 | 用 `setsid` 复现（见步骤 3） |
 
 > **2026-08-18 复核**：H2 基本可排除——两次失败日志均干净（无任何 install 错误输出），若环境差异导致 install 本身失败必有报错；且 deploy.sh 已自行 `export PATH`。H1 与 H3 本质是同一机制（update-notifier 在非交互会话下的缺陷），合并为一条处理，详见第十一节。
+
+> **2026-08-18 二次复核（根因确认）**：H1 **排除**——拿到真实退出码 134（SIGABRT），带 `NO_UPDATE_NOTIFIER=1` 仍失败、无升级提示也失败。真凶是 **pm2 注入的 `NODE_CHANNEL_FD` 环境变量**，详见第十二节。
 
 ## 七、下一步排查步骤（按顺序执行）
 
@@ -189,3 +191,55 @@ pnpm 官方存在多起"install 成功但退出码 1"的 issue（如 #9449、#88
 
 - 若 v0.2.2 部署时 install 又失败 → 属于旧脚本预期行为，手动补跑即可（服务器代码已切换为新 tag）。
 - v0.2.3 起跑的就是新 deploy.sh，预期不再复现；若仍失败，deploy.log 里会有 `INSTALL attempt 1 failed (exit=N)` 的真实退出码。
+
+## 十二、2026-08-18 根因确认（pm2 环境变量污染 → SIGABRT）
+
+### 1. 决定性证据链
+
+1. 重放 webhook 复现，新版脚本（含退出码采集）记录到 **`exit=134`** = 128+6 = **SIGABRT**——进程被 `abort()` 杀掉，非普通错误退出。
+2. **`NO_UPDATE_NOTIFIER=1` 下仍失败**，且无升级提示也失败（缓存窗口内）→ **H1（update-notifier）排除**，与提示无关。
+3. **重试也失败**（同一 webhook 会话内确定性失败）→ 推翻"重试等效手动补跑"的推断。
+4. `setsid` + 无 TTY + 输出重定向到文件复现实验 **EXIT=0 不复现** → 差异不在"无 TTY/新会话"本身。
+5. 对比 `/proc/<webhook-server-pid>/environ` 与登录 shell env，发现 pm2 注入：`NODE_CHANNEL_FD=3`、`NODE_CHANNEL_SERIALIZATION_MODE=json`、`NODE_APP_INSTANCE=0`。
+6. **对照实验**（同一 shell 下）：
+   - 注入 `NODE_CHANNEL_FD=3` 跑 `pnpm install` → `Aborted (core dumped)`，**EXIT=134** ✓ 复现
+   - `unset` 后跑 → **EXIT=0** ✓
+
+### 2. 根因机制
+
+```
+pm2 启动 webhook-server.py（python）
+  └─ 环境变量带 NODE_CHANNEL_FD=3 / NODE_CHANNEL_SERIALIZATION_MODE=json（pm2 的 IPC channel 变量）
+      └─ subprocess.Popen(["bash", deploy.sh])（python 默认 close_fds=True，fd 3 未继承，但环境变量照传）
+          └─ pnpm install（Node 进程看到 NODE_CHANNEL_FD=3，把不存在的 fd 3 当 IPC channel 使用）
+              └─ fd 无效 → Node 内部 fatal → abort() → SIGABRT(134)
+                  └─ deploy.sh 判定 install 失败，exit 1
+```
+
+手动 SSH 补跑环境无 `NODE_CHANNEL_*` 变量 → 一切正常。这解释了"webhook 必失败、手动必成功、重试也失败、与升级提示巧合共存"的所有现象。
+
+### 3. 修复（已落地并验证）
+
+`deploy.sh` 开头 `export PATH` 后加：
+
+```bash
+unset NODE_CHANNEL_FD NODE_CHANNEL_SERIALIZATION_MODE NODE_APP_INSTANCE
+```
+
+同时顺手根治了另一个独立历史问题：**git fetch HTTP/2 挂死**（curl 通 GitHub，git 默认 HTTP/2 25s 无响应，`-c http.version=HTTP/1.1` 立即成功）——deploy.sh 两处 fetch 均加 `-c http.version=HTTP/1.1`，服务器另设全局 `git config --global http.version HTTP/1.1` 双保险。
+
+### 4. 验证结果（v0.2.2）
+
+```
+=== Deploy v0.2.2 started at 10:57:0x ===
+... fetch(HTTP/1.1) ✓ → checkout v0.2.2 ✓ → install EXIT=0 ✓ → build 8.31s ✓ → pm2 restart ✓
+=== Deploy v0.2.2 finished at 10:58:09 AM CST 2026 ===
+```
+
+站点 HTTP 200，新文案（键盘与远方 · 技术记录与生活随笔）已生效。
+
+### 5. 备注
+
+- 第十一节的 H1 假设及"install 重试"兜底**保留**（重试对偶发仍有价值，NO_UPDATE_NOTIFIER 对 CI 环境无害），但真正根治的是 unset。
+- 服务器磁盘 deploy.sh 已通过 `git checkout 4f73b13 -- scripts/deploy.sh` 同步；后续 tag（v0.2.3+）天然包含修复。
+- 可选加固（未做）：`webhook-server.py` 的 Popen 显式传干净 env，从源头阻断 pm2 变量泄漏——涉及重启 webhook 服务，风险收益比低，暂缓。
