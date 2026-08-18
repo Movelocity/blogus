@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { IcpLink } from "./IcpLink";
+import { siteConfig } from "../config/site";
 
 export function Footer() {
   return (
@@ -9,10 +10,10 @@ export function Footer() {
           <div>
             <Link to="/" className="mb-6 inline-flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-              <span className="font-display text-2xl text-foreground">Blogus</span>
+              <span className="font-display text-2xl text-foreground">{siteConfig.name}</span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-              自托管写作平台，面向长期阅读。
+              {siteConfig.footer.blurb}
             </p>
           </div>
           <div>
@@ -54,7 +55,7 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-col items-center justify-between gap-4 border-t border-foreground/10 py-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Blogus</p>
+          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} {siteConfig.name}</p>
           <IcpLink />
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-accent" />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { useTheme } from "../hooks/useTheme";
+import { siteConfig } from "../config/site";
 
 function useScrollHide(threshold = 80) {
   const [hidden, setHidden] = useState(false);
@@ -42,7 +43,7 @@ export function Navigation() {
       <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
         <Link className="flex items-center gap-2 text-lg font-bold text-foreground" to="/">
           <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-          Blogus
+          {siteConfig.name}
         </Link>
 
         <div className="hidden items-center gap-10 md:flex">

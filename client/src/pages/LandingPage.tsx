@@ -1,41 +1,9 @@
 import { Link } from "react-router";
 import { IcpLink } from "../components/IcpLink";
 import { useTheme } from "../hooks/useTheme";
+import { siteConfig } from "../config/site";
 
 // const marqueeItems = ["个人博客", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
-
-const bentoItems = [
-  {
-    className: "bg-[#264653] text-white md:col-span-6",
-    label: "Projects",
-    title: "个人项目",
-    description: "正在做和做完的独立开发项目，以及背后的取舍记录。",
-  },
-  {
-    className: "bg-accent text-accent-foreground md:col-span-6",
-    label: "Notes",
-    title: "学习笔记",
-    description: "边学边记的技术笔记，主要给自己看，能帮到别人更好。",
-  },
-  {
-    className: "bg-[#e9c46a] text-[#1a1408] md:col-span-4",
-    label: "Toolbox",
-    title: "工具折腾",
-    description: "编辑器、CLI、自托管服务的配置与踩坑记录。",
-  },
-  {
-    className: "bg-card text-card-foreground md:col-span-4",
-    label: "Reading",
-    title: "阅读记录",
-    description: "读过的书和值得回看的文章摘记。",
-  },
-  {
-    className: "bg-[#2a9d8f] text-white md:col-span-4",
-    label: "Timeline",
-    title: "时间线",
-    description: "按月份回看所有公开记录。",
-  },
-];
 
 const noteCards = [
   {
@@ -60,7 +28,7 @@ export function LandingPage() {
         <nav className="flex h-16 items-center justify-between px-6 border-b border-border">
           <Link className="flex items-center gap-2 text-lg font-bold text-foreground" to="/">
             <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-            Blogus
+            {siteConfig.name}
           </Link>
           <div className="items-center gap-7 text-sm font-medium flex">
             {/* <Link className="text-muted-foreground transition-colors hover:text-foreground" to="/blog">
@@ -92,21 +60,21 @@ export function LandingPage() {
       <main>
         <section className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col justify-center px-6 py-20 lg:px-10">
           <h1 className="m-0 max-w-5xl font-display text-[clamp(3.5rem,5vw,6rem)] font-bold leading-[0.92] text-foreground">
-            Keep it simple,
+            {siteConfig.hero.title[0]}
             <br />
-            keep it 
-            <span className="landing-highlight relative inline-block text-accent ml-6"> runnable</span>
-            .
+            <span className="landing-highlight relative inline-block text-accent">
+              {siteConfig.hero.title[1]}
+            </span>
           </h1>
           <div className="mt-10 flex flex-wrap items-end justify-between gap-8">
             <p className="m-0 max-w-md text-lg leading-8 text-muted-foreground">
-              收录独立开发的作品、学习笔记和工具折腾记录。
+              {siteConfig.hero.tagline}
             </p>
             <Link
               className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground shadow-[0_16px_44px_rgba(26,20,8,0.18)] transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"
-              to="/blog"
+              to={siteConfig.cta.to}
             >
-              开始阅读
+              {siteConfig.cta.label}
             </Link>
           </div>
         </section>
@@ -114,14 +82,14 @@ export function LandingPage() {
         <section className="mx-auto max-w-6xl px-6 pb-20 lg:px-10">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
             <h2 className="m-0 max-w-xl font-display text-[clamp(2.2rem,5vw,4rem)] font-bold leading-none text-foreground">
-              Collections
+              {siteConfig.collections.title}
             </h2>
             <span className="rounded-full border border-foreground/10 px-4 py-2 text-sm font-semibold text-muted-foreground">
-              个人作品与笔记
+              {siteConfig.collections.subtitle}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-            {bentoItems.map((item) => (
+            {siteConfig.bentoItems.map((item) => (
               <article
                 className={`group flex min-h-60 flex-col justify-between rounded-[8px] p-7 transition-transform duration-300 hover:-translate-y-1 ${item.className}`}
                 key={item.title}
@@ -179,9 +147,9 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2 font-bold text-foreground">
             <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-            Blogus
+            {siteConfig.name}
           </div>
-          <span>&copy; {new Date().getFullYear()} Blogus · 个人主页</span>
+          <span>&copy; {new Date().getFullYear()} {siteConfig.footer.copyright}</span>
           <IcpLink />
           <div className="flex gap-6">
             <Link className="transition-colors hover:text-foreground" to="/blog">

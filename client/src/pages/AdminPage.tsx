@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { type ReactNode, type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogFolder, BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
+import { siteConfig } from "../config/site";
 import {
   createFolder as createFolderApi,
   createPost,
@@ -570,7 +571,7 @@ export function AdminPage() {
           className="mb-1.5 flex items-center rounded-md px-4 py-3 transition-colors w-fit"
           aria-label="回到首页"
         >
-          <span className="font-display text-lg font-semibold tracking-tight text-foreground">Blogus</span>
+          <span className="font-display text-lg font-semibold tracking-tight text-foreground">{siteConfig.name}</span>
         </Link>
 
         {/* Nav */}
