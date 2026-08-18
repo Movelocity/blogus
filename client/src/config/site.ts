@@ -2,7 +2,7 @@
  * 站点文案配置。
  *
  * 构建时（tsc + vite build）编译进 bundle，运行时不可改，改文案即改此文件。
- * 备案站名：键盘与远方（个人博客，分享编程技术学习记录与日常生活感悟）。
+ * 备案站名：键盘与远方（分享编程技术学习记录与日常生活感悟）。
  */
 
 export const siteConfig = {
@@ -74,7 +74,7 @@ export const siteConfig = {
   /** 页脚 */
   footer: {
     blurb: "自托管写作平台，面向长期阅读。",
-    copyright: "键盘与远方 · 个人博客",
+    copyright: "键盘与远方 · 技术记录与生活随笔",
   },
 } as const;
 

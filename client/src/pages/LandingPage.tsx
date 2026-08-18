@@ -3,7 +3,7 @@ import { IcpLink } from "../components/IcpLink";
 import { useTheme } from "../hooks/useTheme";
 import { siteConfig } from "../config/site";
 
-// const marqueeItems = ["个人博客", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
+// const marqueeItems = ["技术记录", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
 
 const noteCards = [
   {
