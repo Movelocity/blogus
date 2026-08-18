@@ -8,6 +8,8 @@ exec 200>"$LOCKFILE"
 flock -n 200 || { echo "Deploy already in progress"; exit 0; }
 
 export PATH=~/.local/node/bin:$PATH
+# 禁用 pnpm 升级提示：webhook 非交互环境下 update-notifier 曾致"install 成功但退出码非 0"（v0.2.0/v0.2.1，见 docs/webhook-install-failure-triage.md）
+export NO_UPDATE_NOTIFIER=1
 DEPLOY_DIR=~/projects/blogus
 LOG=~/projects/blogus/deploy.log
 
@@ -26,7 +28,16 @@ git checkout "$TAG" >> "$LOG" 2>&1
 
 echo "Checked out $TAG ($(git rev-parse --short HEAD))" >> "$LOG"
 
-pnpm install --frozen-lockfile >> "$LOG" 2>&1 || { echo "!!! INSTALL FAILED for $TAG at $(date)" >> "$LOG"; exit 1; }
+# install 在 webhook 非交互环境下偶发"输出完整但退出码非 0"（疑 pnpm 9.15.4 update-notifier 缺陷），重试一次；
+# 重试时处于更新检查缓存窗口内，等效手动补跑（历史手动补跑均成功）。注意 `if ! cmd` 会丢失原始退出码，用 || 采集。
+pnpm install --frozen-lockfile >> "$LOG" 2>&1 || INSTALL_EXIT=$?
+if [ -n "${INSTALL_EXIT:-}" ] && [ "$INSTALL_EXIT" -ne 0 ]; then
+  echo "!!! INSTALL attempt 1 failed for $TAG (exit=$INSTALL_EXIT) at $(date), retrying..." >> "$LOG"
+  sleep 3
+  pnpm install --frozen-lockfile >> "$LOG" 2>&1 \
+    || { echo "!!! INSTALL FAILED (after retry) for $TAG at $(date)" >> "$LOG"; exit 1; }
+fi
+unset INSTALL_EXIT
 
 # build 在 webhook 触发的非交互环境下偶发静默失败，重试一次
 if ! pnpm build >> "$LOG" 2>&1; then
