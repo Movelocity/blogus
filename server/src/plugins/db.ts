@@ -112,6 +112,25 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
   await client`
     CREATE INDEX IF NOT EXISTS post_date_events_post_id_idx ON post_date_events(post_id)
   `;
+  await client`
+    CREATE TABLE IF NOT EXISTS notes (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      date date NOT NULL,
+      content text NOT NULL DEFAULT '',
+      is_public boolean NOT NULL DEFAULT false,
+      is_archived boolean NOT NULL DEFAULT false,
+      tags text[],
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS notes_user_id_idx ON notes(user_id)
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS notes_date_idx ON notes(date)
+  `;
 }
 
 async function seedDefaultInviteCode(client: postgres.Sql) {

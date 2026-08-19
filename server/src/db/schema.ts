@@ -1,4 +1,4 @@
-import { date, index, integer, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, index, integer, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -88,5 +88,26 @@ export const postDateEvents = pgTable(
   (table) => [
     index("post_date_events_event_date_idx").on(table.eventDate),
     index("post_date_events_post_id_idx").on(table.postId)
+  ]
+);
+
+export const notes = pgTable(
+  "notes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "string" }).notNull(),
+    content: text("content").default("").notNull(),
+    isPublic: boolean("is_public").default(false).notNull(),
+    isArchived: boolean("is_archived").default(false).notNull(),
+    tags: text("tags").array(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index("notes_user_id_idx").on(table.userId),
+    index("notes_date_idx").on(table.date)
   ]
 );

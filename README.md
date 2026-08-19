@@ -102,6 +102,14 @@ scripts/      部署相关脚本
 | `PATCH /api/posts/:id` | 更新文章 |
 | `DELETE /api/posts/:id` | 删除文章 |
 | `POST /api/upload` | 上传文件 |
+| `GET /api/notes` | 笔记列表；`visibility=all|archived` 需登录，支持 `date`/`tag`/`isPublic` 过滤与分页 |
+| `GET /api/notes/:id` | 笔记详情（公开或本人） |
+| `POST /api/notes` | 创建笔记 |
+| `PATCH /api/notes/:id` | 更新笔记（本人） |
+| `PUT /api/notes/:id/archive` | 归档 / 取消归档（本人） |
+| `DELETE /api/notes/:id` | 删除笔记（本人） |
+| `GET /api/notes/calendar` | 按年月返回每天笔记密度（登录含本人私有，匿名仅公开） |
+| `GET /api/notes/search` | 搜索笔记内容与标签（登录含本人私有/归档，匿名仅公开未归档） |
 
 ## 开发文档
 

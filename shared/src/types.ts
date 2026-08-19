@@ -23,6 +23,47 @@ export interface BlogFolder {
   updatedAt: string;
 }
 
+export type NoteVisibility = "published" | "archived" | "all";
+
+export interface BlogNote {
+  id: string;
+  userId: string;
+  /** 笔记日期，YYYY-MM-DD */
+  date: string;
+  content: string;
+  isPublic: boolean;
+  isArchived: boolean;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNoteInput {
+  /** 可选，缺省用当天日期 */
+  date?: string;
+  content: string;
+  isPublic?: boolean;
+  tags?: string[];
+}
+
+export interface UpdateNoteInput {
+  date?: string;
+  content?: string;
+  isPublic?: boolean;
+  isArchived?: boolean;
+  tags?: string[];
+}
+
+export interface NoteListResult {
+  notes: BlogNote[];
+  total: number;
+}
+
+export interface NoteCalendarIndex {
+  /** date (YYYY-MM-DD) -> 当天可见笔记数 */
+  index: Record<string, number>;
+}
+
 export interface ApiErrorResponse {
   error: {
     code: string;
