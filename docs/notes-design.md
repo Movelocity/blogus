@@ -1,6 +1,6 @@
 # 笔记功能设计
 
-> 状态：后端已完成并通过真实库冒烟；前端 / CLI 待开发。
+> 状态：后端已完成并通过真实库冒烟；前端已交付（公开页 + 管理一体，轻量日历整合进笔记页）；CLI 待开发（可选）。
 > 关联交接：见团队交接文档「Blogus 笔记功能·后端交接文档」。
 
 ## 1. 背景与目标
@@ -79,11 +79,19 @@
 - `visibility` 枚举 `published | archived | all`，默认 `published`。
 - 日历 `year` 1970..2100、`month` 1..12；搜索 `keyword` 至少 1 字符。
 
-## 7. 前端规划（待开发）
+## 7. 前端实现（已交付）
 
-- 笔记公开页 + 管理页，复用 `client/src/lib/markdown.tsx` 的 `MarkdownView` 渲染 Markdown。
-- 轻量日历组件整合进笔记页：按 `GET /api/notes/calendar` 展示当月密度，点击日期筛出当日笔记。
-- 管理视图用 `visibility=all` 获取本人全部笔记；公开页走默认 `published`。
+笔记页 `client/src/pages/NotesPage.tsx`（路由 `/notes`，`BlogLayout` 内）公开 + 管理一体：登录显示编辑器与完整过滤，匿名只读公开笔记。配套组件在 `client/src/components/notes/`：
+
+- `NoteEditor.tsx`：内容 + 标签 + 公开/私密开关，草稿自动缓存到 `localStorage`，Ctrl/Cmd+S 保存；结构对齐 nextblog，颜色收敛为三色层级（网站背景 / 卡片背景 / 卡片按钮），不引入 accent/绿色。
+- `NoteCard.tsx`：查看（复用 `MarkdownView`，过长折叠/展开）/ 内联编辑 / 公开切换 / 归档 / 删除 / 复制。
+- `NoteSidebar.tsx`：轻量日历（按 `GET /api/notes/calendar` 密度着色，点日期 `?date=` 筛当日）+ 过滤（仅公开/查看归档）+ 搜索 + 标签统计。
+
+API 封装在 `client/src/lib/notes.ts`（对齐 `api.ts` 的 `request<T>` 风格）；轻量 toast 自实现于 `client/src/lib/toast.tsx`（Blogus 原本无 toast 组件）。
+
+登录态判定：先用 `refreshSession()` 探明是否已有有效会话，再 `whoami()` 取用户信息——避免匿名时直接调 `whoami()` 返回 401 触发 session-expired 跳转。
+
+过滤语义：匿名走 `published`；登录默认 `all`（本人全部，含归档），"仅显示公开"叠加 `isPublic=true`，"查看已归档"切 `archived`；搜索与日期筛选沿用后端对应参数。
 
 ## 8. CLI 规划（可选）
 
@@ -93,10 +101,12 @@
 
 - `pnpm typecheck` 通过。
 - `pnpm --filter @blogus/server build` 通过。
+- `pnpm --filter @blogus/client build` 通过（笔记页按需拆为独立 chunk）。
 - 服务端单测 21/21 全绿（含 8 个笔记用例：鉴权、公开/私有、日期/标签过滤、越权隔离、归档、日历、搜索、错误码）。
 - 真实库冒烟通过：`notes` 表经 `ensureDatabaseSchema` 在真实 Postgres 正确建出（含索引与级联外键），CRUD/越权/归档/日历/搜索/删除均验证符合预期。
+- 前端冒烟：匿名公开页渲染正常（日历/空态/导航）；登录后 CRUD/归档/日历密度/搜索/标签过滤/可见性经真实库逐项验证通过。
 
 ## 10. 待办
 
-- [ ] 前端：笔记公开页 + 管理页 + 轻量日历整合
+- [x] 前端：笔记公开页 + 管理页 + 轻量日历整合
 - [ ] `blogus-cli note` 命令（可选）

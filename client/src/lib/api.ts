@@ -40,7 +40,7 @@ function emitSessionExpired() {
   window.dispatchEvent(new CustomEvent("blogus:session-expired"));
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetchApi(path, init);
 
   if (response.status === 401 && !isAuthEntryPath(path)) {

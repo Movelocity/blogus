@@ -2,8 +2,8 @@
 
 :root {
   /* 浅色主题 */
-  --background: oklch(0.99 0.002 90);
-  --foreground: oklch(0.18 0.01 260);
+  --background: white;
+  --foreground: black;
   --card: oklch(0.97 0.003 90);
   --card-foreground: oklch(0.18 0.01 260);
   --primary: oklch(0.34 0.035 28);
@@ -51,8 +51,8 @@
 
 /* 显式浅色主题 - 覆盖系统深色偏好 */
 .light:root {
-  --background: oklch(0.99 0.002 90);
-  --foreground: rgb(31, 35, 41);
+  --background: white;
+  --foreground: black;
   --card: oklch(0.97 0.003 90);
   --card-foreground: oklch(0.18 0.01 260);
   --primary: #d7272d;

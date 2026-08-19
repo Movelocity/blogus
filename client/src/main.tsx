@@ -12,14 +12,14 @@ import "./tailwind.css";
 const LandingPage = lazy(() =>
   import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })),
 );
-const HomePage = lazy(() =>
-  import("./pages/HomePage").then((m) => ({ default: m.HomePage })),
-);
 const ArchivePage = lazy(() =>
   import("./pages/ArchivePage").then((m) => ({ default: m.ArchivePage })),
 );
 const CalendarPage = lazy(() =>
   import("./pages/CalendarPage").then((m) => ({ default: m.CalendarPage })),
+);
+const NotesPage = lazy(() =>
+  import("./pages/NotesPage").then((m) => ({ default: m.NotesPage })),
 );
 const LoginPage = lazy(() =>
   import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })),
@@ -68,9 +68,9 @@ function App() {
         <Routes>
           <Route element={<LandingPage />} path="/" />
           <Route element={<BlogLayout />}>
-            <Route element={<HomePage />} path="/blog" />
-            <Route element={<ArchivePage />} path="/archive" />
-            <Route element={<CalendarPage />} path="/calendar" />
+            <Route element={<ArchivePage />} path="/posts" />
+            <Route element={<CalendarPage />} path="/timeline" />
+            <Route element={<NotesPage />} path="/notes" />
             <Route element={<LoginPage />} path="/login" />
           </Route>
           <Route element={<PostLayout />}>

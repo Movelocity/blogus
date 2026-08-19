@@ -31,11 +31,6 @@ export function ArchivePage() {
 
   return (
     <div className="grid gap-16">
-      {/* <SectionHeader
-        eyebrow="所有公开文章"
-        title="时间线"
-        description="按发布时间整理所有公开文章。"
-      /> */}
 
       {loading ? <ArchiveSkeleton /> : null}
 
@@ -63,7 +58,7 @@ export function ArchivePage() {
                 </div>
                 <div className="grid gap-4">
                   {group.posts.map((post) => (
-                      <article key={post.id} className="hover-lift grid gap-3 border border-foreground/10 bg-card p-6 transition-all duration-300">
+                      <article key={post.id} className="hover-lift grid gap-3 border border-foreground/5 bg-card p-6 transition-all duration-300 rounded-lg">
                         <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
                           <time dateTime={getPostDate(post)}>{formatPostDate(getPostDate(post))}</time>
                           <span className="h-px w-4 bg-foreground/20" />

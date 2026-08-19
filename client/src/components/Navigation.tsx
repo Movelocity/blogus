@@ -48,9 +48,10 @@ export function Navigation() {
 
         <div className="hidden items-center gap-10 md:flex">
           {[
-            { name: "文章", to: "/blog" },
-            { name: "时间线", to: "/archive" },
-            { name: "日历", to: "/calendar" },
+            { name: "文章", to: "/posts" },
+            { name: "时间线", to: "/timeline" },
+            { name: "笔记", to: "/notes" },
+            { name: "管理", to: "/admin" },
           ].map((link) => (
             <NavLink
               key={link.to}
@@ -93,12 +94,6 @@ export function Navigation() {
               </svg>
             )}
           </button>
-          <NavLink
-            to="/admin"
-            className="text-[0.85rem] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            管理
-          </NavLink>
         </div>
 
         <button
@@ -123,12 +118,12 @@ export function Navigation() {
           isMobileMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="flex h-full flex-col px-8 pb-8 pt-28">
-          <div className="flex flex-1 flex-col justify-center gap-8">
+        <div className="flex h-full flex-col  pt-28">
+          <div className="flex flex-1 flex-col justify-center gap-8 bg-background px-6 pb-8">
             {[
-              { name: "文章", to: "/blog" },
-              { name: "时间线", to: "/archive" },
-              { name: "日历", to: "/calendar" },
+              { name: "文章", to: "/posts" },
+              { name: "时间线", to: "/timeline" },
+              { name: "笔记", to: "/notes" },
               { name: "管理", to: "/admin" },
             ].map((link, i) => (
               <NavLink
@@ -151,7 +146,7 @@ export function Navigation() {
               style={{ transitionDelay: isMobileMenuOpen ? `${3 * 75}ms` : "0ms" }}
               aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
             >
-              {theme === "dark" ? "浅色" : "深色"}
+              {theme === "dark" ? "切换到浅色" : "切换到深色"}
             </button>
           </div>
         </div>
