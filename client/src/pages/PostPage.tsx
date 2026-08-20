@@ -84,7 +84,7 @@ export function PostPage() {
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (
                 <span
-                  className="border border-foreground/10 bg-secondary px-2.5 py-1 font-mono text-xs text-muted-foreground"
+                  className="border border-foreground/10 bg-trinary px-2.5 py-1 font-mono text-xs text-muted-foreground rounded-md"
                   key={tag}
                 >
                   {tag}
