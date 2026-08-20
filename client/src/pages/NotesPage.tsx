@@ -13,7 +13,7 @@ import { ToastView, useToast } from "../lib/toast";
 import { NoteCard } from "../components/notes/NoteCard";
 import { NoteEditor } from "../components/notes/NoteEditor";
 import { NoteSidebar } from "../components/notes/NoteSidebar";
-import { SpinnerGap } from "@phosphor-icons/react";
+import { SpinnerGapIcon } from "@phosphor-icons/react";
 
 const PAGE_SIZE = 15;
 
@@ -202,16 +202,10 @@ export function NotesPage() {
           <NoteEditor onSubmit={handleCreate} loading={creating} />
         )}
 
-        {!isAuthenticated && (
-          <p className="border-l-2 border-foreground/15 px-4 py-3 text-lg text-muted-foreground">
-            这里展示公开笔记。登录后可创建、编辑自己的笔记。
-          </p>
-        )}
-
         {loading && notes.length === 0 ? (
           <div className="flex min-h-[240px] items-center justify-center">
             <span className="flex items-center gap-2.5 text-lg text-muted-foreground">
-              <SpinnerGap className="h-5 w-5 animate-spin" />
+              <SpinnerGapIcon className="h-5 w-5 animate-spin" />
               加载中...
             </span>
           </div>

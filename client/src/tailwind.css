@@ -4,7 +4,7 @@
   /* 浅色主题 */
   --background: white;
   --foreground: black;
-  --card: oklch(0.97 0.003 90);
+  --card: #fafafa;
   --card-foreground: oklch(0.18 0.01 260);
   --primary: oklch(0.34 0.035 28);
   --primary-foreground: oklch(0.99 0.002 90);
@@ -53,7 +53,7 @@
 .light:root {
   --background: white;
   --foreground: black;
-  --card: oklch(0.97 0.003 90);
+  --card: #fafafa;
   --card-foreground: oklch(0.18 0.01 260);
   --primary: #d7272d;
   --primary-foreground: oklch(0.99 0.002 90);

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  Archive,
-  CalendarBlank,
-  CaretLeft,
-  CaretRight,
-  FunnelSimple,
-  Hash,
-  MagnifyingGlass,
-  X,
+  ArchiveIcon,
+  CalendarBlankIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  FunnelSimpleIcon,
+  HashIcon,
+  MagnifyingGlassIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { getNotesCalendar } from "../../lib/notes";
 
@@ -119,12 +119,12 @@ export function NoteSidebar({
   const totalNotes = Object.values(tagStats).reduce((s, n) => s + n, 0);
 
   return (
-    <aside className="w-full space-y-4 lg:sticky lg:top-28 lg:max-h-[calc(100vh-9rem)] lg:w-[300px] lg:shrink-0 lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+    <aside className="w-full space-y-3 lg:sticky lg:top-28 lg:max-h-[calc(100vh-9rem)] lg:w-64 lg:shrink-0 lg:self-start lg:overflow-y-auto lg:overscroll-contain">
       {/* 日历 */}
-      <section className="rounded-xl border border-foreground/10 bg-card p-3.5">
-        <div className="mb-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-lg text-foreground">
-            <CalendarBlank className="h-5 w-5 text-muted-foreground" />
+      <section className="rounded-lg border border-foreground/10 p-2">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-base text-foreground">
+            <CalendarBlankIcon className="h-4 w-4 text-muted-foreground" />
             <span>
               {year}年{monthNames[month - 1]}
             </span>
@@ -132,37 +132,37 @@ export function NoteSidebar({
           <div className="flex items-center">
             <button
               onClick={goPrev}
-              className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
               aria-label="上个月"
             >
-              <CaretLeft className="h-4 w-4" />
+              <CaretLeftIcon className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={goToday}
-              className="px-2 text-base text-muted-foreground transition-colors hover:text-foreground"
+              className="px-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               title="返回今天"
             >
               今
             </button>
             <button
               onClick={goNext}
-              className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
               aria-label="下个月"
             >
-              <CaretRight className="h-4 w-4" />
+              <CaretRightIcon className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
         <div
-          className={`grid grid-cols-7 gap-0.5 transition-opacity duration-200 ${
+          className={`grid grid-cols-7 transition-opacity duration-200 ${
             calendarLoading ? "pointer-events-none opacity-50" : ""
           }`}
         >
           {weekDays.map((d) => (
             <div
               key={d}
-              className="pb-1.5 text-center font-mono text-xs tracking-widest text-muted-foreground"
+              className="pb-1 text-center font-mono text-[10px] tracking-widest text-muted-foreground"
             >
               {d}
             </div>
@@ -175,7 +175,7 @@ export function NoteSidebar({
                 key={i}
                 disabled={!cell || !hasNotes || calendarLoading}
                 onClick={() => handleDateClick(cell)}
-                className={`relative flex aspect-square items-center justify-center rounded-md text-sm transition-colors disabled:cursor-default ${
+                className={`relative flex aspect-square items-center justify-center rounded text-xs transition-colors disabled:cursor-default ${
                   isSelected
                     ? "ring-1 ring-inset ring-accent"
                     : cell?.isToday
@@ -185,7 +185,7 @@ export function NoteSidebar({
                 title={cell ? `${cell.date}: ${cell.count} 条笔记` : ""}
               >
                 <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-md ${densityClass(cell?.count ?? 0)}`}
+                  className={`flex h-6 w-6 items-center justify-center rounded ${densityClass(cell?.count ?? 0)}`}
                 >
                   {cell ? cell.day : ""}
                 </span>
@@ -197,9 +197,9 @@ export function NoteSidebar({
 
       {/* 过滤 + 搜索（仅登录） */}
       {isAuthenticated && (
-        <section className="space-y-3 rounded-xl border border-foreground/10 bg-card p-3.5">
-          <div className="flex items-center gap-2 text-lg text-foreground">
-            <FunnelSimple className="h-5 w-5 text-muted-foreground" />
+        <section className="space-y-2.5 rounded-lg border border-foreground/10 p-3">
+          <div className="flex items-center gap-1.5 text-base text-foreground">
+            <FunnelSimpleIcon className="h-4 w-4 text-muted-foreground" />
             过滤
           </div>
 
@@ -207,13 +207,13 @@ export function NoteSidebar({
             仅显示公开笔记
           </FilterButton>
           <FilterButton active={showArchivedOnly} onClick={onToggleArchived} icon>
-            <Archive className="h-4 w-4" />
+            <ArchiveIcon className="h-3.5 w-3.5" />
             查看已归档
           </FilterButton>
 
-          <div className="flex items-center gap-2">
-            <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted/50 px-3.5 py-2 text-base text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
-              <MagnifyingGlass className="h-4 w-4 shrink-0" />
+          <div className="flex items-center gap-1.5">
+            <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
+              <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0" />
               <input
                 type="text"
                 value={keyword}
@@ -227,14 +227,14 @@ export function NoteSidebar({
             </label>
             <button
               onClick={handleSearchSubmit}
-              className="flex h-9 items-center gap-1 rounded-lg bg-foreground px-3.5 text-base font-medium text-background transition-colors hover:bg-accent"
+              className="flex h-8 items-center gap-1 rounded-md bg-foreground px-3 text-sm font-medium text-background transition-colors hover:bg-accent"
             >
               搜索
             </button>
           </div>
 
           {(searchKeyword || selectedDate) && (
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {searchKeyword && (
                 <Chip onClick={() => onSearch("")} label={`搜索: ${searchKeyword}`} />
               )}
@@ -244,11 +244,11 @@ export function NoteSidebar({
 
           {/* 标签 */}
           <div className="pt-1">
-            <div className="mb-2 text-lg text-foreground">标签</div>
+            <div className="mb-1.5 text-base text-foreground">标签</div>
             {sortedTags.length === 0 ? (
-              <div className="py-2.5 text-center text-base text-muted-foreground">还没有标签</div>
+              <div className="py-2 text-center text-sm text-muted-foreground">还没有标签</div>
             ) : (
-              <div className="max-h-56 space-y-1 overflow-y-auto">
+              <div className="max-h-48 space-y-0.5 overflow-y-auto">
                 <TagRow
                   label="全部"
                   count={totalNotes}
@@ -315,7 +315,7 @@ function FilterButton({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex w-full items-center gap-2 rounded-lg px-3.5 py-2.5 text-base transition-colors ${
+      className={`flex w-full items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors ${
         active
           ? "bg-accent/15 text-accent"
           : "bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -331,10 +331,10 @@ function Chip({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 transition-colors hover:text-foreground"
+      className="flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5 transition-colors hover:text-foreground"
     >
       {label}
-      <X className="h-3.5 w-3.5" />
+      <XIcon className="h-3 w-3" />
     </button>
   );
 }
@@ -353,14 +353,14 @@ function TagRow({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-base transition-colors ${
+      className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors ${
         active
           ? "bg-accent/15 text-accent"
           : "bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       }`}
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        <Hash className="h-4 w-4 shrink-0" />
+        <HashIcon className="h-3.5 w-3.5 shrink-0" />
         <span className="truncate">{label}</span>
       </span>
       <span className="ml-1.5 font-mono text-xs opacity-75">{count}</span>

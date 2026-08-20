@@ -61,6 +61,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   const [expanded, setExpanded] = useState(false);
   const [shouldCollapse, setShouldCollapse] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!editing && contentRef.current) {
@@ -68,6 +69,18 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
       setExpanded(false);
     }
   }, [note.content, editing]);
+
+  const adjustHeight = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const max = Math.round(window.innerHeight * 0.5);
+    el.style.height = `${Math.min(el.scrollHeight, max)}px`;
+  };
+
+  useEffect(() => {
+    if (editing) adjustHeight();
+  }, [content, editing]);
 
   const startEdit = () => {
     setEditing(true);
@@ -132,22 +145,23 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   return (
     <article className="rounded-xl border border-foreground/10 bg-card transition-shadow hover:shadow-sm">
       {editing ? (
-        <div className="space-y-3.5 p-5">
+        <div className="space-y-3.5 p-2">
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="笔记内容..."
-            className="min-h-[120px] w-full resize-y rounded-lg bg-muted/40 px-4 py-3 text-xl leading-9 text-foreground outline-none ring-1 ring-transparent focus:ring-ring"
+            className="max-h-[50vh] min-h-[120px] w-full resize-none overflow-y-auto bg-transparent px-1 text-base leading-none text-foreground outline-none"
           />
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setIsPublic(!isPublic)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-base transition-colors ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors ${
                 isPublic ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground"
               }`}
             >
-              {isPublic ? <LockOpenIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4" />}
+              {isPublic ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockIcon className="h-3.5 w-3.5" />}
               {isPublic ? "公开" : "私密"}
             </button>
             <input
@@ -155,35 +169,35 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="标签，用逗号分隔"
-              className="min-w-0 flex-1 rounded-lg bg-muted/40 px-3.5 py-2 text-base text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground/60 focus:ring-ring"
+              className="min-w-0 flex-1 rounded-lg bg-muted/10 px-3 py-1 text-base text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground/60 focus:ring-ring"
             />
             <button
               onClick={cancelEdit}
-              className="flex items-center gap-2 rounded-lg bg-muted/60 px-4 py-2 text-base text-muted-foreground transition-colors hover:text-foreground"
+              className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <XIcon className="h-4 w-4" />
               取消
             </button>
             <button
               onClick={() => void saveEdit()}
-              className="flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-base font-medium text-background transition-opacity hover:opacity-85"
+              className="flex items-center gap-2 rounded-lg bg-foreground px-3 py-1 text-sm font-medium text-background transition-opacity hover:opacity-85 mr-1"
             >
               保存
             </button>
           </div>
         </div>
       ) : (
-        <div className="p-4">
+        <div className="py-2 px-3">
           {/* 头部：日期 + 状态 + 操作 */}
-          <div className="mb-2.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-base text-muted-foreground">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 text-base text-muted-foreground/70 ">
               <span className="font-mono text-sm text-muted-foreground/70">{note.date}</span>
               <span className="h-4 w-px bg-foreground/10" />
-              <span>{formatDate(note.createdAt)}</span>
+              <span className="text-sm">{formatDate(note.createdAt)}</span>
               {isOwner && !note.isPublic && (
-                <span className="flex items-center gap-1.5 text-muted-foreground/70">
+                <span className="flex items-center gap-1.5 text-sm">
                   <LockIcon className="h-4 w-4" />
-                  私密
+                  Private
                 </span>
               )}
               {note.isArchived && (
@@ -195,7 +209,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
             </div>
 
             {isOwner && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center">
                 <IconButton label="编辑" onClick={startEdit} icon={<PencilSimpleIcon className="h-4 w-4" />} />
                 <IconButton
                   label={note.isPublic ? "设为私密" : "设为公开"}
@@ -240,7 +254,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
                   : undefined
               }
             >
-              <MarkdownView content={note.content} />
+              <MarkdownView content={note.content} breaks />
             </div>
 
             {shouldCollapse && (
@@ -265,7 +279,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
 
           {/* 标签 */}
           {note.tags.length > 0 && (
-            <div className="mt-3.5 flex flex-wrap gap-2 border-t border-foreground/[0.07] pt-3.5">
+            <div className="mt-1 flex flex-wrap gap-2 border-t border-foreground/[0.07] pt-1">
               {note.tags.map((tag) => (
                 <span
                   key={tag}

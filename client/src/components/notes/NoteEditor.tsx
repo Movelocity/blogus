@@ -34,10 +34,10 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
 
   const adjustHeight = () => {
     const el = textareaRef.current;
-    if (el) {
-      el.style.height = "auto";
-      el.style.height = `${el.scrollHeight}px`;
-    }
+    if (!el) return;
+    el.style.height = "auto";
+    const max = Math.round(window.innerHeight * 0.5);
+    el.style.height = `${Math.min(el.scrollHeight, max)}px`;
   };
 
   useEffect(() => {
@@ -73,26 +73,26 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
         onKeyDown={handleKeyDown}
         placeholder="写点什么..."
         disabled={loading}
-        className="min-h-[108px] w-full resize-none bg-transparent px-5 py-4 text-xl leading-9 text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+        className="max-h-[50vh] min-h-[108px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-lg leading-7 text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
       />
 
       {/* 底部操作栏：一律用「卡片按钮」层级，不再引入 accent/绿色 */}
-      <div className="flex flex-wrap items-center gap-2.5 border-t border-foreground/10 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2.5 border-t border-foreground/10 px-2 py-2">
         <button
           onClick={() => setIsPublic(!isPublic)}
           disabled={loading}
           aria-pressed={isPublic}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-base transition-colors disabled:opacity-60 ${
+          className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors disabled:opacity-60 ${
             isPublic
               ? "bg-foreground text-background"
               : "bg-muted text-muted-foreground hover:text-foreground"
           }`}
         >
-          {isPublic ? <LockOpenIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4" />}
+          {isPublic ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockIcon className="h-3.5 w-3.5" />}
           {isPublic ? "公开" : "私密"}
         </button>
 
-        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted px-3.5 py-2 text-base text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
+        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground">
           <HashIcon className="h-4 w-4 shrink-0" />
           <input
             type="text"
@@ -100,16 +100,16 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
             onChange={(e) => setTags(e.target.value)}
             disabled={loading}
             placeholder="标签，用逗号分隔"
-            className="w-full min-w-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+            className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
           />
         </label>
 
         <button
           onClick={() => void handleSubmit()}
           disabled={!canSave}
-          className="ml-auto flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-base font-medium text-background transition-opacity enabled:hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
+          className="ml-auto flex items-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity enabled:hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <PaperPlaneTiltIcon className="h-4 w-4" />
+          <PaperPlaneTiltIcon className="h-3.5 w-3.5" />
           {loading ? "保存中..." : "保存"}
         </button>
       </div>

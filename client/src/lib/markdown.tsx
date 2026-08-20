@@ -65,7 +65,7 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function parseMarkdown(source: string) {
+function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
   const blocks: Block[] = [];
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   let i = 0;
@@ -171,7 +171,7 @@ function parseMarkdown(source: string) {
         quoteLines.push((lines[i] ?? "").replace(/^>\s?/, ""));
         i += 1;
       }
-      blocks.push({ type: "blockquote", text: quoteLines.join(" ") });
+      blocks.push({ type: "blockquote", text: quoteLines.join(options.breaks ? "\n" : " ") });
       continue;
     }
 
@@ -194,7 +194,8 @@ function parseMarkdown(source: string) {
       paragraphLines.push(cur);
       i += 1;
     }
-    blocks.push({ type: "paragraph", text: paragraphLines.join(" ") });
+    // 默认按 CommonMark 把软换行收成空格；notes 等场景用 breaks 保留行内换行
+    blocks.push({ type: "paragraph", text: paragraphLines.join(options.breaks ? "\n" : " ") });
   }
 
   return blocks;
@@ -345,8 +346,17 @@ function renderInline(text: string): ReactNode[] {
   return nodes;
 }
 
-export function MarkdownView({ content, emptyText = "暂无内容" }: { content: string; emptyText?: string }) {
-  const blocks = parseMarkdown(content);
+export function MarkdownView({
+  content,
+  emptyText = "暂无内容",
+  breaks = false,
+}: {
+  content: string;
+  emptyText?: string;
+  /** 为 true 时保留段落内的单个换行（不被 Markdown 收成空格） */
+  breaks?: boolean;
+}) {
+  const blocks = parseMarkdown(content, { breaks });
 
   if (blocks.length === 0) {
     return <p className="markdown-content m-0">{emptyText}</p>;
@@ -451,7 +461,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         if (block.type === "blockquote") {
           return (
             <blockquote
-              className="border-l-2 border-foreground/20 bg-secondary px-5 py-4"
+              className={`border-l-2 border-foreground/20 bg-secondary px-5 py-4 ${breaks ? "whitespace-pre-wrap" : ""}`}
               key={key}
             >
               {renderInline(block.text)}
@@ -460,7 +470,7 @@ export function MarkdownView({ content, emptyText = "暂无内容" }: { content:
         }
 
         return (
-          <p className="m-0 leading-8 break-all" key={key}>
+          <p className={`m-0 leading-8 break-all ${breaks ? "whitespace-pre-wrap" : ""}`} key={key}>
             {renderInline(block.text)}
           </p>
         );
