@@ -175,20 +175,13 @@ export function NoteSidebar({
                 key={i}
                 disabled={!cell || !hasNotes || calendarLoading}
                 onClick={() => handleDateClick(cell)}
-                className={`relative flex aspect-square items-center justify-center rounded text-xs transition-colors disabled:cursor-default ${
-                  isSelected
-                    ? "ring-1 ring-inset ring-accent"
-                    : cell?.isToday
-                      ? "ring-1 ring-inset ring-foreground/25"
-                      : ""
-                } ${hasNotes ? "cursor-pointer hover:brightness-95" : "text-muted-foreground/50"}`}
+                className={`m-0.5 relative flex aspect-square items-center justify-center rounded text-sm transition-colors disabled:cursor-default 
+                  ${isSelected ? "ring-1 ring-inset ring-foreground/30": ""} 
+                  ${cell?.isToday ? "bg-muted/60" : densityClass(cell?.count ?? 0)}
+                  ${hasNotes ? "cursor-pointer hover:brightness-95" : "text-muted-foreground/50"}`}
                 title={cell ? `${cell.date}: ${cell.count} 条笔记` : ""}
               >
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded ${densityClass(cell?.count ?? 0)}`}
-                >
-                  {cell ? cell.day : ""}
-                </span>
+                {cell ? cell.day : ""}
               </button>
             );
           })}

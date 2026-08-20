@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { type ReactNode, type SubmitEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, type SubmitEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { BlogFolder, BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
 import { siteConfig } from "../config/site";
 import {
@@ -17,13 +17,14 @@ import {
   whoami,
 } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
+import { SlashMenu, type TextRange } from "../components/editor/SlashMenu";
+import { ImagePrepareDialog } from "../components/editor/ImagePrepareDialog";
 import {
   ListIcon,
   NotePencilIcon,
   SignOutIcon,
   SpinnerIcon,
   UploadIcon,
-  ImageIcon,
   EyeIcon,
   PencilSimpleIcon,
   CaretUpIcon,
@@ -34,6 +35,7 @@ import {
   DotsThreeIcon,
   ArrowSquareOutIcon,
   ArrowUUpLeftIcon,
+  ArrowCounterClockwiseIcon,
   ArchiveIcon,
   TrashIcon,
   PaperPlaneTiltIcon,
@@ -106,6 +108,7 @@ export function AdminPage() {
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const pendingCaretRef = useRef<number | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -133,6 +136,7 @@ export function AdminPage() {
   const [draggingPostId, setDraggingPostId] = useState<string | null>(null);
   const [dropTargetFolderId, setDropTargetFolderId] = useState<string | null>(null);
   const [rootDropActive, setRootDropActive] = useState(false);
+  const [imageJob, setImageJob] = useState<{ file: File; range: TextRange } | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("blogus-admin-folders") ?? "{}");
@@ -296,29 +300,9 @@ export function AdminPage() {
     }
   }
 
-  if (authChecked && !user) {
-    return (
-      <div className="mx-auto grid max-w-sm gap-6 pt-8">
-        <header className="grid gap-2 text-center">
-          <h1 className="m-0 font-display text-3xl tracking-tight text-foreground">文章管理</h1>
-          <p className="m-0 text-sm text-muted-foreground">需要登录后才能访问。</p>
-        </header>
-        <div className="grid gap-4 rounded-lg border border-border bg-card p-6">
-          {message ? <p className="m-0 text-sm text-muted-foreground">{message}</p> : null}
-          {error ? <p className="m-0 font-mono text-sm text-destructive">{error}</p> : null}
-          <Link
-            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            to="/login"
-          >
-            去登录
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
+    event.stopPropagation();
     await savePost();
   }
 
@@ -344,7 +328,8 @@ export function AdminPage() {
     }
   }
 
-  // Ctrl/Cmd+S 保存：挂在 window 上，编辑器内任何焦点位置都生效
+  // Ctrl/Cmd+S 保存：挂在 window 上，编辑器内任何焦点位置都生效。
+  // 必须放在未登录 early return 之前，否则鉴权失败后 hook 数量会变少，页面白屏。
   const saveRef = useRef(savePost);
   saveRef.current = savePost;
   useEffect(() => {
@@ -357,6 +342,26 @@ export function AdminPage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useLayoutEffect(() => {
+    const pos = pendingCaretRef.current;
+    if (pos == null) return;
+    pendingCaretRef.current = null;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(pos, pos);
+  }, [content]);
+
+  useEffect(() => {
+    if (authChecked && !user) {
+      navigate("/login", { replace: true });
+    }
+  }, [authChecked, user, navigate]);
+
+  if (!authChecked || !user) {
+    return null;
+  }
 
   async function changeStatus(id: string, status: PostStatus) {
     const post = posts.find((p) => p.id === id);
@@ -396,35 +401,32 @@ export function AdminPage() {
     }
   }
 
+  function discardChanges() {
+    if (!selectedPost) return;
+    loadPost(selectedPost);
+    setMessage("已放弃未保存的修改");
+  }
+
+  function handleDiscardChanges() {
+    if (!isDirty) return;
+    if (!window.confirm("确定放弃未保存的修改？")) return;
+    discardChanges();
+  }
+
   function handleViewFrontend() {
     if (!selectedPost) return;
-    if (isDirty) {
-      window.alert("有未保存的修改，请先保存后再查看前台。");
+    if (isDirty && !window.confirm("有未保存的修改。放弃修改并查看前台？")) {
       return;
     }
+    if (isDirty) discardChanges();
     setActionMenuOpen(false);
     navigate(`/posts/${selectedPost.slug}`);
   }
 
-  async function handleInlineUpload(file: File | undefined) {
-    if (!file) return;
-    setError(null);
-    try {
-      const r = await uploadFile(file);
-      const md = `![${file.name}](${r.file.url})`;
-      const ta = textareaRef.current;
-      if (ta) {
-        const s = ta.selectionStart;
-        const e = ta.selectionEnd;
-        setContent(`${content.slice(0, s)}\n${md}\n${content.slice(e)}`);
-        requestAnimationFrame(() => ta.focus());
-      } else {
-        setContent(`${content}\n${md}\n`);
-      }
-      setMessage("图片已上传并插入正文");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "上传失败");
-    }
+  function insertMarkdown(md: string, range: TextRange) {
+    const pos = range.start + md.length;
+    pendingCaretRef.current = pos;
+    setContent((prev) => `${prev.slice(0, range.start)}${md}${prev.slice(range.end)}`);
   }
 
   async function handleCoverUpload(file: File | undefined) {
@@ -786,7 +788,7 @@ export function AdminPage() {
               <span className="min-w-0 flex-1 truncate text-sm">{user.email}</span>
             </button>
             {userMenuOpen ? (
-              <div className="absolute bottom-full left-0 z-50 mb-2 m-[5px] w-[calc(100%-10px)] rounded-xl border border-border bg-background p-1.5 shadow-lg">
+              <div className="absolute bottom-full left-0 z-50 mb-2 m-[5px] w-[calc(100%-10px)] rounded-xl border border-border bg-muted p-1.5 shadow-lg">
                 <div className="flex items-center gap-2 border-b border-border px-2 pb-2 pt-1">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary font-mono text-[10px] uppercase text-gray-50">
                     {user.email.slice(0, 1)}
@@ -937,6 +939,16 @@ export function AdminPage() {
                           </button>
                         </>
                       ) : null}
+                      {isDirty ? (
+                        <button
+                          type="button"
+                          onClick={handleDiscardChanges}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <ArrowCounterClockwiseIcon size={15} className="shrink-0" />
+                          放弃修改
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => void remove(selectedPost.id)}
@@ -950,7 +962,7 @@ export function AdminPage() {
                 </div>
               ) : null}
               <button
-                className="inline-flex h-8 min-w-[72px] items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary h-8 min-w-[72px]"
                 disabled={saving}
                 type="submit"
               >
@@ -960,7 +972,7 @@ export function AdminPage() {
           </div>
 
           {/* Content */}
-          <div className={`min-h-0 flex-1 min-w-0 w-full px-6 pt-5 lg:px-8 ${editorMode === "edit" ? "flex flex-col pb-5" : "overflow-y-auto pb-12"}`}>
+          <div className={`min-h-0 flex-1 min-w-0 w-full px-6 pt-5 lg:px-8 ${editorMode === "edit" ? "flex flex-col pb-5" : "overflow-y-auto pb-12 max-w-4xl mx-auto pb-24"}`}>
             {error ? (
               <div className="mb-4 shrink-0 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
@@ -977,17 +989,12 @@ export function AdminPage() {
                   onChange={(e) => setTitle(e.target.value)}
                 />
 
-                {/* Cover + inline upload - minimal row */}
+                {/* Cover + meta - minimal row */}
                 <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <label className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground">
                     <UploadIcon size={14} />
                     封面
                     <input accept="image/*" className="hidden" type="file" onChange={(e) => void handleCoverUpload(e.target.files?.[0])} />
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground">
-                    <ImageIcon size={14} />
-                    插图
-                    <input accept="image/*" className="hidden" type="file" onChange={(e) => void handleInlineUpload(e.target.files?.[0])} />
                   </label>
                   <button
                     type="button"
@@ -1012,13 +1019,25 @@ export function AdminPage() {
                 </div>
 
                 {/* Markdown body：flex-1 自动填满剩余屏幕高度，内容超长时内部滚动，仍保留右下角手动拖拽 */}
-                <textarea
-                  className="min-h-[120px] w-full flex-1 resize-y overflow-y-auto border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="正文 (Markdown)"
-                />
+                <div className="relative flex min-h-[120px] w-full flex-1 flex-col">
+                  <textarea
+                    className="min-h-[120px] w-full flex-1 resize-y overflow-y-auto border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                    ref={textareaRef}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="正文 (Markdown)，输入 / 插入图片或链接"
+                  />
+                  <SlashMenu
+                    textareaRef={textareaRef}
+                    value={content}
+                    paused={Boolean(imageJob)}
+                    onInsertMarkdown={(range, markdown) => insertMarkdown(markdown, range)}
+                    onPickImage={(file, range) => {
+                      setError(null);
+                      setImageJob({ file, range });
+                    }}
+                  />
+                </div>
               </div>
             ) : (
               <article className="pb-12">
@@ -1056,6 +1075,19 @@ export function AdminPage() {
             onChange={(e) => setExcerpt(e.target.value)}
           />
         </MetaDialog>
+
+        {imageJob ? (
+          <ImagePrepareDialog
+            file={imageJob.file}
+            onClose={() => setImageJob(null)}
+            onInsert={async (output) => {
+              const r = await uploadFile(output);
+              insertMarkdown(`![${output.name}](${r.file.url})`, imageJob.range);
+              setImageJob(null);
+              setMessage("图片已上传并插入正文");
+            }}
+          />
+        ) : null}
 
         <MetaDialog
           open={metaDialog === "tags"}

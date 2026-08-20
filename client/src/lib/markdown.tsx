@@ -299,7 +299,7 @@ function renderInline(text: string): ReactNode[] {
     if (full!.startsWith("![")) {
       nodes.push(
         isSafeUrl(url!) ? (
-          <img alt={label} className="my-6 max-h-[560px] w-full object-contain rounded-xl shadow-sm" key={key} src={url} />
+          <img alt={label} className="my-6 max-h-[560px] object-contain rounded-xl shadow-sm" key={key} src={url} />
         ) : (
           label
         ),
@@ -308,7 +308,7 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(
         isSafeUrl(url) ? (
           <a
-            className="font-medium underline underline-offset-4 transition-colors hover:text-accent"
+            className="font-base hover:underline underline-offset-4 transition-colors hover:text-accent"
             href={url}
             key={key}
           >
@@ -320,7 +320,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (code !== undefined) {
       nodes.push(
-        <code className="bg-secondary/30 px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
+        <code className="bg-secondary/20 rounded-md px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
           {code}
         </code>,
       );
@@ -461,7 +461,7 @@ export function MarkdownView({
         if (block.type === "blockquote") {
           return (
             <blockquote
-              className={`border-l-2 border-foreground/20 bg-secondary px-5 py-4 ${breaks ? "whitespace-pre-wrap" : ""}`}
+              className={`border-l-4 border-foreground/20 bg-trinary px-5 py-4 rounded-lg ${breaks ? "whitespace-pre-wrap" : ""}`}
               key={key}
             >
               {renderInline(block.text)}

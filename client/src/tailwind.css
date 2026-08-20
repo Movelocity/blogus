@@ -12,6 +12,8 @@
   --secondary-foreground: oklch(0.18 0.01 260);
   --muted: #dfdfdf;
   --muted-foreground: oklch(0.48 0.015 90);
+  --trinary: #f5f5f5;
+  --trinary-foreground: black;
   --accent: oklch(0.57 0.21 25.9);
   --accent-foreground: oklch(0.99 0.002 90);
   --destructive: oklch(0.577 0.245 27.325);
@@ -35,6 +37,8 @@
     --primary-foreground: rgb(31, 31, 34);
     --secondary: #6A7282;
     --secondary-foreground: rgb(226, 226, 230);
+    --trinary: #3A3F4B;
+    --trinary-foreground: rgb(226, 226, 230);
     --muted: #3A3F4B;
     --muted-foreground: rgb(5, 5, 7);
     --accent: oklch(0.62 0.2 28);
@@ -59,6 +63,8 @@
   --primary-foreground: oklch(0.99 0.002 90);
   --secondary: #a1a1a1;
   --secondary-foreground: oklch(0.18 0.01 260);
+  --trinary: #f5f5f5;
+  --trinary-foreground: black;
   --muted: #f2f2f2;
   --muted-foreground: oklch(0.48 0.015 90);
   --accent: oklch(0.57 0.21 25.9);
@@ -81,6 +87,8 @@
   --primary-foreground: rgb(31, 31, 34);
   --secondary: #6A7282;
   --secondary-foreground: rgb(226, 226, 230);
+  --trinary: #3A3F4B;
+  --trinary-foreground: rgb(226, 226, 230);
   --muted: #3A3F4B;
   --muted-foreground: rgb(205, 205, 211);
   --accent: oklch(0.62 0.2 28);
@@ -105,6 +113,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-trinary: var(--trinary);
+  --color-trinary-foreground: var(--trinary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -200,6 +210,13 @@ pre code.hljs {
 }
 .katex {
   font-size: 1.05em;
+}
+
+@layer components {
+  /* 主操作按钮：保存 / 插入 / 确认 等 CTA，替代 bg-foreground 实心黑钮 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60;
+  }
 }
 
 @layer utilities {

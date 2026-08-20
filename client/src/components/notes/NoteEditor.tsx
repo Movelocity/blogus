@@ -65,7 +65,7 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
 
   return (
     // 卡片背景：编辑器是一个卡片，浮在网站背景之上
-    <section className="rounded-xl border border-foreground/10 bg-card">
+    <section className="rounded-xl border border-foreground/20">
       <textarea
         ref={textareaRef}
         value={content}
@@ -73,7 +73,7 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
         onKeyDown={handleKeyDown}
         placeholder="写点什么..."
         disabled={loading}
-        className="max-h-[50vh] min-h-[108px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-lg leading-7 text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+        className="max-h-[50vh] min-h-[108px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-lg leading-base text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
       />
 
       {/* 底部操作栏：一律用「卡片按钮」层级，不再引入 accent/绿色 */}
@@ -82,17 +82,17 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
           onClick={() => setIsPublic(!isPublic)}
           disabled={loading}
           aria-pressed={isPublic}
-          className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors disabled:opacity-60 ${
+          className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors disabled:opacity-60 text-muted-foreground ${
             isPublic
-              ? "bg-foreground text-background"
-              : "bg-muted text-muted-foreground hover:text-foreground"
+              ? "bg-muted/60"
+              : ""
           }`}
         >
           {isPublic ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockIcon className="h-3.5 w-3.5" />}
           {isPublic ? "公开" : "私密"}
         </button>
 
-        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground">
+        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg focus-within:bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground">
           <HashIcon className="h-4 w-4 shrink-0" />
           <input
             type="text"
@@ -107,7 +107,7 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
         <button
           onClick={() => void handleSubmit()}
           disabled={!canSave}
-          className="ml-auto flex items-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity enabled:hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-primary ml-auto gap-2 px-3 py-1.5"
         >
           <PaperPlaneTiltIcon className="h-3.5 w-3.5" />
           {loading ? "保存中..." : "保存"}

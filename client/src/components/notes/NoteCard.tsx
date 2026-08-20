@@ -43,7 +43,7 @@ function formatDate(dateString: string): string {
 
 function splitTags(input: string): string[] {
   return input
-    .split(",")
+    .split(/[,，]/) // 支持英文逗号和中文逗号分割
     .map((t) => t.trim())
     .filter(Boolean)
     .slice(0, 12);
@@ -143,7 +143,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   };
 
   return (
-    <article className="rounded-xl border border-foreground/10 bg-card transition-shadow hover:shadow-sm">
+    <article className="rounded-xl border border-foreground/20 transition-shadow hover:shadow-sm">
       {editing ? (
         <div className="space-y-3.5 p-2">
           <textarea
@@ -152,13 +152,13 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="笔记内容..."
-            className="max-h-[50vh] min-h-[120px] w-full resize-none overflow-y-auto bg-transparent px-1 text-base leading-none text-foreground outline-none"
+            className="max-h-[50vh] min-h-[120px] w-full resize-none overflow-y-auto bg-transparent px-1 text-base leading-base text-foreground outline-none"
           />
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setIsPublic(!isPublic)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors ${
-                isPublic ? "bg-foreground text-background" : "bg-muted/60 text-muted-foreground"
+              className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors text-muted-foreground ${
+                isPublic ? "bg-muted/60" : ""
               }`}
             >
               {isPublic ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockIcon className="h-3.5 w-3.5" />}
@@ -169,7 +169,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="标签，用逗号分隔"
-              className="min-w-0 flex-1 rounded-lg bg-muted/10 px-3 py-1 text-base text-foreground outline-none ring-1 ring-transparent placeholder:text-muted-foreground/60 focus:ring-ring"
+              className="min-w-0 flex-1 rounded-lg px-3 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground/60 focus-within:bg-muted/40"
             />
             <button
               onClick={cancelEdit}
@@ -260,7 +260,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
             {shouldCollapse && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="mt-2.5 flex items-center gap-1.5 text-base text-muted-foreground transition-colors hover:text-foreground"
+                className="flex items-center gap-1.5 text-base text-muted-foreground transition-colors hover:text-foreground"
               >
                 {expanded ? (
                   <>
