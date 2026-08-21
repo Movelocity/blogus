@@ -29,6 +29,10 @@ export function formatPostMonth(value: string) {
   return Number.isNaN(date.getTime()) ? "未归档" : monthFormatter.format(date);
 }
 
+export function countContentChars(content: string) {
+  return content.replace(/\s/g, "").length;
+}
+
 export function estimateReadingMinutes(content: string) {
   const normalized = content.trim();
   if (!normalized) {

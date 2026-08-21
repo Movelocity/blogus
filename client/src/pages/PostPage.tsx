@@ -76,7 +76,7 @@ export function PostPage() {
           {post.coverImageUrl ? (
             <img
               alt=""
-              className="mx-auto max-h-[420px] w-full max-w-4xl rounded-xl border border-foreground/10 object-cover"
+              className="mx-auto aspect-video w-full rounded-xl border border-foreground/10 object-cover"
               src={post.coverImageUrl}
             />
           ) : null}
@@ -99,7 +99,7 @@ export function PostPage() {
       </header>
 
       <div className="mt-6 mx-auto w-full min-w-0 min-h-[60vh]">
-        <MarkdownView content={post.content} />
+        <MarkdownView content={post.content} underlineH1 />
       </div>
     </article>
   );
@@ -112,7 +112,7 @@ function PostSkeleton() {
         <div className="px-4 sm:px-0">
           <div className="h-4 w-20 animate-pulse rounded bg-muted/50" />
         </div>
-        <div className="mx-auto h-72 w-full max-w-4xl animate-pulse rounded-xl bg-muted/50" />
+        <div className="mx-auto aspect-video w-full animate-pulse rounded-xl bg-muted/50" />
         <div className="grid w-full gap-5 px-4 sm:px-0">
           <div className="h-4 w-44 animate-pulse rounded bg-muted/50" />
           <div className="h-16 w-5/6 animate-pulse rounded bg-muted/50" />

@@ -68,6 +68,7 @@ export function ArchivePage() {
                           <Link
                             className="transition-colors duration-300 hover:text-muted-foreground"
                             to={`/posts/${post.slug}`}
+                            rel="noreferrer"
                           >
                             {post.title}
                           </Link>

@@ -9,6 +9,21 @@
     />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <title>伟康技术小站 · 技术记录与生活随笔</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.classList.toggle("dark", theme === "dark");
+          document.documentElement.classList.toggle("light", theme === "light");
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* 与 useTheme 的 html.dark / html.light 对齐；否则 dark: 会跟系统 prefers-color-scheme，
+   站点浅色、系统深色时日历等组件仍会套上 dark: 文字色 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* 浅色主题 */
   --background: white;
@@ -216,6 +220,43 @@ pre code.hljs {
   /* 主操作按钮：保存 / 插入 / 确认 等 CTA，替代 bg-foreground 实心黑钮 */
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg bg-muted/60 px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  /* range：浅色轨道 + 主题色的 muted 滑块，避免 accent-foreground 在浅色模式变成纯黑 */
+  .range-muted {
+    appearance: none;
+    height: 1.25rem;
+    cursor: pointer;
+    background: transparent;
+    accent-color: color-mix(in oklab, var(--primary) 40%, var(--muted));
+  }
+  .range-muted::-webkit-slider-runnable-track {
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+  .range-muted::-webkit-slider-thumb {
+    appearance: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: -0.3125rem;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--primary) 40%, var(--muted));
+  }
+  .range-muted::-moz-range-track {
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--muted);
+  }
+  .range-muted::-moz-range-thumb {
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--primary) 40%, var(--muted));
   }
 }
 

@@ -4,11 +4,11 @@ import {
   CalendarBlankIcon,
   CaretLeftIcon,
   CaretRightIcon,
-  FunnelSimpleIcon,
   HashIcon,
   MagnifyingGlassIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import { cn } from "../../lib/cn";
 import { getNotesCalendar } from "../../lib/notes";
 
 const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
@@ -39,11 +39,17 @@ interface DayCell {
   isToday: boolean;
 }
 
-function densityClass(count: number): string {
+function densityClass(count: number, isToday: boolean): string {
+  if (isToday) {
+    if (count <= 0) return "bg-red-500/15 text-red-600 dark:bg-red-500/15 dark:text-red-400";
+    if (count === 1) return "bg-red-500/25 text-red-700 dark:bg-red-500/25 dark:text-red-300";
+    return "bg-red-500/40 text-red-800 dark:bg-red-500/40 dark:text-red-200";
+  }
   if (count <= 0) return "";
-  if (count === 1) return "bg-accent/20 text-accent";
-  if (count <= 3) return "bg-accent/40 text-accent-foreground";
-  return "bg-accent text-accent-foreground";
+  if (count === 1) return "bg-gray-300/20 text-gray-700 dark:bg-gray-500/20  dark:text-gray-400";
+  if (count <= 3) return "bg-gray-300/40 text-gray-700 dark:bg-gray-500/40  dark:text-gray-400";
+  if (count <= 6) return "bg-gray-300/60 text-gray-700 dark:bg-gray-500/60  dark:text-gray-400";
+  return "bg-gray-300/80 text-gray-700 dark:bg-gray-600/80  dark:text-gray-400";
 }
 
 /**
@@ -155,9 +161,10 @@ export function NoteSidebar({
         </div>
 
         <div
-          className={`grid grid-cols-7 transition-opacity duration-200 ${
-            calendarLoading ? "pointer-events-none opacity-50" : ""
-          }`}
+          className={cn(
+            "grid grid-cols-7 transition-opacity duration-200",
+            calendarLoading && "pointer-events-none opacity-50",
+          )}
         >
           {weekDays.map((d) => (
             <div
@@ -175,10 +182,11 @@ export function NoteSidebar({
                 key={i}
                 disabled={!cell || !hasNotes || calendarLoading}
                 onClick={() => handleDateClick(cell)}
-                className={`m-0.5 relative flex aspect-square items-center justify-center rounded text-sm transition-colors disabled:cursor-default 
-                  ${isSelected ? "ring-1 ring-inset ring-foreground/30": ""} 
-                  ${cell?.isToday ? "bg-muted/60" : densityClass(cell?.count ?? 0)}
-                  ${hasNotes ? "cursor-pointer hover:brightness-95" : "text-muted-foreground/50"}`}
+                className={cn(
+                  "relative m-[1px] flex aspect-square items-center justify-center rounded text-sm transition-colors disabled:cursor-default",
+                  cell && densityClass(cell.count, cell.isToday),
+                  isSelected && "ring-1 ring-inset ring-foreground/30",
+                )}
                 title={cell ? `${cell.date}: ${cell.count} 条笔记` : ""}
               >
                 {cell ? cell.day : ""}
@@ -190,23 +198,9 @@ export function NoteSidebar({
 
       {/* 过滤 + 搜索（仅登录） */}
       {isAuthenticated && (
-        <section className="space-y-2.5 rounded-lg border border-foreground/10 p-3">
-          <div className="flex items-center gap-1.5 text-base text-foreground">
-            <FunnelSimpleIcon className="h-4 w-4 text-muted-foreground" />
-            过滤
-          </div>
-
-          <FilterButton active={showPublicOnly} onClick={onTogglePublic}>
-            仅显示公开笔记
-          </FilterButton>
-          <FilterButton active={showArchivedOnly} onClick={onToggleArchived} icon>
-            <ArchiveIcon className="h-3.5 w-3.5" />
-            查看已归档
-          </FilterButton>
-
+        <section className="space-y-3 rounded-lg border border-foreground/10 p-2.5">
           <div className="flex items-center gap-1.5">
-            <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
-              <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0" />
+            <label className="flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md bg-muted/50 px-2.5 text-sm text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
               <input
                 type="text"
                 value={keyword}
@@ -214,42 +208,52 @@ export function NoteSidebar({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearchSubmit();
                 }}
-                placeholder="搜索笔记..."
+                placeholder="搜索笔记"
                 className="w-full min-w-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground/60"
               />
             </label>
             <button
               onClick={handleSearchSubmit}
-              className="flex h-8 items-center gap-1 rounded-md bg-foreground px-3 text-sm font-medium text-background transition-colors hover:bg-accent"
+              title="搜索"
+              aria-label="搜索"
+              className="btn-secondary h-8 w-8 px-0"
             >
-              搜索
+              <MagnifyingGlassIcon className="h-3.5 w-3.5" />
             </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            <FilterButton active={showPublicOnly} onClick={onTogglePublic}>
+              公开
+            </FilterButton>
+            <FilterButton active={showArchivedOnly} onClick={onToggleArchived}>
+              <ArchiveIcon className="h-3.5 w-3.5" />
+              归档
+            </FilterButton>
           </div>
 
           {(searchKeyword || selectedDate) && (
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {searchKeyword && (
-                <Chip onClick={() => onSearch("")} label={`搜索: ${searchKeyword}`} />
+                <Chip onClick={() => onSearch("")} label={searchKeyword} />
               )}
-              {selectedDate && <Chip onClick={() => onSelectDate(undefined)} label={`日期: ${selectedDate}`} />}
+              {selectedDate && <Chip onClick={() => onSelectDate(undefined)} label={selectedDate} />}
             </div>
           )}
 
-          {/* 标签 */}
-          <div className="pt-1">
-            <div className="mb-1.5 text-base text-foreground">标签</div>
+          <div>
             {sortedTags.length === 0 ? (
               <div className="py-2 text-center text-sm text-muted-foreground">还没有标签</div>
             ) : (
-              <div className="max-h-48 space-y-0.5 overflow-y-auto">
-                <TagRow
+              <div className="flex flex-wrap gap-1.5">
+                <TagChip
                   label="全部"
                   count={totalNotes}
                   active={!selectedTag}
                   onClick={() => onSelectTag(undefined)}
                 />
                 {sortedTags.map(([tag, count]) => (
-                  <TagRow
+                  <TagChip
                     key={tag}
                     label={tag}
                     count={count}
@@ -297,24 +301,21 @@ function FilterButton({
   active,
   onClick,
   children,
-  icon = false,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
-  icon?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`flex w-full items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors ${
+      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors ${
         active
-          ? "bg-accent/15 text-accent"
+          ? "bg-primary text-primary-foreground"
           : "bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       }`}
     >
-      {active && <span className="mr-0.5">✓</span>}
       {children}
     </button>
   );
@@ -332,7 +333,7 @@ function Chip({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function TagRow({
+function TagChip({
   label,
   count,
   active,
@@ -346,17 +347,15 @@ function TagRow({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors ${
+      className={`inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-sm transition-colors ${
         active
-          ? "bg-accent/15 text-accent"
+          ? "bg-primary/80 text-primary-foreground"
           : "bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       }`}
     >
-      <span className="flex min-w-0 items-center gap-1.5">
-        <HashIcon className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{label}</span>
-      </span>
-      <span className="ml-1.5 font-mono text-xs opacity-75">{count}</span>
+      <HashIcon className="h-3 w-3 shrink-0 opacity-70" />
+      <span className="truncate">{label}</span>
+      <span className="font-mono text-[11px] opacity-70">{count}</span>
     </button>
   );
 }

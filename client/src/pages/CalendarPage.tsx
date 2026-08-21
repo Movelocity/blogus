@@ -440,6 +440,7 @@ function DateDetailPanel({ day, posts, onClose }: DateDetailPanelProps) {
                 <li key={post.id}>
                   <Link
                     to={`/posts/${post.slug}`}
+                    rel="noreferrer"
                     className="group flex items-baseline gap-3 py-3"
                     onClick={onClose}
                   >

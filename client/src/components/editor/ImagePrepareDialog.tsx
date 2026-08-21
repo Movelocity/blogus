@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { SpinnerIcon } from "@phosphor-icons/react";
 import {
   canvasSupportsMime,
+  coverCropRect,
   encodeImage,
   extForMime,
   formatBytes,
   loadImageFile,
   mimeForFormat,
   replaceExt,
+  type ImageCrop,
   type ImageFormatId,
 } from "../../lib/imageConvert";
 
@@ -25,20 +27,100 @@ const FORMAT_OPTIONS: { id: ImageFormatId; label: string }[] = [
   { id: "png", label: "PNG" },
 ];
 
+function CropPreview({
+  src,
+  naturalWidth,
+  naturalHeight,
+  aspect,
+  zoom,
+  panX,
+  panY,
+  onPanChange,
+}: {
+  src: string;
+  naturalWidth: number;
+  naturalHeight: number;
+  aspect: number;
+  zoom: number;
+  panX: number;
+  panY: number;
+  onPanChange: (panX: number, panY: number) => void;
+}) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const crop = coverCropRect(naturalWidth, naturalHeight, aspect, zoom, panX, panY);
+
+  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { x: e.clientX, y: e.clientY, panX, panY };
+  }
+
+  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    const el = viewportRef.current;
+    if (!drag || !el) return;
+    const rect = el.getBoundingClientRect();
+    const rangeX = naturalWidth - crop.width;
+    const rangeY = naturalHeight - crop.height;
+    const nextPanX = rangeX <= 0 ? 0.5 : Math.min(1, Math.max(0, drag.panX - ((e.clientX - drag.x) / rect.width) * (crop.width / rangeX)));
+    const nextPanY = rangeY <= 0 ? 0.5 : Math.min(1, Math.max(0, drag.panY - ((e.clientY - drag.y) / rect.height) * (crop.height / rangeY)));
+    onPanChange(nextPanX, nextPanY);
+  }
+
+  function onPointerUp() {
+    dragRef.current = null;
+  }
+
+  return (
+    <div
+      ref={viewportRef}
+        className="relative cursor-grab touch-none overflow-hidden rounded-lg border border-border bg-muted/40 active:cursor-grabbing"
+      style={{ aspectRatio: String(aspect) }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="absolute max-w-none select-none"
+        style={{
+          width: `${(naturalWidth / crop.width) * 100}%`,
+          height: `${(naturalHeight / crop.height) * 100}%`,
+          left: `${(-crop.x / crop.width) * 100}%`,
+          top: `${(-crop.y / crop.height) * 100}%`,
+        }}
+      />
+    </div>
+  );
+}
+
 export function ImagePrepareDialog({
   file,
   onClose,
   onInsert,
+  cropAspect,
+  confirmLabel = "插入",
+  hint,
 }: {
   file: File;
   onClose: () => void;
   onInsert: (output: File) => Promise<void>;
+  /** 若设置，预览区按该宽高比裁剪构图 */
+  cropAspect?: number;
+  confirmLabel?: string;
+  hint?: string;
 }) {
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [format, setFormat] = useState<ImageFormatId>("webp");
   const [scale, setScale] = useState(100);
   const [quality, setQuality] = useState(82);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [panX, setPanX] = useState(0.5);
+  const [panY, setPanY] = useState(0.5);
   const [expectedBytes, setExpectedBytes] = useState<number | null>(null);
   const [encoding, setEncoding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -46,9 +128,18 @@ export function ImagePrepareDialog({
 
   const supportsWebp = useMemo(() => canvasSupportsMime("image/webp"), []);
   const scaleRatio = scale / 100;
-  const outWidth = preview ? Math.max(1, Math.round(preview.width * scaleRatio)) : 0;
-  const outHeight = preview ? Math.max(1, Math.round(preview.height * scaleRatio)) : 0;
-  const needsQuality = format === "webp" || format === "jpeg" || (format === "original" && (file.type === "image/jpeg" || file.type === "image/webp") && scale < 100);
+  const crop = useMemo((): ImageCrop | undefined => {
+    if (!preview || !cropAspect) return undefined;
+    return coverCropRect(preview.width, preview.height, cropAspect, cropZoom, panX, panY);
+  }, [preview, cropAspect, cropZoom, panX, panY]);
+  const outWidth = preview
+    ? Math.max(1, Math.round((crop?.width ?? preview.width) * scaleRatio))
+    : 0;
+  const outHeight = preview
+    ? Math.max(1, Math.round((crop?.height ?? preview.height) * scaleRatio))
+    : 0;
+  const mustReencode = Boolean(crop);
+  const needsQuality = format === "webp" || format === "jpeg" || (format === "original" && (file.type === "image/jpeg" || file.type === "image/webp") && (scale < 100 || mustReencode));
 
   useEffect(() => {
     if (!supportsWebp && format === "webp") setFormat("jpeg");
@@ -83,7 +174,7 @@ export function ImagePrepareDialog({
   useEffect(() => {
     if (!preview) return;
     let cancelled = false;
-    if (format === "original" && scale === 100) {
+    if (!mustReencode && format === "original" && scale === 100) {
       setExpectedBytes(file.size);
       setEncoding(false);
       return;
@@ -103,6 +194,7 @@ export function ImagePrepareDialog({
             scale: scaleRatio,
             mime,
             quality: quality / 100,
+            crop,
           });
           if (!cancelled) setExpectedBytes(blob.size);
         } catch {
@@ -116,7 +208,7 @@ export function ImagePrepareDialog({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [preview, format, scale, quality, file, scaleRatio]);
+  }, [preview, format, scale, quality, file, scaleRatio, mustReencode, crop]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -129,14 +221,16 @@ export function ImagePrepareDialog({
   async function buildOutput(): Promise<File> {
     if (!preview) throw new Error("图片尚未就绪");
     const mime = mimeForFormat(format, file.type);
-    if (mime === "original" || (format === "original" && scale === 100)) {
+    if (!mustReencode && (mime === "original" || (format === "original" && scale === 100))) {
       return file;
     }
+    if (mime === "original") throw new Error("当前格式无法裁剪，请改选 WebP / JPG / PNG");
     const blob = await encodeImage({
       image: preview.image,
       scale: scaleRatio,
       mime,
       quality: quality / 100,
+      crop,
     });
     return new File([blob], replaceExt(file.name, extForMime(blob.type || mime)), {
       type: blob.type || mime,
@@ -173,25 +267,55 @@ export function ImagePrepareDialog({
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-background p-4 shadow-lg"
         role="dialog"
         aria-modal="true"
-        aria-label="处理图片"
+        aria-label={cropAspect ? "处理封面" : "处理图片"}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {loadError ? (
           <p className="text-sm text-destructive">{loadError}</p>
         ) : (
           <>
-            <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
-              {preview ? (
-                <img src={preview.objectUrl} alt="" className="mx-auto max-h-48 w-auto object-contain" />
+            {cropAspect ? (
+              preview ? (
+                <CropPreview
+                  src={preview.objectUrl}
+                  naturalWidth={preview.width}
+                  naturalHeight={preview.height}
+                  aspect={cropAspect}
+                  zoom={cropZoom}
+                  panX={panX}
+                  panY={panY}
+                  onPanChange={(x, y) => {
+                    setPanX(x);
+                    setPanY(y);
+                  }}
+                />
               ) : (
-                <div className="flex h-36 items-center justify-center text-sm text-muted-foreground">读取中…</div>
-              )}
-            </div>
+                <div
+                  className="flex items-center justify-center rounded-lg border border-border bg-muted/40 text-sm text-muted-foreground"
+                  style={{ aspectRatio: String(cropAspect) }}
+                >
+                  读取中…
+                </div>
+              )
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border bg-muted/40">
+                {preview ? (
+                  <img src={preview.objectUrl} alt="" className="mx-auto max-h-48 w-auto object-contain" />
+                ) : (
+                  <div className="flex h-36 items-center justify-center text-sm text-muted-foreground">读取中…</div>
+                )}
+              </div>
+            )}
+            {hint ? <p className="mt-2 text-xs text-muted-foreground">{hint}</p> : null}
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-muted-foreground sm:grid-cols-3">
               <div>
                 <dt className="text-xs text-muted-foreground/70">尺寸</dt>
                 <dd className="font-mono text-foreground">
-                  {preview ? `${preview.width} × ${preview.height}` : "…"}
+                  {preview
+                    ? crop
+                      ? `${Math.round(crop.width)} × ${Math.round(crop.height)}`
+                      : `${preview.width} × ${preview.height}`
+                    : "…"}
                 </dd>
               </div>
               <div>
@@ -230,6 +354,24 @@ export function ImagePrepareDialog({
               </div>
             </fieldset>
 
+            {cropAspect ? (
+              <label className="mt-4 block">
+                <span className="flex items-center justify-between text-xs text-muted-foreground">
+                  构图缩放
+                  <span className="font-mono text-foreground">{Math.round(cropZoom * 100)}%</span>
+                </span>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.01}
+                  value={cropZoom}
+                  onChange={(e) => setCropZoom(Number(e.target.value))}
+                  className="range-muted mt-2 w-full"
+                />
+              </label>
+            ) : null}
+
             <label className="mt-4 block">
               <span className="flex items-center justify-between text-xs text-muted-foreground">
                 等比例缩放
@@ -244,7 +386,7 @@ export function ImagePrepareDialog({
                 step={1}
                 value={scale}
                 onChange={(e) => setScale(Number(e.target.value))}
-                className="mt-2 w-full accent-foreground"
+                className="range-muted mt-2 w-full"
               />
             </label>
 
@@ -261,7 +403,7 @@ export function ImagePrepareDialog({
                   step={1}
                   value={quality}
                   onChange={(e) => setQuality(Number(e.target.value))}
-                  className="mt-2 w-full accent-foreground"
+                  className="range-muted mt-2 w-full"
                 />
               </label>
             ) : null}
@@ -290,7 +432,7 @@ export function ImagePrepareDialog({
                 className="btn-primary h-10 flex-1 gap-1.5"
               >
                 {uploading ? <SpinnerIcon size={16} className="animate-spin" /> : null}
-                {uploading ? "上传中" : "插入"}
+                {uploading ? "上传中" : confirmLabel}
               </button>
             </div>
           </>

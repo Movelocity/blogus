@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { type ReactNode, type SubmitEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { BlogFolder, BlogPost, CurrentUser, PostStatus } from "@blogus/shared";
 import { siteConfig } from "../config/site";
@@ -17,8 +17,10 @@ import {
   whoami,
 } from "../lib/api";
 import { MarkdownView } from "../lib/markdown";
+import { countContentChars } from "../lib/posts";
 import { SlashMenu, type TextRange } from "../components/editor/SlashMenu";
 import { ImagePrepareDialog } from "../components/editor/ImagePrepareDialog";
+import { COVER_CROP_ASPECT } from "../lib/imageConvert";
 import {
   ListIcon,
   NotePencilIcon,
@@ -29,6 +31,7 @@ import {
   PencilSimpleIcon,
   CaretUpIcon,
   CaretDownIcon,
+  CaretLeftIcon,
   CaretRightIcon,
   FolderIcon,
   FolderPlusIcon,
@@ -45,7 +48,7 @@ import {
 import { useTheme } from "../hooks/useTheme";
 
 type EditorMode = "edit" | "preview";
-type MetaDialogKind = "excerpt" | "tags";
+type MetaDialogKind = "excerpt" | "tags" | "cover";
 
 function MetaDialog({
   open,
@@ -106,16 +109,19 @@ function statusDotClass(s: PostStatus) {
 
 export function AdminPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("id");
   const { theme, toggle: toggleTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const pendingCaretRef = useRef<number | null>(null);
+  const pendingFolderIdRef = useRef<string | null>(null);
+  const appliedIdRef = useRef<string | null | undefined>(undefined);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -137,6 +143,7 @@ export function AdminPage() {
   const [dropTargetFolderId, setDropTargetFolderId] = useState<string | null>(null);
   const [rootDropActive, setRootDropActive] = useState(false);
   const [imageJob, setImageJob] = useState<{ file: File; range: TextRange } | null>(null);
+  const [coverJob, setCoverJob] = useState<File | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("blogus-admin-folders") ?? "{}");
@@ -221,8 +228,7 @@ export function AdminPage() {
     return () => document.removeEventListener("click", onDocumentClick);
   }, [actionMenuOpen]);
 
-  function loadPost(post: BlogPost) {
-    setSelectedId(post.id);
+  function applyPostFields(post: BlogPost) {
     setTitle(post.title);
     setContent(post.content);
     setExcerpt(post.excerpt ?? "");
@@ -233,34 +239,40 @@ export function AdminPage() {
     setMessage(null);
     setError(null);
     setActionMenuOpen(false);
+    appliedIdRef.current = post.id;
   }
 
-  function startNewPost() {
-    setSelectedId(null);
+  function clearEditor(folderId: string | null = null) {
     setTitle("");
     setContent("");
     setExcerpt("");
     setCoverImageUrl("");
     setTagsText("");
-    setDraftFolderId(null);
+    setDraftFolderId(folderId);
     setEditorMode("edit");
     setMessage(null);
     setError(null);
     setActionMenuOpen(false);
+    appliedIdRef.current = null;
+  }
+
+  function startNewPost(folderId: string | null = null) {
+    pendingFolderIdRef.current = folderId;
+    setSearchParams({}, { replace: false });
+    // 已在无 id 状态时 setSearchParams 不会触发 effect，需直接清空
+    if (!selectedId) {
+      clearEditor(folderId);
+      pendingFolderIdRef.current = null;
+    }
   }
 
   function startNewPostInFolder(folder: BlogFolder) {
-    startNewPost();
-    setDraftFolderId(folder.id);
+    startNewPost(folder.id);
   }
 
-  async function refreshPosts(nextSelectedId = selectedId) {
+  async function refreshPosts() {
     const result = await listPosts({ visibility: "all" });
     setPosts(result.posts);
-    if (nextSelectedId) {
-      const next = result.posts.find((p) => p.id === nextSelectedId);
-      if (next) loadPost(next);
-    }
   }
 
   async function refreshFolders() {
@@ -280,7 +292,6 @@ export function AdminPage() {
           setUser(cu.user);
           setFolders(folderResult.folders);
           setPosts(result.posts);
-          if (result.posts[0]) loadPost(result.posts[0]);
         })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : "加载失败"))
         .finally(() => setAuthChecked(true));
@@ -315,11 +326,14 @@ export function AdminPage() {
       if (selectedPost) {
         const r = await updatePost(selectedPost.id, { title, content, excerpt, coverImageUrl, tags });
         setMessage(`已保存：${r.post.title}`);
-        await refreshPosts(r.post.id);
+        appliedIdRef.current = r.post.id;
+        await refreshPosts();
       } else {
         const r = await createPost({ title, content, excerpt, coverImageUrl, tags, folderId: draftFolderId, status: "draft" });
         setMessage(`草稿已创建：${r.post.title}`);
-        await refreshPosts(r.post.id);
+        appliedIdRef.current = r.post.id;
+        await refreshPosts();
+        setSearchParams({ id: r.post.id }, { replace: true });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "保存失败");
@@ -359,6 +373,29 @@ export function AdminPage() {
     }
   }, [authChecked, user, navigate]);
 
+  // 文章选择以 URL ?id= 为准；前进后退会改 param，这里同步编辑器
+  useEffect(() => {
+    if (!authChecked) return;
+    if (!selectedId) {
+      const folderId = pendingFolderIdRef.current;
+      if (appliedIdRef.current !== null || folderId) {
+        clearEditor(folderId);
+        pendingFolderIdRef.current = null;
+      }
+      return;
+    }
+    if (posts.length === 0) return;
+    const post = posts.find((p) => p.id === selectedId);
+    if (!post) {
+      setSearchParams({}, { replace: true });
+      setError("文章不存在或已删除");
+      return;
+    }
+    if (appliedIdRef.current !== selectedId) {
+      applyPostFields(post);
+    }
+  }, [selectedId, posts, authChecked, setSearchParams]);
+
   if (!authChecked || !user) {
     return null;
   }
@@ -380,7 +417,7 @@ export function AdminPage() {
         archived: `已归档：${r.post.title}`,
       };
       setMessage(lm[status] ?? `状态已更新：${r.post.title}`);
-      await refreshPosts(r.post.id);
+      await refreshPosts();
     } catch (e) {
       setError(e instanceof Error ? e.message : "状态更新失败");
     }
@@ -395,7 +432,7 @@ export function AdminPage() {
       await deletePost(id);
       setMessage("文章已删除");
       startNewPost();
-      await refreshPosts(null);
+      await refreshPosts();
     } catch (e) {
       setError(e instanceof Error ? e.message : "删除失败");
     }
@@ -403,7 +440,7 @@ export function AdminPage() {
 
   function discardChanges() {
     if (!selectedPost) return;
-    loadPost(selectedPost);
+    applyPostFields(selectedPost);
     setMessage("已放弃未保存的修改");
   }
 
@@ -420,7 +457,7 @@ export function AdminPage() {
     }
     if (isDirty) discardChanges();
     setActionMenuOpen(false);
-    navigate(`/posts/${selectedPost.slug}`);
+    window.open(`/posts/${selectedPost.slug}`, "noopener,noreferrer");
   }
 
   function insertMarkdown(md: string, range: TextRange) {
@@ -429,16 +466,11 @@ export function AdminPage() {
     setContent((prev) => `${prev.slice(0, range.start)}${md}${prev.slice(range.end)}`);
   }
 
-  async function handleCoverUpload(file: File | undefined) {
+  function handleCoverFile(file: File | undefined) {
     if (!file) return;
     setError(null);
-    try {
-      const r = await uploadFile(file);
-      setCoverImageUrl(r.file.url);
-      setMessage("封面图已上传");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "上传失败");
-    }
+    setCoverJob(file);
+    setMetaDialog(null);
   }
 
   function persistCollapsed(next: Record<string, boolean>) {
@@ -520,7 +552,10 @@ export function AdminPage() {
     return (
       <button
         key={post.id}
-        onClick={() => { loadPost(post); setSidebarOpen(false); }}
+        onClick={() => {
+          setSearchParams({ id: post.id });
+          setSidebarOpen(false);
+        }}
         type="button"
         draggable
         title={post.title || "未命名文章"}
@@ -567,14 +602,35 @@ export function AdminPage() {
       <aside
         className={`fixed left-0 top-0 z-30 flex h-dvh w-[280px] flex-col border-r border-border bg-sidebar transition-transform duration-300 ease-out max-lg:-translate-x-full ${sidebarOpen ? "max-lg:translate-x-0" : ""}`}
       >
-        {/* Brand - 点击回首页 */}
-        <Link
-          to="/"
-          className="mb-1.5 flex items-center rounded-md px-4 py-3 transition-colors w-fit"
-          aria-label="回到首页"
-        >
-          <span className="font-display text-lg font-semibold tracking-tight text-foreground">{siteConfig.name}</span>
-        </Link>
+        {/* Brand + 历史前进后退 */}
+        <div className="mb-1.5 flex items-center gap-1 px-2 pt-2">
+          <Link
+            to="/"
+            className="flex items-center rounded-md px-2 py-1.5 transition-colors mr-auto"
+            aria-label="回到首页"
+          >
+            <span className="font-display text-lg font-semibold tracking-tight text-foreground">{siteConfig.name}</span>
+          </Link>
+
+          <button
+            type="button"
+            aria-label="后退"
+            title="后退"
+            onClick={() => navigate(-1)}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <CaretLeftIcon size={16} />
+          </button>
+          <button
+            type="button"
+            aria-label="前进"
+            title="前进"
+            onClick={() => navigate(1)}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <CaretRightIcon size={16} />
+          </button>
+        </div>
 
         {/* Nav */}
         <nav className="flex flex-col pb-2">
@@ -834,24 +890,26 @@ export function AdminPage() {
       <div className="flex h-full min-w-0 flex-1 flex-col lg:ml-[280px]">
         <form className="flex h-full min-h-0 min-w-0 flex-col" onSubmit={handleSubmit}>
           {/* Toolbar - fixed at top while content scrolls */}
-          <div className="z-20 flex shrink-0 min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-background px-6 py-2.5 lg:px-8">
-            <div className="flex min-w-0 items-center gap-2.5 ml-12 lg:ml-0">
-              <span className="shrink-0 font-display text-base font-medium text-foreground">
-                {selectedPost ? "编辑" : "新建"}
-              </span>
+          <div className="z-20 flex shrink-0 min-w-0 items-center gap-x-3 border-b border-border bg-background px-6 py-2.5 lg:px-8">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 ml-12 lg:ml-0">
               {selectedPost ? (
-                <>
-                  <span className="truncate font-mono text-muted-foreground">
-                    {selectedPost.slug}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                    <span className={`size-1.5 rounded-full ${statusDotClass(selectedPost.status)}`} />
-                    {statusLabel(selectedPost.status)}
-                  </span>
-                </>
-              ) : null}
+                <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                  <span className={`size-1.5 rounded-full ${statusDotClass(selectedPost.status)}`} />
+                  {statusLabel(selectedPost.status)}
+                </span>
+              ) : (
+                <span className="shrink-0 font-display text-sm text-muted-foreground">新建</span>
+              )}
+              <input
+                className="min-w-0 flex-1 bg-transparent font-display text-base font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/30"
+                maxLength={240}
+                placeholder="标题"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
-            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm">
               {message ? (
                 <span className="max-w-[220px] truncate text-xs text-emerald-600" title={message}>{message}</span>
               ) : null}
@@ -972,36 +1030,29 @@ export function AdminPage() {
           </div>
 
           {/* Content */}
-          <div className={`min-h-0 flex-1 min-w-0 w-full px-6 pt-5 lg:px-8 ${editorMode === "edit" ? "flex flex-col pb-5" : "overflow-y-auto pb-12 max-w-4xl mx-auto pb-24"}`}>
+          <div className={`min-h-0 flex-1 min-w-0 w-full px-6 pt-3 lg:px-8 ${editorMode === "edit" ? "flex flex-col pb-5" : "overflow-y-auto pb-12 max-w-4xl mx-auto pb-24"}`}>
             {error ? (
               <div className="mb-4 shrink-0 rounded bg-destructive/5 px-3 py-2 font-mono text-sm text-destructive">{error}</div>
             ) : null}
 
             {editorMode === "edit" ? (
-              <div className="flex min-h-0 flex-1 flex-col gap-4">
-                {/* Title - bottom border only */}
-                <input
-                  className="w-full shrink-0 border-b border-border bg-transparent pb-3 font-display text-2xl font-semibold tracking-tight text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/30"
-                  maxLength={240}
-                  placeholder="标题"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-
+              <div className="flex min-h-0 flex-1 flex-col gap-1">
                 {/* Cover + meta - minimal row */}
                 <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  <label className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setMetaDialog("cover")}
+                    className={`flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground ${coverImageUrl ? "text-foreground" : ""}`}
+                  >
                     <UploadIcon size={14} />
                     封面
-                    <input accept="image/*" className="hidden" type="file" onChange={(e) => void handleCoverUpload(e.target.files?.[0])} />
-                  </label>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMetaDialog("excerpt")}
                     className={`flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground ${excerpt ? "text-foreground" : ""}`}
                   >
-                    摘要
+                    摘要{excerpt ? <span className="" title="摘要字数">({excerpt?.length ?? 0})</span> : null}
                   </button>
                   <button
                     type="button"
@@ -1010,12 +1061,6 @@ export function AdminPage() {
                   >
                     标签{tags.length > 0 ? ` (${tags.length})` : ""}
                   </button>
-                  <input
-                    className="ml-auto min-w-0 flex-1 border-b border-transparent bg-transparent text-right text-xs text-muted-foreground/40 outline-none transition-colors focus:border-border focus:text-muted-foreground"
-                    placeholder="封面 URL"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                  />
                 </div>
 
                 {/* Markdown body：flex-1 自动填满剩余屏幕高度，内容超长时内部滚动，仍保留右下角手动拖拽 */}
@@ -1042,7 +1087,7 @@ export function AdminPage() {
             ) : (
               <article className="pb-12">
                 {coverImageUrl ? (
-                  <img alt="" className="mb-6 max-h-72 w-full rounded-md object-cover" src={coverImageUrl} />
+                  <img alt="" className="mb-6 aspect-video w-full rounded-md object-cover" src={coverImageUrl} />
                 ) : null}
                 <h1 className="mb-3 break-words font-display text-4xl font-semibold leading-tight tracking-tight text-foreground">
                   {title || "未命名文章"}
@@ -1060,6 +1105,60 @@ export function AdminPage() {
             )}
           </div>
         </form>
+
+        <MetaDialog
+          open={metaDialog === "cover"}
+          onClose={() => setMetaDialog(null)}
+          label="设置封面"
+        >
+          <div className="aspect-video overflow-hidden rounded-lg border border-border bg-muted/40">
+            {coverImageUrl ? (
+              <img alt="" className="h-full w-full object-cover" src={coverImageUrl} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">暂无封面</div>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">推荐 16:9。选择图片后可裁剪构图、转码再上传。</p>
+          <input
+            autoFocus
+            className="mt-3 w-full border-b border-border bg-transparent pb-2 text-base text-foreground outline-none transition-colors focus:border-foreground/40 placeholder:text-muted-foreground/40"
+            placeholder="或粘贴封面 URL"
+            value={coverImageUrl}
+            onChange={(e) => setCoverImageUrl(e.target.value)}
+          />
+          <div className="mt-4 flex gap-2">
+            <label className="btn-primary h-10 flex-1 cursor-pointer">
+              选择图片
+              <input
+                accept="image/*"
+                className="hidden"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  void handleCoverFile(file);
+                }}
+              />
+            </label>
+            {coverImageUrl ? (
+              <button
+                type="button"
+                className="h-10 flex-1 rounded-md border border-border text-sm text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setCoverImageUrl("")}
+              >
+                清除
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="h-10 flex-1 rounded-md border border-border text-sm text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setMetaDialog(null)}
+              >
+                完成
+              </button>
+            )}
+          </div>
+        </MetaDialog>
 
         <MetaDialog
           open={metaDialog === "excerpt"}
@@ -1085,6 +1184,22 @@ export function AdminPage() {
               insertMarkdown(`![${output.name}](${r.file.url})`, imageJob.range);
               setImageJob(null);
               setMessage("图片已上传并插入正文");
+            }}
+          />
+        ) : null}
+
+        {coverJob ? (
+          <ImagePrepareDialog
+            file={coverJob}
+            cropAspect={COVER_CROP_ASPECT}
+            confirmLabel="设为封面"
+            hint="推荐 16:9，拖动调整构图"
+            onClose={() => setCoverJob(null)}
+            onInsert={async (output) => {
+              const r = await uploadFile(output);
+              setCoverImageUrl(r.file.url);
+              setCoverJob(null);
+              setMessage("封面图已上传");
             }}
           />
         ) : null}

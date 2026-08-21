@@ -73,7 +73,7 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
         onKeyDown={handleKeyDown}
         placeholder="写点什么..."
         disabled={loading}
-        className="max-h-[50vh] min-h-[108px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-lg leading-base text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+        className="max-h-[50vh] min-h-[108px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-base leading-base text-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
       />
 
       {/* 底部操作栏：一律用「卡片按钮」层级，不再引入 accent/绿色 */}

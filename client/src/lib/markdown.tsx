@@ -17,14 +17,86 @@ async function loadKaTeX() {
 
 type Alignment = "left" | "center" | "right" | null;
 
+type ListItem = {
+  text: string;
+  /** 任务列表：true 已勾选，false 未勾选；普通列表项为 null */
+  checked: boolean | null;
+};
+
 type Block =
   | { type: "blockquote"; text: string }
   | { type: "code"; lang: string; text: string }
   | { type: "heading"; level: 1 | 2 | 3; text: string }
-  | { type: "list"; ordered: boolean; items: string[] }
+  | { type: "list"; ordered: boolean; items: ListItem[] }
   | { type: "math"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "table"; headers: string[]; alignments: Alignment[]; rows: string[][] };
+
+const UNORDERED_TASK_RE = /^[-*]\s+\[([ xX])\]\s?(.*)$/;
+const UNORDERED_ITEM_RE = /^[-*]\s+(.+)$/;
+const ORDERED_TASK_RE = /^\d+\.\s+\[([ xX])\]\s?(.*)$/;
+const ORDERED_ITEM_RE = /^\d+\.\s+(.+)$/;
+
+function parseListItem(line: string, ordered: boolean): ListItem | null {
+  if (ordered) {
+    const task = ORDERED_TASK_RE.exec(line);
+    if (task) return { text: task[2] ?? "", checked: task[1] !== " " };
+    const item = ORDERED_ITEM_RE.exec(line);
+    if (item) return { text: item[1] ?? "", checked: null };
+    return null;
+  }
+  const task = UNORDERED_TASK_RE.exec(line);
+  if (task) return { text: task[2] ?? "", checked: task[1] !== " " };
+  const item = UNORDERED_ITEM_RE.exec(line);
+  if (item) return { text: item[1] ?? "", checked: null };
+  return null;
+}
+
+function isListLine(line: string): boolean {
+  return Boolean(parseListItem(line, false) || parseListItem(line, true));
+}
+
+/**
+ * 切换正文中第 index 个任务项（跳过代码块 / 数学块，与渲染顺序一致）。
+ */
+export function toggleChecklistItem(source: string, index: number): string {
+  const lines = source.replace(/\r\n/g, "\n").split("\n");
+  let n = 0;
+  let inCode = false;
+  let inMath = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? "";
+    const trimmed = line.trimStart();
+
+    if (!inMath && trimmed.startsWith("```")) {
+      inCode = !inCode;
+      continue;
+    }
+    if (inCode) continue;
+
+    if (trimmed.startsWith("$$")) {
+      const rest = trimmed.slice(2);
+      if (!(rest.trimEnd().endsWith("$$") && rest.trimEnd().length > 2)) {
+        inMath = !inMath;
+      }
+      continue;
+    }
+    if (inMath) continue;
+
+    const item = parseListItem(line, false) ?? parseListItem(line, true);
+    if (!item || item.checked === null) continue;
+    if (n !== index) {
+      n += 1;
+      continue;
+    }
+
+    const next = item.checked ? " " : "x";
+    lines[i] = line.replace(/\[([ xX])\]/, `[${next}]`);
+    return lines.join("\n");
+  }
+  return source;
+}
 
 function isSafeUrl(url: string) {
   const trimmed = url.trim();
@@ -146,18 +218,16 @@ function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
       continue;
     }
 
-    // --- List ---
-    const unordered = /^[-*]\s+(.+)$/.exec(line);
-    const ordered = /^\d+\.\s+(.+)$/.exec(line);
-    if (unordered || ordered) {
-      const isOrdered = Boolean(ordered);
-      const items: string[] = [];
+    // --- List（含 GFM 任务列表 - [ ] / 1. [x]）---
+    const unorderedItem = parseListItem(line, false);
+    const orderedItem = parseListItem(line, true);
+    if (unorderedItem || orderedItem) {
+      const isOrdered = Boolean(orderedItem) && !unorderedItem;
+      const items: ListItem[] = [];
       while (i < lines.length) {
-        const item = isOrdered
-          ? /^\d+\.\s+(.+)$/.exec(lines[i] ?? "")
-          : /^[-*]\s+(.+)$/.exec(lines[i] ?? "");
+        const item = parseListItem(lines[i] ?? "", isOrdered);
         if (!item) break;
-        items.push(item[1]);
+        items.push(item);
         i += 1;
       }
       blocks.push({ type: "list", ordered: isOrdered, items });
@@ -184,8 +254,7 @@ function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
         cur.startsWith("```") ||
         cur.trimStart().startsWith("$$") ||
         /^(#{1,3})\s+/.test(cur) ||
-        /^[-*]\s+/.test(cur) ||
-        /^\d+\.\s+/.test(cur) ||
+        isListLine(cur) ||
         cur.startsWith(">") ||
         (cur.includes("|") && i + 1 < lines.length && TABLE_SEP_RE.test(lines[i + 1] ?? ""))
       ) {
@@ -311,6 +380,7 @@ function renderInline(text: string): ReactNode[] {
             className="font-base hover:underline underline-offset-4 transition-colors hover:text-accent"
             href={url}
             key={key}
+            target="_blank"
           >
             {label || url}
           </a>
@@ -350,27 +420,43 @@ export function MarkdownView({
   content,
   emptyText = "暂无内容",
   breaks = false,
+  compact = false,
+  underlineH1 = false,
+  onChecklistToggle,
 }: {
   content: string;
   emptyText?: string;
   /** 为 true 时保留段落内的单个换行（不被 Markdown 收成空格） */
   breaks?: boolean;
+  /** 笔记等紧凑场景：缩小列表间距 */
+  compact?: boolean;
+  /** 文章查看：一级标题全宽下划线 */
+  underlineH1?: boolean;
+  /** 点击任务列表复选框时回调，参数为切换后的全文 */
+  onChecklistToggle?: (nextContent: string) => void;
 }) {
   const blocks = parseMarkdown(content, { breaks });
+  let checklistIndex = 0;
 
   if (blocks.length === 0) {
     return <p className="markdown-content m-0">{emptyText}</p>;
   }
 
   return (
-    <div className="markdown-content grid gap-3 *:min-w-0 text-base leading-8">
+    <div
+      className={`markdown-content grid *:min-w-0 text-base ${
+        compact ? "gap-2 leading-7" : "gap-3 leading-8"
+      }`}
+    >
       {blocks.map((block, idx) => {
         const key = `${block.type}-${idx}`;
 
         if (block.type === "heading") {
           const className =
             block.level === 1
-              ? "mt-6 font-display text-4xl leading-tight tracking-tight"
+              ? `mt-6 font-display text-4xl leading-tight tracking-tight ${
+                  underlineH1 ? "w-full border-b border-foreground/20 pb-2" : ""
+                }`
               : block.level === 2
                 ? "mt-6 font-display text-3xl leading-tight tracking-tight"
                 : "mt-4 font-display text-2xl leading-snug tracking-tight";
@@ -449,11 +535,46 @@ export function MarkdownView({
 
         if (block.type === "list") {
           const List = block.ordered ? "ol" : "ul";
+          const hasTasks = block.items.some((item) => item.checked !== null);
           return (
-            <List className={`grid gap-2 pl-6 leading-8 ${block.ordered ? "list-decimal" : "list-disc"}`} key={key}>
-              {block.items.map((item, ii) => (
-                <li key={`${key}-${ii}`}>{renderInline(item)}</li>
-              ))}
+            <List
+              className={`grid ${compact ? "gap-0.5 leading-6" : "gap-2 leading-8"} pl-6 ${
+                hasTasks ? "list-none pl-0" : block.ordered ? "list-decimal" : "list-disc"
+              }`}
+              key={key}
+            >
+              {block.items.map((item, ii) => {
+                if (item.checked === null) {
+                  return (
+                    <li
+                      key={`${key}-${ii}`}
+                      className={hasTasks ? (block.ordered ? "list-decimal ml-6" : "list-disc ml-6") : undefined}
+                    >
+                      {renderInline(item.text)}
+                    </li>
+                  );
+                }
+                const itemIndex = checklistIndex;
+                checklistIndex += 1;
+                const interactive = Boolean(onChecklistToggle);
+                return (
+                  <li key={`${key}-${ii}`} className="flex list-none items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      disabled={!interactive}
+                      onChange={() => {
+                        if (!onChecklistToggle) return;
+                        onChecklistToggle(toggleChecklistItem(content, itemIndex));
+                      }}
+                      className="mt-[0.35em] size-4 shrink-0 cursor-pointer accent-foreground disabled:cursor-default"
+                    />
+                    <span className={item.checked ? "text-muted-foreground line-through decoration-foreground/30" : ""}>
+                      {renderInline(item.text)}
+                    </span>
+                  </li>
+                );
+              })}
             </List>
           );
         }

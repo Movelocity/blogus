@@ -3,6 +3,7 @@ import {
   ArchiveIcon,
   CaretDownIcon,
   CaretUpIcon,
+  CheckIcon,
   CopyIcon,
   HashIcon,
   LockIcon,
@@ -144,101 +145,101 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
 
   return (
     <article className="rounded-xl border border-foreground/20 transition-shadow hover:shadow-sm">
-      {editing ? (
-        <div className="space-y-3.5 p-2">
+      <div className="px-3 py-2">
+        {/* 头部：日期 + 状态；编辑时右上角换成保存组，放弃底部操作条 */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5 text-base text-muted-foreground/70">
+            <span className="font-mono text-sm text-muted-foreground/70">{note.date}</span>
+            <span className="h-4 w-px bg-foreground/10" />
+            <span className="text-sm">{formatDate(note.createdAt)}</span>
+            {isOwner && !editing && !note.isPublic && (
+              <span className="flex items-center gap-1.5 text-sm">
+                <LockIcon className="h-4 w-4" />
+                Private
+              </span>
+            )}
+            {note.isArchived && (
+              <span className="flex items-center gap-1.5 text-muted-foreground/70">
+                <ArchiveIcon className="h-4 w-4" />
+                已归档
+              </span>
+            )}
+          </div>
+
+          {isOwner && editing ? (
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
+              <button
+                onClick={() => setIsPublic(!isPublic)}
+                title={isPublic ? "公开" : "私密"}
+                aria-label={isPublic ? "公开" : "私密"}
+                className={`flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground ${
+                  isPublic ? "bg-muted/60" : ""
+                }`}
+              >
+                {isPublic ? <LockOpenIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4" />}
+              </button>
+              <label className="flex h-9 min-w-[7rem] max-w-[12rem] items-center gap-1 rounded-lg px-2 text-muted-foreground focus-within:bg-muted/40">
+                <HashIcon className="h-3.5 w-3.5 shrink-0" />
+                <input
+                  type="text"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="标签"
+                  className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/60"
+                />
+              </label>
+              <IconButton label="取消" onClick={cancelEdit} icon={<XIcon className="h-4 w-4" />} />
+              <button
+                onClick={() => void saveEdit()}
+                title="保存"
+                aria-label="保存"
+                className="btn-primary h-8 gap-1 px-3"
+              >
+                <CheckIcon className="h-4 w-4" />
+                保存
+              </button>
+            </div>
+          ) : isOwner ? (
+            <div className="flex items-center">
+              <IconButton label="编辑" onClick={startEdit} icon={<PencilSimpleIcon className="h-4 w-4" />} />
+              <IconButton
+                label={note.isPublic ? "设为私密" : "设为公开"}
+                onClick={() => void togglePublic()}
+                icon={
+                  note.isPublic ? (
+                    <LockOpenIcon className="h-4 w-4" />
+                  ) : (
+                    <LockIcon className="h-4 w-4" />
+                  )
+                }
+              />
+              <IconButton
+                label={note.isArchived ? "取消归档" : "归档"}
+                onClick={() => void toggleArchive()}
+                icon={<ArchiveIcon className="h-4 w-4" />}
+              />
+              <IconButton label="复制" onClick={() => void handleCopy()} icon={<CopyIcon className="h-4 w-4" />} />
+              <IconButton
+                label="删除"
+                danger
+                onClick={() => void handleDelete()}
+                icon={<TrashIcon className="h-4 w-4" />}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        {editing ? (
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="笔记内容..."
-            className="max-h-[50vh] min-h-[120px] w-full resize-none overflow-y-auto bg-transparent px-1 text-base leading-base text-foreground outline-none"
+            className="mt-1 max-h-[50vh] min-h-[120px] w-full resize-none overflow-y-auto bg-transparent text-base leading-base text-foreground outline-none"
           />
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => setIsPublic(!isPublic)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm transition-colors text-muted-foreground ${
-                isPublic ? "bg-muted/60" : ""
-              }`}
-            >
-              {isPublic ? <LockOpenIcon className="h-3.5 w-3.5" /> : <LockIcon className="h-3.5 w-3.5" />}
-              {isPublic ? "公开" : "私密"}
-            </button>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="标签，用逗号分隔"
-              className="min-w-0 flex-1 rounded-lg px-3 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground/60 focus-within:bg-muted/40"
-            />
-            <button
-              onClick={cancelEdit}
-              className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <XIcon className="h-4 w-4" />
-              取消
-            </button>
-            <button
-              onClick={() => void saveEdit()}
-              className="flex items-center gap-2 rounded-lg bg-foreground px-3 py-1 text-sm font-medium text-background transition-opacity hover:opacity-85 mr-1"
-            >
-              保存
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="py-2 px-3">
-          {/* 头部：日期 + 状态 + 操作 */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-base text-muted-foreground/70 ">
-              <span className="font-mono text-sm text-muted-foreground/70">{note.date}</span>
-              <span className="h-4 w-px bg-foreground/10" />
-              <span className="text-sm">{formatDate(note.createdAt)}</span>
-              {isOwner && !note.isPublic && (
-                <span className="flex items-center gap-1.5 text-sm">
-                  <LockIcon className="h-4 w-4" />
-                  Private
-                </span>
-              )}
-              {note.isArchived && (
-                <span className="flex items-center gap-1.5 text-muted-foreground/70">
-                  <ArchiveIcon className="h-4 w-4" />
-                  已归档
-                </span>
-              )}
-            </div>
-
-            {isOwner && (
-              <div className="flex items-center">
-                <IconButton label="编辑" onClick={startEdit} icon={<PencilSimpleIcon className="h-4 w-4" />} />
-                <IconButton
-                  label={note.isPublic ? "设为私密" : "设为公开"}
-                  onClick={() => void togglePublic()}
-                  icon={
-                    note.isPublic ? (
-                      <LockOpenIcon className="h-4 w-4" />
-                    ) : (
-                      <LockIcon className="h-4 w-4" />
-                    )
-                  }
-                />
-                <IconButton
-                  label={note.isArchived ? "取消归档" : "归档"}
-                  onClick={() => void toggleArchive()}
-                  icon={<ArchiveIcon className="h-4 w-4" />}
-                />
-                <IconButton label="复制" onClick={() => void handleCopy()} icon={<CopyIcon className="h-4 w-4" />} />
-                <IconButton
-                  label="删除"
-                  danger
-                  onClick={() => void handleDelete()}
-                  icon={<TrashIcon className="h-4 w-4" />}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* 内容 */}
+        ) : (
+          <>
           <div className="relative">
             <div
               ref={contentRef}
@@ -254,7 +255,18 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
                   : undefined
               }
             >
-              <MarkdownView content={note.content} breaks />
+              <MarkdownView
+                content={note.content}
+                breaks
+                compact
+                onChecklistToggle={
+                  isOwner
+                    ? (next) => {
+                        void onUpdate(note.id, { content: next });
+                      }
+                    : undefined
+                }
+              />
             </div>
 
             {shouldCollapse && (
@@ -291,8 +303,9 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
               ))}
             </div>
           )}
-        </div>
-      )}
+        </>
+        )}
+      </div>
     </article>
   );
 }
