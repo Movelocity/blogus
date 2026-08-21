@@ -12,6 +12,9 @@ export interface LunarInfo {
 
 export interface FestivalInfo {
   name: string;
+  /** 法定节假日才为 true；农历传统节日为 false */
+  isLegal: boolean;
+  /** 仅法定节假日有效：true 表示调休上班，false 表示放假 */
   isWork: boolean;
 }
 
@@ -51,20 +54,20 @@ export function getFestivals(date: Date): FestivalInfo[] {
   const festivals: FestivalInfo[] = [];
   const seen = new Set<string>();
 
-  // 法定假日（调休/放假）
+  // 国务院公布的法定节假日（含调休上班日），「休」只来自这里
   if (holiday) {
     const name = holiday.getName();
     seen.add(name);
-    festivals.push({ name, isWork: holiday.isWork() });
+    festivals.push({ name, isLegal: true, isWork: holiday.isWork() });
   }
 
-  // 农历传统节日（春节、中秋、端午、七夕、重阳等主流节日）
+  // 农历传统节日（元宵、七夕、重阳、腊八等），只展示名称，不放假
   // 注意：不用 lunar.getOtherFestivals()，它包含大量冷门节日（驱傩日、天穿节、秋社等），日历上太噪
   const lunarFestivals: string[] = lunar.getFestivals();
   for (const name of lunarFestivals) {
     if (!seen.has(name)) {
       seen.add(name);
-      festivals.push({ name, isWork: false });
+      festivals.push({ name, isLegal: false, isWork: false });
     }
   }
 

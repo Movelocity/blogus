@@ -240,10 +240,11 @@ function CalendarCell({ day, posts, isSelected, onSelect }: CalendarCellProps) {
   const isFaded = !day.isCurrentMonth;
 
   // 节假日：直接替换农历文字显示（像老黄历）
-  // 法定假日/传统节日用强调色；调休上班日完全不显示，和普通工作日一致
-  const legalHoliday = day.festivals.find((f) => !f.isWork);
-  const subText = legalHoliday?.name ?? day.lunar.term ?? day.lunar.display;
-  const subTextClass = legalHoliday
+  // 「休」只标国务院法定放假日；传统节日仅强调名称；调休上班日不显示
+  const restHoliday = day.festivals.find((f) => f.isLegal && !f.isWork);
+  const namedFestival = restHoliday ?? day.festivals.find((f) => !f.isLegal);
+  const subText = namedFestival?.name ?? day.lunar.term ?? day.lunar.display;
+  const subTextClass = namedFestival
     ? "text-accent"
     : day.lunar.term
       ? "text-accent/70"
@@ -281,7 +282,7 @@ function CalendarCell({ day, posts, isSelected, onSelect }: CalendarCellProps) {
         </span>
 
         <span className="flex items-baseline gap-1">
-          {legalHoliday && !isFaded ? (
+          {restHoliday && !isFaded ? (
             <span className="font-mono text-[9px] leading-none text-accent">
               休
             </span>
@@ -354,7 +355,9 @@ function DateDetailPanel({ day, posts, onClose }: DateDetailPanelProps) {
 
   const weekdayText = new Intl.DateTimeFormat("zh-CN", { weekday: "long" }).format(day.date);
   const lunarFull = `农历${day.lunar.monthInChinese}月${day.lunar.dayInChinese}`;
-  const holidayNames = day.festivals.filter((f) => !f.isWork).map((f) => f.name);
+  const holidayNames = day.festivals
+    .filter((f) => !f.isLegal || !f.isWork)
+    .map((f) => f.name);
   const tags = [day.lunar.term, ...holidayNames].filter((t): t is string => Boolean(t));
   const metaItems = [
     { text: lunarFull, className: "" },

@@ -42,8 +42,7 @@ interface DayCell {
 function densityClass(count: number, isToday: boolean): string {
   if (isToday) {
     if (count <= 0) return "bg-red-500/15 text-red-600 dark:bg-red-500/15 dark:text-red-400";
-    if (count === 1) return "bg-red-500/25 text-red-700 dark:bg-red-500/25 dark:text-red-300";
-    return "bg-red-500/40 text-red-800 dark:bg-red-500/40 dark:text-red-200";
+    return "bg-red-500/25 text-red-700 dark:bg-red-500/25 dark:text-red-300";
   }
   if (count <= 0) return "";
   if (count === 1) return "bg-gray-300/20 text-gray-700 dark:bg-gray-500/20  dark:text-gray-400";
