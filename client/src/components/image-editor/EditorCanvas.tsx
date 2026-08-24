@@ -12,6 +12,9 @@ interface Props {
   onCrop: (layer: ImageLayer, crop: CropSelection) => Promise<void>;
 }
 type Corner = "nw" | "ne" | "sw" | "se";
+export const CANVAS_GUTTER = 1200;
+const CANVAS_WIDTH = 1800;
+const CANVAS_HEIGHT = 1200;
 const corners: Corner[] = ["nw", "ne", "sw", "se"];
 const cornerClass: Record<Corner, string> = {
   nw: "-left-2.5 -top-2.5 cursor-nwse-resize", ne: "-right-2.5 -top-2.5 cursor-nesw-resize",
@@ -29,7 +32,7 @@ export function EditorCanvas({ document, zoom, aspectLocked, dispatch, onCrop }:
     const target = event.currentTarget.closest<HTMLElement>("[data-layer]")!;
     const startX = event.clientX, startY = event.clientY; let next: Rect = layer;
     const move = (pointer: PointerEvent) => {
-      next = { x: Math.max(0, layer.x + (pointer.clientX - startX) / zoom), y: Math.max(0, layer.y + (pointer.clientY - startY) / zoom), width: layer.width, height: layer.height };
+      next = { x: layer.x + (pointer.clientX - startX) / zoom, y: layer.y + (pointer.clientY - startY) / zoom, width: layer.width, height: layer.height };
       schedule(() => { target.style.transform = `translate(${next.x * zoom}px, ${next.y * zoom}px)`; });
     };
     const end = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); dispatch({ type: "geometry", id: layer.id, rect: next }); };
@@ -46,7 +49,7 @@ export function EditorCanvas({ document, zoom, aspectLocked, dispatch, onCrop }:
       const east = corner.includes("e"), south = corner.includes("s");
       let width = Math.max(40, before.width + (east ? dx : -dx)); let height = Math.max(40, before.height + (south ? dy : -dy));
       if (aspectLocked) { const aspect = before.width / before.height; if (Math.abs(dx) >= Math.abs(dy)) height = width / aspect; else width = height * aspect; }
-      next = { x: Math.max(0, east ? before.x : before.x + before.width - width), y: Math.max(0, south ? before.y : before.y + before.height - height), width, height };
+      next = { x: east ? before.x : before.x + before.width - width, y: south ? before.y : before.y + before.height - height, width, height };
       schedule(() => { target.style.transform = `translate(${next.x * zoom}px, ${next.y * zoom}px)`; target.style.width = `${next.width * zoom}px`; target.style.height = `${next.height * zoom}px`; });
     };
     const end = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); dispatch({ type: "geometry", id: layer.id, rect: next }); };
@@ -74,10 +77,11 @@ export function EditorCanvas({ document, zoom, aspectLocked, dispatch, onCrop }:
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", end, { once: true });
   };
 
-  return <div className="relative min-h-full min-w-full" style={{ width: 1800 * zoom, height: 1200 * zoom }} onPointerDown={(e) => { if (e.target === e.currentTarget && !crop) dispatch({ type: "select", id: null }, false); }}>
-    {document.layers.map((layer) => {
-      const selected = layer.id === document.selectedId, cropping = crop?.layerId === layer.id;
-      return <div key={layer.id} data-layer className={`absolute touch-none select-none ${selected ? "ring-2 ring-accent" : "hover:ring-1 hover:ring-foreground/30"}`} style={{ transform: `translate(${layer.x * zoom}px, ${layer.y * zoom}px)`, width: layer.width * zoom, height: layer.height * zoom, zIndex: layer.z }} onPointerDown={(event) => moveLayer(event, layer)}>
+  return <div className="relative" style={{ width: CANVAS_WIDTH * zoom + CANVAS_GUTTER * 2, height: CANVAS_HEIGHT * zoom + CANVAS_GUTTER * 2 }} onPointerDown={(e) => { if (e.target === e.currentTarget && !crop) dispatch({ type: "select", id: null }, false); }}>
+    <div data-canvas className="absolute" style={{ left: CANVAS_GUTTER, top: CANVAS_GUTTER, width: CANVAS_WIDTH * zoom, height: CANVAS_HEIGHT * zoom }}>
+      {document.layers.map((layer) => {
+        const selected = layer.id === document.selectedId, cropping = crop?.layerId === layer.id;
+        return <div key={layer.id} data-layer className={`absolute touch-none select-none ${selected ? "ring-2 ring-accent" : "hover:ring-1 hover:ring-foreground/30"}`} style={{ transform: `translate(${layer.x * zoom}px, ${layer.y * zoom}px)`, width: layer.width * zoom, height: layer.height * zoom, zIndex: layer.z }} onPointerDown={(event) => moveLayer(event, layer)}>
         <img src={layer.src} alt={layer.name} draggable={false} className="pointer-events-none h-full w-full object-fill" />
         {selected && !cropping && <>
           <div className="absolute -top-11 left-0 flex gap-1 rounded-lg border bg-background/95 p-1 shadow-lg backdrop-blur">
@@ -98,7 +102,8 @@ export function EditorCanvas({ document, zoom, aspectLocked, dispatch, onCrop }:
             <button aria-label="确认裁剪" className="rounded bg-accent p-2 text-accent-foreground" onPointerDown={(e) => e.stopPropagation()} onClick={async () => { await onCrop(layer, crop.rect); setCrop(null); }}><Check /></button>
           </div>
         </div>}
-      </div>;
-    })}
+        </div>;
+      })}
+    </div>
   </div>;
 }
