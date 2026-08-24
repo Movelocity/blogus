@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { IcpLink } from "../components/IcpLink";
+import { Footer } from "../components/Footer";
 import { Navigation } from "../components/Navigation";
 import { siteConfig } from "../config/site";
 
@@ -10,13 +10,13 @@ const noteCards = [
     title: "最近文章",
     tags: ["Blog", "Notes"],
     description: "从最新发布开始读。",
-    to: "/blog",
+    to: "/posts",
   },
   {
     title: "时间线",
     tags: ["Archive", "History"],
     description: "按月份回看所有公开文章。",
-    to: "/archive",
+    to: "/timeline",
   },
 ];
 
@@ -73,20 +73,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-foreground/10 px-6 py-10 lg:px-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <span>&copy; {new Date().getFullYear()} {siteConfig.footer.copyright}</span>
-          <IcpLink />
-          <div className="flex gap-6">
-            <Link className="transition-colors hover:text-foreground" to="/posts">
-              文章
-            </Link>
-            <Link className="transition-colors hover:text-foreground" to="/admin">
-              管理
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer compact />
     </div>
   );
 }

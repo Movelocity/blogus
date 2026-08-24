@@ -119,6 +119,8 @@ pnpm build
 
 服务端核心文章路由有 `pnpm --filter @blogus/server test` 覆盖。
 
+图片编辑器开发时直接访问 `http://127.0.0.1:5177/tools/image-editor`。该页面为独立懒加载 chunk，构建后应检查 `client/dist/assets/ImageEditorPage-*.js` 未合并进首屏入口包。
+
 ## 生产部署
 
 最简部署只需后端进程，无需 nginx：

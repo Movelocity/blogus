@@ -19,6 +19,11 @@
 - 开发阶段的脚本命令可以看 [DEV.md](./DEV.md)
 - 修改脚本或推荐命令后，同步更新 `README.md`(给人看)、`AGENTS.md`(给Coding Agent看) 和 `docs/*` 系列文档。
 
+## 前端工具页
+
+- 图片编辑器路由为 `/tools/image-editor`，必须保持 React lazy 独立加载，不得引入博客正文布局或后端图片接口。
+- 工具入口只放在共享页脚，不加入 `Navigation.tsx`；图片内容仅在浏览器内存中处理。
+
 ## 发版流程
 
 - push `main` 不触发部署，只有打 `v*.*.*` tag 才自动部署

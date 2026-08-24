@@ -2,7 +2,16 @@ import { Link } from "react-router";
 import { IcpLink } from "./IcpLink";
 import { siteConfig } from "../config/site";
 
-export function Footer() {
+export function Footer({ compact = false }: { compact?: boolean }) {
+  if (compact) return (
+    <footer className="border-t border-foreground/10 px-6 py-10 lg:px-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <span>&copy; {new Date().getFullYear()} {siteConfig.footer.copyright}</span>
+        <IcpLink />
+        <div className="flex flex-wrap gap-6"><Link className="hover:text-foreground" to="/posts">文章</Link><Link className="hover:text-foreground" to="/tools/image-editor">图片编辑器</Link><Link className="hover:text-foreground" to="/admin">管理</Link></div>
+      </div>
+    </footer>
+  );
   return (
     <footer className="border-t border-foreground/10 bg-background text-muted-foreground">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-12">
@@ -20,9 +29,9 @@ export function Footer() {
             <h3 className="mb-6 text-sm font-medium text-foreground">导航</h3>
             <ul className="space-y-4">
               {[
-                { name: "全部文章", to: "/blog" },
-                { name: "时间线", to: "/archive" },
-                { name: "日历", to: "/calendar" },
+                { name: "全部文章", to: "/posts" },
+                { name: "时间线", to: "/timeline" },
+                { name: "随手记", to: "/notes" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -36,9 +45,10 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="mb-6 text-sm font-medium text-foreground">管理</h3>
+            <h3 className="mb-6 text-sm font-medium text-foreground">工具与管理</h3>
             <ul className="space-y-4">
               {[
+                { name: "图片编辑器", to: "/tools/image-editor" },
                 { name: "编辑文章", to: "/admin" },
                 // { name: "登录", to: "/login" },
               ].map((link) => (
