@@ -1,4 +1,5 @@
 import type { EditorDocument, ImageLayer, Rect } from "./types";
+import { createEditorId } from "./createEditorId";
 
 export type EditorAction =
   | { type: "add"; layers: ImageLayer[] }
@@ -18,11 +19,10 @@ export function editorReducer(state: EditorDocument, action: EditorAction): Edit
     case "duplicate": {
       const source = state.layers.find((item) => item.id === action.id);
       if (!source) return state;
-      const copy = { ...source, id: crypto.randomUUID(), name: `${source.name.replace(/\.[^.]+$/, "")}_copy.png`, x: source.x + 24, y: source.y + 24, z: Math.max(0, ...state.layers.map((item) => item.z)) + 1 };
+      const copy = { ...source, id: createEditorId(), name: `${source.name.replace(/\.[^.]+$/, "")}_copy.png`, x: source.x + 24, y: source.y + 24, z: Math.max(0, ...state.layers.map((item) => item.z)) + 1 };
       return { layers: [...state.layers, copy], selectedId: copy.id };
     }
     case "geometry": return { ...state, layers: state.layers.map((item) => item.id === action.id ? { ...item, ...action.rect } : item) };
     case "replace": return { ...state, layers: state.layers.map((item) => item.id === action.id ? action.layer : item), selectedId: action.id };
   }
 }
-
