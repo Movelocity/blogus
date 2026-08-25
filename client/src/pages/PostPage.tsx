@@ -2,9 +2,11 @@ import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import type { BlogPost } from "@blogus/shared";
 import { getPostBySlug } from "../lib/api";
-import { getHeadings, MarkdownView } from "../lib/markdown";
+import { getHeadings, MarkdownView, preloadMathRendering } from "../lib/markdown";
 import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
-import { ArrowLeftIcon } from "@phosphor-icons/react";
+import { copyText } from "../lib/clipboard";
+import { CopyIcon } from "@phosphor-icons/react";
+import { ToastView, useToast } from "../lib/toast";
 import { useToc } from "../components/layouts/PostLayout";
 
 export function PostPage() {
@@ -13,6 +15,7 @@ export function PostPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { setHeadings } = useToc();
+  const { toasts, dismiss, notify } = useToast();
 
   useEffect(() => {
     if (!slug) {
@@ -24,6 +27,7 @@ export function PostPage() {
     setLoading(true);
     getPostBySlug(slug)
       .then((result) => {
+        preloadMathRendering(result.post.content);
         setPost(result.post);
         setError(null);
       })
@@ -39,6 +43,12 @@ export function PostPage() {
     setHeadings(headings);
     return () => setHeadings([]);
   }, [post, setHeadings]);
+
+  const handleCopyMarkdown = async () => {
+    if (!post) return;
+    const ok = await copyText(post.content);
+    notify(ok ? "Markdown 原文已复制到剪贴板" : "复制失败，请手动选择", ok ? "success" : "error");
+  };
 
   if (loading) {
     return <PostSkeleton />;
@@ -65,10 +75,20 @@ export function PostPage() {
     <article className="mx-auto w-full min-w-0 max-w-3xl">
       <header className="grid gap-8 border-b border-foreground/10 pb-6">
         <div className="grid w-full gap-5 px-4 sm:px-0">
-          <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
-            <span>{formatPostDate(post.publishedAt)}</span>
-            <span className="h-px w-4 bg-foreground/20" />
-            <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
+              <span>{formatPostDate(post.publishedAt)}</span>
+              <span className="h-px w-4 bg-foreground/20" />
+              <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleCopyMarkdown()}
+              title="复制 Markdown 原文"
+              className="inline-flex items-center justify-center rounded-full p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground active:translate-y-px"
+            >
+              <CopyIcon className="h-4 w-4" weight="bold" />
+            </button>
           </div>
           <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-5xl">
             {post.title}
@@ -101,6 +121,7 @@ export function PostPage() {
       <div className="mt-6 mx-auto w-full min-w-0 min-h-[60vh]">
         <MarkdownView content={post.content} underlineH1 />
       </div>
+      <ToastView toasts={toasts} onDismiss={dismiss} />
     </article>
   );
 }

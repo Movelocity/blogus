@@ -155,6 +155,10 @@ export function AdminPage() {
   const folderMenuRef = useRef<HTMLDivElement | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const selectedPost = useMemo(() => posts.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
+  const draftFolder = useMemo(
+    () => folders.find((folder) => folder.id === draftFolderId) ?? null,
+    [folders, draftFolderId],
+  );
   const tags = splitTags(tagsText);
   const isDirty = useMemo(() => {
     const currentTags = splitTags(tagsText);
@@ -897,9 +901,11 @@ export function AdminPage() {
                   <span className={`size-1.5 rounded-full ${statusDotClass(selectedPost.status)}`} />
                   {statusLabel(selectedPost.status)}
                 </span>
-              ) : (
-                <span className="shrink-0 font-display text-sm text-muted-foreground">新建</span>
-              )}
+              ) : draftFolder ? (
+                <span className="max-w-40 shrink-0 truncate font-display text-sm text-muted-foreground" title={draftFolder.name}>
+                  {draftFolder.name}
+                </span>
+              ) : null}
               <input
                 className="min-w-0 flex-1 bg-transparent font-display text-base font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/30"
                 maxLength={240}

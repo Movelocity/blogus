@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import hljs from "highlight.js/lib/common";
 import "highlight.js/styles/github-dark.min.css";
 
@@ -10,10 +10,17 @@ async function loadKaTeX() {
     katexPromise = Promise.all([
       import("katex").then((mod) => mod.default),
       import("katex/dist/katex.min.css"),
-    ]).then(([katex]) => katex);
+    ])
+      .then(([katex]) => katex)
+      .catch((error: unknown) => {
+        katexPromise = null;
+        throw error;
+      });
   }
   return katexPromise;
 }
+
+type KaTeX = Awaited<ReturnType<typeof loadKaTeX>>;
 
 type Alignment = "left" | "center" | "right" | null;
 
@@ -31,6 +38,18 @@ type Block =
   | { type: "math"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "table"; headers: string[]; alignments: Alignment[]; rows: string[][] };
+
+const INLINE_MATH_RE = /\$[^$\n]+?\$/;
+
+function blockContainsMath(block: Block): boolean {
+  if (block.type === "math") return true;
+  if (block.type === "code") return false;
+  if (block.type === "list") return block.items.some((item) => INLINE_MATH_RE.test(item.text));
+  if (block.type === "table") {
+    return [...block.headers, ...block.rows.flat()].some((cell) => INLINE_MATH_RE.test(cell));
+  }
+  return INLINE_MATH_RE.test(block.text);
+}
 
 const UNORDERED_TASK_RE = /^[-*]\s+\[([ xX])\]\s?(.*)$/;
 const UNORDERED_ITEM_RE = /^[-*]\s+(.+)$/;
@@ -270,6 +289,15 @@ function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
   return blocks;
 }
 
+/** 在文章数据到达后立即请求公式资源，与文章页首次渲染并行。 */
+export function preloadMathRendering(source: string): void {
+  if (parseMarkdown(source).some(blockContainsMath)) {
+    void loadKaTeX().catch(() => {
+      // 实际渲染仍会保留 TeX 源文本，预加载失败无需阻断文章展示。
+    });
+  }
+}
+
 export interface HeadingItem {
   level: 1 | 2 | 3;
   text: string;
@@ -282,50 +310,17 @@ export function getHeadings(source: string): HeadingItem[] {
     .map((b) => ({ level: b.level, text: b.text, slug: slugify(b.text) }));
 }
 
-// KaTeX renderer component with lazy loading
-function KaTeXRenderer({ tex, displayMode }: { tex: string; displayMode: boolean }) {
-  const [html, setHtml] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    
-    loadKaTeX()
-      .then((katex) => {
-        if (cancelled) return;
-        try {
-          const rendered = katex.renderToString(tex, { 
-            displayMode, 
-            throwOnError: false, 
-            strict: false 
-          });
-          setHtml(rendered);
-        } catch {
-          setError(true);
-        } finally {
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError(true);
-        setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tex, displayMode]);
-
-  if (loading) {
-    return <span className="animate-pulse bg-secondary/30 px-2 py-1 rounded">Loading...</span>;
+function KaTeXRenderer({ katex, tex, displayMode }: { katex: KaTeX | null; tex: string; displayMode: boolean }) {
+  if (!katex) {
+    // 加载期间保留原始公式，避免每个公式各自显示 Loading 造成布局抖动。
+    return <span className="font-mono text-[0.92em]">{displayMode ? `$$${tex}$$` : `$${tex}$`}</span>;
   }
 
-  if (error) {
-    return <span className="text-destructive">{tex}</span>;
-  }
-
+  const html = katex.renderToString(tex, {
+    displayMode,
+    throwOnError: false,
+    strict: false,
+  });
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
@@ -351,7 +346,7 @@ function highlightCode(code: string, lang: string): string {
 const INLINE_RE =
   /(!?\[([^\]]*)\]\(([^)]+)\)|`([^`]+)`|\$([^$\n]+?)\$|\*\*([^*]+)\*\*|\*([^*]+)\*|~~([^~]+)~~)/g;
 
-function renderInline(text: string): ReactNode[] {
+function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
   const nodes: ReactNode[] = [];
   let cursor = 0;
   let match: RegExpExecArray | null;
@@ -396,7 +391,7 @@ function renderInline(text: string): ReactNode[] {
       );
     } else if (inlineMath !== undefined) {
       nodes.push(
-        <KaTeXRenderer key={key} tex={inlineMath} displayMode={false} />,
+        <KaTeXRenderer katex={katex} key={key} tex={inlineMath} displayMode={false} />,
       );
     } else if (bold !== undefined) {
       nodes.push(<strong key={key}>{bold}</strong>);
@@ -436,6 +431,24 @@ export function MarkdownView({
   onChecklistToggle?: (nextContent: string) => void;
 }) {
   const blocks = parseMarkdown(content, { breaks });
+  const hasMath = blocks.some(blockContainsMath);
+  const [katex, setKatex] = useState<KaTeX | null>(null);
+
+  useEffect(() => {
+    if (!hasMath) return;
+    let cancelled = false;
+    loadKaTeX()
+      .then((loaded) => {
+        if (!cancelled) setKatex(() => loaded);
+      })
+      .catch(() => {
+        // 网络失败时保留可读的 TeX 源文本，避免整篇 Markdown 渲染失败。
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasMath]);
+
   let checklistIndex = 0;
 
   if (blocks.length === 0) {
@@ -464,7 +477,7 @@ export function MarkdownView({
           const id = slugify(block.text);
           return (
             <Heading className={className} id={id} key={key}>
-              {renderInline(block.text)}
+              {renderInline(block.text, katex)}
             </Heading>
           );
         }
@@ -491,7 +504,7 @@ export function MarkdownView({
         if (block.type === "math") {
           return (
             <div className="my-2 overflow-x-auto py-2 text-center" key={key}>
-              <KaTeXRenderer tex={block.text} displayMode={true} />
+              <KaTeXRenderer katex={katex} tex={block.text} displayMode={true} />
             </div>
           );
         }
@@ -508,7 +521,7 @@ export function MarkdownView({
                         key={hi}
                         style={{ textAlign: block.alignments[hi] ?? "left" }}
                       >
-                        {renderInline(header)}
+                        {renderInline(header, katex)}
                       </th>
                     ))}
                   </tr>
@@ -522,7 +535,7 @@ export function MarkdownView({
                           key={ci}
                           style={{ textAlign: block.alignments[ci] ?? "left" }}
                         >
-                          {renderInline(cell)}
+                          {renderInline(cell, katex)}
                         </td>
                       ))}
                     </tr>
@@ -550,7 +563,7 @@ export function MarkdownView({
                       key={`${key}-${ii}`}
                       className={hasTasks ? (block.ordered ? "list-decimal ml-6" : "list-disc ml-6") : undefined}
                     >
-                      {renderInline(item.text)}
+                      {renderInline(item.text, katex)}
                     </li>
                   );
                 }
@@ -570,7 +583,7 @@ export function MarkdownView({
                       className="mt-[0.35em] size-4 shrink-0 cursor-pointer accent-foreground disabled:cursor-default"
                     />
                     <span className={item.checked ? "text-muted-foreground line-through decoration-foreground/30" : ""}>
-                      {renderInline(item.text)}
+                      {renderInline(item.text, katex)}
                     </span>
                   </li>
                 );
@@ -585,14 +598,14 @@ export function MarkdownView({
               className={`border-l-4 border-foreground/20 bg-trinary px-5 py-4 rounded-lg ${breaks ? "whitespace-pre-wrap" : ""}`}
               key={key}
             >
-              {renderInline(block.text)}
+              {renderInline(block.text, katex)}
             </blockquote>
           );
         }
 
         return (
           <p className={`m-0 leading-8 break-all ${breaks ? "whitespace-pre-wrap" : ""}`} key={key}>
-            {renderInline(block.text)}
+            {renderInline(block.text, katex)}
           </p>
         );
       })}

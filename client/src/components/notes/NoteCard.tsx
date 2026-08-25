@@ -15,6 +15,7 @@ import {
 import type { BlogNote } from "@blogus/shared";
 import { MarkdownView } from "../../lib/markdown";
 import type { ToastType } from "../../lib/toast";
+import { copyText } from "../../lib/clipboard";
 
 const COLLAPSE_HEIGHT = 260;
 
@@ -128,12 +129,8 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   };
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(note.content);
-      notify("内容已复制到剪贴板", "success");
-    } catch {
-      notify("复制失败", "error");
-    }
+    const ok = await copyText(note.content);
+    notify(ok ? "内容已复制到剪贴板" : "复制失败", ok ? "success" : "error");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
