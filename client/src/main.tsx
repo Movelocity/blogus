@@ -33,6 +33,9 @@ const AdminPage = lazy(() =>
 const ImageEditorPage = lazy(() =>
   import("./pages/ImageEditorPage").then((m) => ({ default: m.ImageEditorPage })),
 );
+const TextCardsPage = lazy(() =>
+  import("./pages/TextCardsPage").then((m) => ({ default: m.TextCardsPage })),
+);
 
 // 延迟显示加载提示：chunk 在 250ms 内就绪则不显示任何 fallback，
 // 避免「加载中」一闪而过造成的视觉跳动（本地开发按需编译时尤其明显）。
@@ -81,6 +84,7 @@ function App() {
           </Route>
           <Route element={<AdminPage />} path="/admin" />
           <Route element={<ImageEditorPage />} path="/tools/image-editor" />
+          <Route element={<TextCardsPage />} path="/tools/text-cards" />
         </Routes>
       </Suspense>
     </BrowserRouter>

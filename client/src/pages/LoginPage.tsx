@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { ArrowRight } from "@phosphor-icons/react";
 import { getSystemStatus, login, register } from "../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/admin";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -33,7 +35,7 @@ export function LoginPage() {
       } else {
         await login({ email, password });
       }
-      navigate("/admin");
+      navigate(redirectTo.startsWith("/") ? redirectTo : "/admin");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : isRegister ? "注册失败" : "登录失败");
     } finally {

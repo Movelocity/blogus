@@ -12,6 +12,7 @@ import { authRoutes } from "./routes/auth.js";
 import { folderRoutes } from "./routes/folders.js";
 import { noteRoutes } from "./routes/notes.js";
 import { postRoutes } from "./routes/posts.js";
+import { textCardRoutes } from "./routes/text-cards.js";
 import { uploadRoutes } from "./routes/upload.js";
 
 export async function buildApp() {
@@ -58,6 +59,7 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(folderRoutes, { prefix: "/api/folders" });
   await app.register(noteRoutes, { prefix: "/api/notes" });
+  await app.register(textCardRoutes, { prefix: "/api/text-cards" });
   await app.register(postRoutes, { prefix: "/api/posts" });
   await app.register(uploadRoutes, { prefix: "/api/upload" });
 

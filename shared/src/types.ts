@@ -109,3 +109,71 @@ export interface InviteCode {
   disabledAt?: string;
   createdAt: string;
 }
+
+/** 语法高亮模式；空字符串表示 Raw 纯文本 */
+export type HlMode = "" | "json" | "js" | "ts" | "html" | "css" | "xml" | "md" | "sql" | "yaml" | "sh" | "py" | "text";
+
+export interface TextCardWorkspace {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TextCardWorkspaceWithCount extends TextCardWorkspace {
+  paneCount: number;
+}
+
+export interface TextCardPane {
+  id: string;
+  workspaceId: string;
+  title: string;
+  content: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  hlMode: HlMode;
+  minimized: boolean;
+  wordWrap: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateTextCardWorkspaceInput {
+  name: string;
+}
+
+export interface UpdateTextCardPaneInput {
+  title?: string;
+  content?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  zIndex?: number;
+  hlMode?: HlMode;
+  minimized?: boolean;
+  wordWrap?: boolean;
+}
+
+/** import 单项；兼容 tool-station v1 字段名 */
+export interface ImportTextCardPaneInput {
+  title?: string;
+  content?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  zIndex?: number;
+  hlMode?: string;
+  /** tool-station 遗留字段：true 且无 hlMode 时映射为 json */
+  highlightOn?: boolean;
+  minimized?: boolean;
+  wordWrap?: boolean;
+}
+
+export interface ImportTextCardPanesInput {
+  panes: ImportTextCardPaneInput[];
+}

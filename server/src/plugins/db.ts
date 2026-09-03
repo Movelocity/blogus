@@ -131,6 +131,39 @@ async function ensureDatabaseSchema(client: postgres.Sql) {
   await client`
     CREATE INDEX IF NOT EXISTS notes_date_idx ON notes(date)
   `;
+  await client`
+    CREATE TABLE IF NOT EXISTS text_card_workspaces (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS text_card_workspaces_user_id_idx ON text_card_workspaces(user_id)
+  `;
+  await client`
+    CREATE TABLE IF NOT EXISTS text_card_panes (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      workspace_id uuid NOT NULL REFERENCES text_card_workspaces(id) ON DELETE CASCADE,
+      title text NOT NULL DEFAULT '',
+      content text NOT NULL DEFAULT '',
+      x integer NOT NULL DEFAULT 0,
+      y integer NOT NULL DEFAULT 0,
+      width integer NOT NULL DEFAULT 560,
+      height integer NOT NULL DEFAULT 280,
+      z_index integer NOT NULL DEFAULT 1,
+      hl_mode text NOT NULL DEFAULT '',
+      minimized boolean NOT NULL DEFAULT false,
+      word_wrap boolean NOT NULL DEFAULT true,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await client`
+    CREATE INDEX IF NOT EXISTS text_card_panes_workspace_id_idx ON text_card_panes(workspace_id)
+  `;
 }
 
 async function seedDefaultInviteCode(client: postgres.Sql) {

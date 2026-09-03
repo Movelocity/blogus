@@ -111,3 +111,40 @@ export const notes = pgTable(
     index("notes_date_idx").on(table.date)
   ]
 );
+
+export const textCardWorkspaces = pgTable(
+  "text_card_workspaces",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index("text_card_workspaces_user_id_idx").on(table.userId)]
+);
+
+export const textCardPanes = pgTable(
+  "text_card_panes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => textCardWorkspaces.id, { onDelete: "cascade" }),
+    title: text("title").default("").notNull(),
+    content: text("content").default("").notNull(),
+    x: integer("x").default(0).notNull(),
+    y: integer("y").default(0).notNull(),
+    width: integer("width").default(560).notNull(),
+    height: integer("height").default(280).notNull(),
+    zIndex: integer("z_index").default(1).notNull(),
+    hlMode: text("hl_mode").default("").notNull(),
+    minimized: boolean("minimized").default(false).notNull(),
+    wordWrap: boolean("word_wrap").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index("text_card_panes_workspace_id_idx").on(table.workspaceId)]
+);
