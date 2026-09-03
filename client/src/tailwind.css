@@ -169,10 +169,249 @@
   }
 }
 
-/* highlight.js: let our container own background/padding */
-pre code.hljs {
+/* highlight.js: container owns background/padding; themes scoped per site light/dark */
+.markdown-content pre code.hljs {
   background: transparent;
   padding: 0;
+}
+
+/* GitHub light (default) */
+.markdown-content .hljs {
+  color: #24292e;
+  background: transparent;
+}
+.markdown-content .hljs-doctag,
+.markdown-content .hljs-keyword,
+.markdown-content .hljs-meta .hljs-keyword,
+.markdown-content .hljs-template-tag,
+.markdown-content .hljs-template-variable,
+.markdown-content .hljs-type,
+.markdown-content .hljs-variable.language_ {
+  color: #d73a49;
+}
+.markdown-content .hljs-title,
+.markdown-content .hljs-title.class_,
+.markdown-content .hljs-title.class_.inherited__,
+.markdown-content .hljs-title.function_ {
+  color: #6f42c1;
+}
+.markdown-content .hljs-attr,
+.markdown-content .hljs-attribute,
+.markdown-content .hljs-literal,
+.markdown-content .hljs-meta,
+.markdown-content .hljs-number,
+.markdown-content .hljs-operator,
+.markdown-content .hljs-selector-attr,
+.markdown-content .hljs-selector-class,
+.markdown-content .hljs-selector-id,
+.markdown-content .hljs-variable {
+  color: #005cc5;
+}
+.markdown-content .hljs-meta .hljs-string,
+.markdown-content .hljs-regexp,
+.markdown-content .hljs-string {
+  color: #032f62;
+}
+.markdown-content .hljs-built_in,
+.markdown-content .hljs-symbol {
+  color: #e36209;
+}
+.markdown-content .hljs-code,
+.markdown-content .hljs-comment,
+.markdown-content .hljs-formula {
+  color: #6a737d;
+}
+.markdown-content .hljs-name,
+.markdown-content .hljs-quote,
+.markdown-content .hljs-selector-pseudo,
+.markdown-content .hljs-selector-tag {
+  color: #22863a;
+}
+.markdown-content .hljs-subst {
+  color: #24292e;
+}
+.markdown-content .hljs-section {
+  color: #005cc5;
+  font-weight: 700;
+}
+.markdown-content .hljs-bullet {
+  color: #735c0f;
+}
+.markdown-content .hljs-emphasis {
+  color: #24292e;
+  font-style: italic;
+}
+.markdown-content .hljs-strong {
+  color: #24292e;
+  font-weight: 700;
+}
+.markdown-content .hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+.markdown-content .hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+
+/* GitHub dark — explicit .dark */
+.dark:root .markdown-content .hljs {
+  color: #c9d1d9;
+  background: transparent;
+}
+.dark:root .markdown-content .hljs-doctag,
+.dark:root .markdown-content .hljs-keyword,
+.dark:root .markdown-content .hljs-meta .hljs-keyword,
+.dark:root .markdown-content .hljs-template-tag,
+.dark:root .markdown-content .hljs-template-variable,
+.dark:root .markdown-content .hljs-type,
+.dark:root .markdown-content .hljs-variable.language_ {
+  color: #ff7b72;
+}
+.dark:root .markdown-content .hljs-title,
+.dark:root .markdown-content .hljs-title.class_,
+.dark:root .markdown-content .hljs-title.class_.inherited__,
+.dark:root .markdown-content .hljs-title.function_ {
+  color: #d2a8ff;
+}
+.dark:root .markdown-content .hljs-attr,
+.dark:root .markdown-content .hljs-attribute,
+.dark:root .markdown-content .hljs-literal,
+.dark:root .markdown-content .hljs-meta,
+.dark:root .markdown-content .hljs-number,
+.dark:root .markdown-content .hljs-operator,
+.dark:root .markdown-content .hljs-selector-attr,
+.dark:root .markdown-content .hljs-selector-class,
+.dark:root .markdown-content .hljs-selector-id,
+.dark:root .markdown-content .hljs-variable {
+  color: #79c0ff;
+}
+.dark:root .markdown-content .hljs-meta .hljs-string,
+.dark:root .markdown-content .hljs-regexp,
+.dark:root .markdown-content .hljs-string {
+  color: #a5d6ff;
+}
+.dark:root .markdown-content .hljs-built_in,
+.dark:root .markdown-content .hljs-symbol {
+  color: #ffa657;
+}
+.dark:root .markdown-content .hljs-code,
+.dark:root .markdown-content .hljs-comment,
+.dark:root .markdown-content .hljs-formula {
+  color: #8b949e;
+}
+.dark:root .markdown-content .hljs-name,
+.dark:root .markdown-content .hljs-quote,
+.dark:root .markdown-content .hljs-selector-pseudo,
+.dark:root .markdown-content .hljs-selector-tag {
+  color: #7ee787;
+}
+.dark:root .markdown-content .hljs-subst {
+  color: #c9d1d9;
+}
+.dark:root .markdown-content .hljs-section {
+  color: #1f6feb;
+  font-weight: 700;
+}
+.dark:root .markdown-content .hljs-bullet {
+  color: #f2cc60;
+}
+.dark:root .markdown-content .hljs-emphasis {
+  color: #c9d1d9;
+  font-style: italic;
+}
+.dark:root .markdown-content .hljs-strong {
+  color: #c9d1d9;
+  font-weight: 700;
+}
+.dark:root .markdown-content .hljs-addition {
+  color: #aff5b4;
+  background-color: #033a16;
+}
+.dark:root .markdown-content .hljs-deletion {
+  color: #ffdcd7;
+  background-color: #67060c;
+}
+
+/* GitHub dark — system preference when no explicit theme class */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) .markdown-content .hljs {
+    color: #c9d1d9;
+    background: transparent;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-doctag,
+  :root:not(.light):not(.dark) .markdown-content .hljs-keyword,
+  :root:not(.light):not(.dark) .markdown-content .hljs-meta .hljs-keyword,
+  :root:not(.light):not(.dark) .markdown-content .hljs-template-tag,
+  :root:not(.light):not(.dark) .markdown-content .hljs-template-variable,
+  :root:not(.light):not(.dark) .markdown-content .hljs-type,
+  :root:not(.light):not(.dark) .markdown-content .hljs-variable.language_ {
+    color: #ff7b72;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-title,
+  :root:not(.light):not(.dark) .markdown-content .hljs-title.class_,
+  :root:not(.light):not(.dark) .markdown-content .hljs-title.class_.inherited__,
+  :root:not(.light):not(.dark) .markdown-content .hljs-title.function_ {
+    color: #d2a8ff;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-attr,
+  :root:not(.light):not(.dark) .markdown-content .hljs-attribute,
+  :root:not(.light):not(.dark) .markdown-content .hljs-literal,
+  :root:not(.light):not(.dark) .markdown-content .hljs-meta,
+  :root:not(.light):not(.dark) .markdown-content .hljs-number,
+  :root:not(.light):not(.dark) .markdown-content .hljs-operator,
+  :root:not(.light):not(.dark) .markdown-content .hljs-selector-attr,
+  :root:not(.light):not(.dark) .markdown-content .hljs-selector-class,
+  :root:not(.light):not(.dark) .markdown-content .hljs-selector-id,
+  :root:not(.light):not(.dark) .markdown-content .hljs-variable {
+    color: #79c0ff;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-meta .hljs-string,
+  :root:not(.light):not(.dark) .markdown-content .hljs-regexp,
+  :root:not(.light):not(.dark) .markdown-content .hljs-string {
+    color: #a5d6ff;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-built_in,
+  :root:not(.light):not(.dark) .markdown-content .hljs-symbol {
+    color: #ffa657;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-code,
+  :root:not(.light):not(.dark) .markdown-content .hljs-comment,
+  :root:not(.light):not(.dark) .markdown-content .hljs-formula {
+    color: #8b949e;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-name,
+  :root:not(.light):not(.dark) .markdown-content .hljs-quote,
+  :root:not(.light):not(.dark) .markdown-content .hljs-selector-pseudo,
+  :root:not(.light):not(.dark) .markdown-content .hljs-selector-tag {
+    color: #7ee787;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-subst {
+    color: #c9d1d9;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-section {
+    color: #1f6feb;
+    font-weight: 700;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-bullet {
+    color: #f2cc60;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-emphasis {
+    color: #c9d1d9;
+    font-style: italic;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-strong {
+    color: #c9d1d9;
+    font-weight: 700;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-addition {
+    color: #aff5b4;
+    background-color: #033a16;
+  }
+  :root:not(.light):not(.dark) .markdown-content .hljs-deletion {
+    color: #ffdcd7;
+    background-color: #67060c;
+  }
 }
 
 .markdown-content {

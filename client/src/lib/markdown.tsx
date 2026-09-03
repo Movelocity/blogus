@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { ListDashesIcon } from "@phosphor-icons/react";
 import hljs from "highlight.js/lib/common";
-import "highlight.js/styles/github-dark.min.css";
 
 // Lazy KaTeX loader - caches the import promise
 let katexPromise: Promise<typeof import("katex").default> | null = null;
@@ -411,6 +411,56 @@ function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
   return nodes;
 }
 
+function MarkdownCodeBlock({
+  html,
+  lang,
+  compact,
+}: {
+  html: string;
+  lang: string;
+  compact: boolean;
+}) {
+  const [wrap, setWrap] = useState(false);
+  const codePad = compact ? "px-3 py-2" : "px-4 py-3";
+  const codeRadius = compact ? "rounded-lg" : "rounded-xl";
+  const corner = compact ? "right-2 top-2" : "right-3 top-3";
+
+  return (
+    <div className="group relative">
+      <div className={`absolute z-10 flex items-center gap-1.5 ${corner}`}>
+        {lang ? (
+          <span className="select-none font-mono text-xs text-muted-foreground/50 transition-opacity group-hover:text-muted-foreground/70">
+            {lang}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          aria-label={wrap ? "取消自动换行" : "自动换行"}
+          aria-pressed={wrap}
+          title={wrap ? "取消自动换行" : "自动换行"}
+          onClick={() => setWrap((on) => !on)}
+          className={`rounded p-0.5 transition-colors hover:bg-foreground/10 ${
+            wrap ? "text-foreground/80" : "text-muted-foreground/50 group-hover:text-muted-foreground/70"
+          }`}
+        >
+          <ListDashesIcon size={14} weight={wrap ? "bold" : "regular"} />
+        </button>
+      </div>
+      <pre
+        className={`bg-muted font-mono text-sm leading-6 text-foreground ${codePad} ${codeRadius} ${
+          wrap ? "overflow-x-hidden whitespace-pre-wrap break-all" : "overflow-x-auto"
+        }`}
+      >
+        <code
+          className="hljs"
+          dangerouslySetInnerHTML={{ __html: html }}
+          style={{ background: "transparent", padding: 0 }}
+        />
+      </pre>
+    </div>
+  );
+}
+
 export function MarkdownView({
   content,
   emptyText = "暂无内容",
@@ -467,12 +517,12 @@ export function MarkdownView({
         if (block.type === "heading") {
           const className =
             block.level === 1
-              ? `mt-6 font-display text-4xl leading-tight tracking-tight ${
+              ? `mt-6 font-display text-3xl leading-tight tracking-tight ${
                   underlineH1 ? "w-full border-b border-foreground/20 pb-2" : ""
                 }`
               : block.level === 2
-                ? "mt-6 font-display text-3xl leading-tight tracking-tight"
-                : "mt-4 font-display text-2xl leading-snug tracking-tight";
+                ? "mt-6 font-display text-2xl leading-tight tracking-tight"
+                : "mt-4 font-display text-xl leading-snug tracking-tight";
           const Heading = `h${block.level}` as "h1" | "h2" | "h3";
           const id = slugify(block.text);
           return (
@@ -484,28 +534,8 @@ export function MarkdownView({
 
         if (block.type === "code") {
           const html = highlightCode(block.text, block.lang);
-          const codePad = compact ? "px-3 py-2" : "px-4 py-3";
-          const codeRadius = compact ? "rounded-lg" : "rounded-xl";
           return (
-            <div className="group relative" key={key}>
-              {block.lang && (
-                <span
-                  className={`absolute select-none font-mono text-xs text-muted-foreground/50 transition-opacity group-hover:text-muted-foreground/70 ${
-                    compact ? "right-2 top-2" : "right-3 top-3"
-                  }`}
-                >
-                  {block.lang}
-                </span>
-              )}
-              <pre
-                className={`overflow-x-auto bg-muted font-mono text-sm leading-6 text-foreground ${codePad} ${codeRadius}`}
-              >
-                <code
-                  dangerouslySetInnerHTML={{ __html: html }}
-                  style={{ background: "transparent", padding: 0 }}
-                />
-              </pre>
-            </div>
+            <MarkdownCodeBlock key={key} compact={compact} html={html} lang={block.lang} />
           );
         }
 

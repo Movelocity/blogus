@@ -1,6 +1,6 @@
-import { AlignLeft, ArrowsOut, Minus, X } from "@phosphor-icons/react";
+import { ListDashesIcon, ArrowsOutIcon, MinusIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import type { HlMode, TextCardPane } from "@blogus/shared";
+import type { TextCardPane } from "@blogus/shared";
 import { MIN_PANE_HEIGHT, MIN_PANE_WIDTH, TOP_BAR_HEIGHT } from "../../features/text-cards/constants";
 import { highlightContent, hlModeLabel } from "../../features/text-cards/highlight";
 
@@ -198,7 +198,7 @@ export function PaneCard({
               type="button"
               onClick={() => onWordWrapChange(!pane.wordWrap)}
             >
-              <AlignLeft size={14} />
+              <ListDashesIcon size={14} />
             </button>
             <button
               aria-label={maximized ? "退出最大化" : "最大化"}
@@ -207,13 +207,13 @@ export function PaneCard({
               type="button"
               onClick={maximized ? onRestore : onMaximize}
             >
-              <ArrowsOut size={14} />
+              <ArrowsOutIcon size={14} />
             </button>
             <button aria-label="最小化" className="tc-btn" data-minimize type="button" onClick={onMinimize}>
-              <Minus size={14} />
+              <MinusIcon size={14} />
             </button>
             <button aria-label="删除卡片" className="tc-btn tc-btn-danger" type="button" onClick={onDelete}>
-              <X size={14} />
+              <XIcon size={14} />
             </button>
           </div>
         ) : null}

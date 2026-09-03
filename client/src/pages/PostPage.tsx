@@ -90,7 +90,7 @@ export function PostPage() {
               <CopyIcon className="h-4 w-4" weight="bold" />
             </button>
           </div>
-          <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-5xl">
+          <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-4xl">
             {post.title}
           </h1>
           {post.coverImageUrl ? (
