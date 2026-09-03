@@ -1,23 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TextCardPane } from "@blogus/shared";
+import type { TextCardPane, UpdateTextCardPaneInput } from "@blogus/shared";
 import { SAVE_DEBOUNCE_MS } from "../constants";
 import * as api from "../../../lib/text-cards";
 
 export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
-interface PendingEdit {
-  title?: string;
-  content?: string;
-}
+type TextPatch = Pick<UpdateTextCardPaneInput, "title" | "content">;
+type LayoutPatch = Omit<UpdateTextCardPaneInput, "title" | "content">;
+type PendingEdit = UpdateTextCardPaneInput;
 
 export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void) {
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-  const pending = useRef(new Map<string, PendingEdit>());
+  const pending = useRef(new Map<string, TextPatch>());
   const inflight = useRef(new Map<string, Promise<void>>());
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const hasPending = useCallback(() => timers.current.size > 0 || pending.current.size > 0 || inflight.current.size > 0, []);
+  const hasPending = useCallback(
+    () => timers.current.size > 0 || pending.current.size > 0 || inflight.current.size > 0,
+    []
+  );
 
   const savePane = useCallback(
     async (id: string, patch: PendingEdit) => {
@@ -46,7 +48,7 @@ export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void
   );
 
   const queueSave = useCallback(
-    (id: string, patch: PendingEdit) => {
+    (id: string, patch: TextPatch) => {
       const existing = pending.current.get(id) ?? {};
       pending.current.set(id, { ...existing, ...patch });
       setStatus("pending");
@@ -63,6 +65,13 @@ export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void
       }, SAVE_DEBOUNCE_MS);
 
       timers.current.set(id, timer);
+    },
+    [savePane]
+  );
+
+  const saveNow = useCallback(
+    (id: string, patch: LayoutPatch) => {
+      void savePane(id, patch);
     },
     [savePane]
   );
@@ -90,5 +99,5 @@ export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void
     };
   }, []);
 
-  return { status, error, queueSave, flush, retry, hasPending };
+  return { status, error, queueSave, saveNow, flush, retry, hasPending };
 }

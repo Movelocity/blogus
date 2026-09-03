@@ -22,7 +22,7 @@
 ## 前端工具页
 
 - 图片编辑器路由为 `/tools/image-editor`，必须保持 React lazy 独立加载，不得引入博客正文布局或后端图片接口。
-- 卡片笔记路由为 `/tools/text-cards`，同样 lazy 独立 chunk、全屏工具页、不套 `BlogLayout`；数据经 `/api/text-cards` 持久化，需登录。
+- 卡片笔记路由为 `/tools/text-cards`，同样 lazy 独立 chunk、全屏画布工具页、不套 `BlogLayout`；数据经 `/api/text-cards` 持久化，需登录。
 - 工具入口只放在共享页脚，不加入 `Navigation.tsx`；图片内容仅在浏览器内存中处理；「卡片笔记」仅登录后在页脚显示。
 
 ## 发版流程
