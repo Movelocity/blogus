@@ -6,6 +6,7 @@ import { Canvas, type CanvasHandle } from "../components/text-cards/Canvas";
 import { HlModePortal } from "../components/text-cards/HlModePortal";
 import { PaneIndex } from "../components/text-cards/PaneIndex";
 import { WorkspaceFab } from "../components/text-cards/WorkspaceFab";
+import { WorkspaceSwitcher } from "../components/text-cards/WorkspaceSwitcher";
 import { nextPosition, nextZIndex } from "../features/text-cards/geometry";
 import { usePanes } from "../features/text-cards/hooks/usePanes";
 import { usePaneSave } from "../features/text-cards/hooks/usePaneSave";
@@ -203,6 +204,15 @@ export function TextCardsPage() {
           <ArrowLeft size={16} />
           <span className="max-sm:hidden">首页</span>
         </Link>
+        <WorkspaceSwitcher
+          activeWorkspace={activeWorkspace}
+          activeWorkspaceId={activeWorkspaceId}
+          workspaces={workspaces}
+          onCreateWorkspace={() => void createWorkspace()}
+          onDeleteWorkspace={(id) => void removeWorkspace(id)}
+          onRenameWorkspace={(id, name) => void renameWorkspace(id, name)}
+          onSelectWorkspace={handleSelectWorkspace}
+        />
         <PaneIndex
           activePaneId={activePaneId}
           maximizedPaneId={maximizedPaneId}
@@ -252,16 +262,10 @@ export function TextCardsPage() {
 
       <WorkspaceFab
         activeWorkspace={activeWorkspace}
-        activeWorkspaceId={activeWorkspaceId}
         panes={panes}
         saveError={saveError}
         saveStatus={status}
-        workspaces={workspaces}
-        onCreateWorkspace={() => void createWorkspace()}
-        onDeleteWorkspace={(id) => void removeWorkspace(id)}
         onImport={handleImport}
-        onRenameWorkspace={(id, name) => void renameWorkspace(id, name)}
-        onSelectWorkspace={handleSelectWorkspace}
       />
 
       {hlMenu && hlPane ? (

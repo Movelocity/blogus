@@ -190,24 +190,6 @@ pre code.hljs {
   --markdown-text: rgb(255, 255, 255);
 }
 
-/* 深色主题下的代码块样式（仅系统偏好回退） */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light):not(.dark) pre {
-    background: oklch(0.115 0.006 255) !important;
-  }
-  :root:not(.light):not(.dark) pre code {
-    color: oklch(0.9 0.004 70);
-  }
-}
-
-/* 显式 .dark class 的代码块样式 */
-.dark:root pre {
-  background: oklch(0.115 0.006 255) !important;
-}
-.dark:root pre code {
-  color: oklch(0.9 0.004 70);
-}
-
 /* KaTeX: scale down display math slightly for body text */
 .katex-display {
   margin: 0;

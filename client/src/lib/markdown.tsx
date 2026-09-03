@@ -484,14 +484,22 @@ export function MarkdownView({
 
         if (block.type === "code") {
           const html = highlightCode(block.text, block.lang);
+          const codePad = compact ? "px-3 py-2" : "px-4 py-3";
+          const codeRadius = compact ? "rounded-lg" : "rounded-xl";
           return (
             <div className="group relative" key={key}>
               {block.lang && (
-                <span className="absolute right-3 top-3 select-none font-mono text-xs text-primary-foreground/30 transition-opacity group-hover:text-primary-foreground/50">
+                <span
+                  className={`absolute select-none font-mono text-xs text-muted-foreground/50 transition-opacity group-hover:text-muted-foreground/70 ${
+                    compact ? "right-2 top-2" : "right-3 top-3"
+                  }`}
+                >
                   {block.lang}
                 </span>
               )}
-              <pre className="overflow-x-auto bg-foreground p-5 font-mono text-sm leading-6 text-primary-foreground rounded-xl">
+              <pre
+                className={`overflow-x-auto bg-muted font-mono text-sm leading-6 text-foreground ${codePad} ${codeRadius}`}
+              >
                 <code
                   dangerouslySetInnerHTML={{ __html: html }}
                   style={{ background: "transparent", padding: 0 }}
@@ -593,9 +601,10 @@ export function MarkdownView({
         }
 
         if (block.type === "blockquote") {
+          const quotePad = compact ? "px-3 py-2" : "px-4 py-3";
           return (
             <blockquote
-              className={`border-l-4 border-foreground/20 bg-trinary px-5 py-4 rounded-lg ${breaks ? "whitespace-pre-wrap" : ""}`}
+              className={`rounded-lg border-l-4 border-foreground/20 bg-trinary ${quotePad} ${breaks ? "whitespace-pre-wrap" : ""}`}
               key={key}
             >
               {renderInline(block.text, katex)}
