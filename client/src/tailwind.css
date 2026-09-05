@@ -6,6 +6,7 @@
 
 :root {
   /* 浅色主题 */
+  --bg-primary: #F9FAFB;
   --background: white;
   --foreground: black;
   --card: #fafafa;
@@ -33,6 +34,7 @@
 /* 深色主题 - 系统偏好回退 */
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not(.dark) {
+    --bg-primary: #1F1F22;
     --background: rgb(31, 31, 34);
     --foreground: rgb(226, 226, 230);
     --card: oklch(0.18 0.008 255);
@@ -59,6 +61,7 @@
 
 /* 显式浅色主题 - 覆盖系统深色偏好 */
 .light:root {
+  --bg-primary: #F9FAFB;
   --background: white;
   --foreground: black;
   --card: #fafafa;
@@ -83,6 +86,7 @@
 
 /* 深色主题 - 显式 .dark class（优先级高于 media query） */
 .dark:root {
+  --bg-primary: #1F1F22;
   --background: rgb(31, 31, 34);
   --foreground: rgb(226, 226, 230);
   --card: oklch(0.18 0.008 255);
@@ -129,6 +133,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
+  --color-bg-primary: var(--bg-primary);
   /* --radius-sm: calc(var(--radius) - 4px); */
   /* --radius-md: calc(var(--radius) - 2px); */
   /* --radius-lg: var(--radius); */

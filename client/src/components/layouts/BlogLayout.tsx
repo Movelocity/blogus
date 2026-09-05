@@ -4,7 +4,7 @@ import { Footer } from "../Footer";
 
 export function BlogLayout() {
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    <div className="flex min-h-dvh flex-col bg-bg-primary text-foreground">
       <Navigation />
       <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 px-6 pb-20 pt-24 lg:px-12">
         <Outlet />

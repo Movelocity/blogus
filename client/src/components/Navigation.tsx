@@ -141,7 +141,7 @@ export function Navigation() {
           isMobileMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <nav className="flex flex-col gap-1 px-4 py-3">
+        <nav className="flex flex-col gap-1 px-4 py-3 bg-background">
           {navLinks.map((link) => (
             <NavLink
               key={link.to}
