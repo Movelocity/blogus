@@ -429,6 +429,334 @@
   --markdown-text: rgb(255, 255, 255);
 }
 
+/* 文章正文排版（对齐少数派式阅读体验） */
+.markdown-content--article {
+  --article-body-size: 15px;
+  --article-body-leading: 1.8;
+  --article-element-space: 24px;
+  --article-h2-size: 24px;
+  --article-h3-size: 20px;
+  --article-caption-size: 17px;
+  --article-link: #0097ff;
+  --article-image-border: rgba(0, 0, 0, 0.051);
+  --article-code-bg: #f7f7f9;
+  --article-pre-border: #f0f0f3;
+  --article-quote-bar: #cdcdce;
+
+  font-size: var(--article-body-size);
+  line-height: var(--article-body-leading);
+  text-align: left;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .markdown-content--article {
+    --article-body-size: 17px;
+    --article-element-space: 32px;
+    --article-h2-size: 32px;
+    --article-h3-size: 24px;
+    --article-caption-size: 20px;
+  }
+}
+
+.dark:root .markdown-content--article,
+:root:not(.light):not(.dark) .markdown-content--article {
+  --article-link: #33acff;
+  --article-image-border: hsla(0, 0%, 100%, 0.051);
+  --article-code-bg: #28282a;
+  --article-pre-border: #39393c;
+  --article-quote-bar: #5e5e61;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) .markdown-content--article {
+    --article-link: #33acff;
+    --article-image-border: hsla(0, 0%, 100%, 0.051);
+    --article-code-bg: #28282a;
+    --article-pre-border: #39393c;
+    --article-quote-bar: #5e5e61;
+  }
+}
+
+.markdown-content--article > * {
+  margin-top: 0;
+  margin-bottom: var(--article-element-space);
+}
+
+.markdown-content--article > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content--article h1 {
+  font-size: var(--article-h2-size);
+  font-weight: 600;
+  line-height: 1.4;
+  padding-top: 24px;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.markdown-content--article h2 {
+  font-size: var(--article-h2-size);
+  font-weight: 600;
+  line-height: 1.4;
+  padding-top: 24px;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.markdown-content--article h3 {
+  font-size: var(--article-h3-size);
+  font-weight: 600;
+  line-height: 1.4;
+  padding-top: 16px;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.markdown-content--article p {
+  margin-top: 0;
+  letter-spacing: 0.01em;
+}
+
+.markdown-content--article img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid var(--article-image-border);
+  border-radius: 4px;
+}
+
+.markdown-content--article a {
+  color: var(--article-link);
+  text-decoration: none;
+}
+
+.markdown-content--article a:hover {
+  color: var(--article-link);
+}
+
+.markdown-content--article a img {
+  display: block;
+}
+
+.markdown-content--article ol,
+.markdown-content--article ul {
+  line-height: var(--article-body-leading);
+  margin-top: var(--article-element-space);
+  margin-bottom: var(--article-element-space);
+  padding-left: 1.4em;
+}
+
+.markdown-content--article ul {
+  list-style-type: disc;
+}
+
+.markdown-content--article ol {
+  list-style-type: decimal;
+}
+
+.markdown-content--article li {
+  line-height: inherit;
+  margin: 6px 0;
+  padding-left: 4px;
+}
+
+.markdown-content--article li > * {
+  margin: 0;
+}
+
+.markdown-content--article li::marker {
+  color: var(--muted-foreground);
+}
+
+.markdown-content--article strong {
+  font-weight: 700;
+}
+
+.markdown-content--article em {
+  font-style: italic;
+}
+
+.markdown-content--article blockquote {
+  position: relative;
+  display: block;
+  margin: 0;
+  padding: 16px 0 16px 16px;
+  /* border: 0;
+  border-radius: 0; */
+  background: transparent;
+  color: inherit;
+  /* font-size: var(--article-caption-size); */
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* @media (min-width: 768px) {
+  .markdown-content--article blockquote {
+    padding: 52px 0 24px 24px;
+  }
+} */
+
+.markdown-content--article blockquote::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--article-quote-bar);
+  background-clip: content-box;
+  box-sizing: border-box;
+}
+
+.markdown-content--article :not(pre) > code {
+  font-family: var(--font-mono);
+  background: var(--article-code-bg);
+  border-radius: 3px;
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+}
+
+/* 代码块容器：顶栏 + 内容区 */
+.markdown-code-block {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.markdown-code-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--muted);
+}
+
+.markdown-code-block__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.markdown-code-block__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.markdown-code-block__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.markdown-code-block__action:hover,
+.markdown-code-block__action.is-active {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+}
+
+.markdown-code-block-pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  background: var(--background);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+.markdown-code-block--compact .markdown-code-block__header {
+  padding: 8px 12px;
+}
+
+.markdown-code-block--compact .markdown-code-block__label {
+  font-size: 13px;
+}
+
+.markdown-code-block--compact .markdown-code-block-pre {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.markdown-content:not(.markdown-content--article) .markdown-code-block-pre {
+  background: color-mix(in oklab, var(--muted) 55%, var(--background));
+}
+
+.markdown-content pre.markdown-code-block-pre.markdown-code-block--wrap {
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.markdown-content pre.markdown-code-block-pre.markdown-code-block--wrap code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.markdown-content--article .markdown-code-block {
+  border-color: var(--article-pre-border);
+}
+
+.markdown-content--article .markdown-code-block__header {
+  border-bottom-color: var(--article-pre-border);
+  background: var(--article-code-bg);
+}
+
+.markdown-content--article .markdown-code-block-pre {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.markdown-content--article .markdown-code-block-pre code {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  white-space: pre;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+
+.markdown-content--article table {
+  font-size: 0.94em;
+}
+
+.markdown-content--article hr.markdown-article-hr {
+  border: 0;
+  height: 1px;
+  margin: 0;
+  background: var(--article-pre-border);
+}
+
 /* KaTeX: scale down display math slightly for body text */
 .katex-display {
   margin: 0;

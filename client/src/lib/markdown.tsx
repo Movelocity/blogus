@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ListDashesIcon } from "@phosphor-icons/react";
+import { CopyIcon, ListDashesIcon } from "@phosphor-icons/react";
 import hljs from "highlight.js/lib/common";
+import { copyText } from "./clipboard";
 
 // Lazy KaTeX loader - caches the import promise
 let katexPromise: Promise<typeof import("katex").default> | null = null;
@@ -34,6 +35,7 @@ type Block =
   | { type: "blockquote"; text: string }
   | { type: "code"; lang: string; text: string }
   | { type: "heading"; level: 1 | 2 | 3; text: string }
+  | { type: "hr" }
   | { type: "list"; ordered: boolean; items: ListItem[] }
   | { type: "math"; text: string }
   | { type: "paragraph"; text: string }
@@ -43,7 +45,7 @@ const INLINE_MATH_RE = /\$[^$\n]+?\$/;
 
 function blockContainsMath(block: Block): boolean {
   if (block.type === "math") return true;
-  if (block.type === "code") return false;
+  if (block.type === "code" || block.type === "hr") return false;
   if (block.type === "list") return block.items.some((item) => INLINE_MATH_RE.test(item.text));
   if (block.type === "table") {
     return [...block.headers, ...block.rows.flat()].some((cell) => INLINE_MATH_RE.test(cell));
@@ -73,6 +75,11 @@ function parseListItem(line: string, ordered: boolean): ListItem | null {
 
 function isListLine(line: string): boolean {
   return Boolean(parseListItem(line, false) || parseListItem(line, true));
+}
+
+/** GFM 分隔线：`---` / `***` / `___`（允许至多 3 个前导空格） */
+function isThematicBreak(line: string): boolean {
+  return /^ {0,3}(-{3,}|\*{3,}|_{3,})\s*$/.test(line);
 }
 
 /**
@@ -209,6 +216,13 @@ function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
       continue;
     }
 
+    // --- Thematic break ---
+    if (isThematicBreak(line)) {
+      blocks.push({ type: "hr" });
+      i += 1;
+      continue;
+    }
+
     // --- Heading ---
     const heading = /^(#{1,3})\s+(.+)$/.exec(line);
     if (heading) {
@@ -274,6 +288,7 @@ function parseMarkdown(source: string, options: { breaks?: boolean } = {}) {
         cur.trimStart().startsWith("$$") ||
         /^(#{1,3})\s+/.test(cur) ||
         isListLine(cur) ||
+        isThematicBreak(cur) ||
         cur.startsWith(">") ||
         (cur.includes("|") && i + 1 < lines.length && TABLE_SEP_RE.test(lines[i + 1] ?? ""))
       ) {
@@ -346,7 +361,7 @@ function highlightCode(code: string, lang: string): string {
 const INLINE_RE =
   /(!?\[([^\]]*)\]\(([^)]+)\)|`([^`]+)`|\$([^$\n]+?)\$|\*\*([^*]+)\*\*|\*([^*]+)\*|~~([^~]+)~~)/g;
 
-function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
+function renderInline(text: string, katex: KaTeX | null, article = false): ReactNode[] {
   const nodes: ReactNode[] = [];
   let cursor = 0;
   let match: RegExpExecArray | null;
@@ -363,7 +378,12 @@ function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
     if (full!.startsWith("![")) {
       nodes.push(
         isSafeUrl(url!) ? (
-          <img alt={label} className="my-6 max-h-[560px] object-contain rounded-xl shadow-sm" key={key} src={url} />
+          <img
+            alt={label}
+            className={article ? undefined : "my-6 max-h-[560px] object-contain rounded-xl shadow-sm"}
+            key={key}
+            src={url}
+          />
         ) : (
           label
         ),
@@ -372,9 +392,14 @@ function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
       nodes.push(
         isSafeUrl(url) ? (
           <a
-            className="font-base hover:underline underline-offset-4 transition-colors hover:text-accent"
+            className={
+              article
+                ? undefined
+                : "font-base hover:underline underline-offset-4 transition-colors hover:text-accent"
+            }
             href={url}
             key={key}
+            rel="noopener noreferrer"
             target="_blank"
           >
             {label || url}
@@ -385,7 +410,7 @@ function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
       );
     } else if (code !== undefined) {
       nodes.push(
-        <code className="bg-secondary/20 rounded-md px-1.5 py-0.5 font-mono text-[0.92em]" key={key}>
+        <code className={article ? undefined : "bg-secondary/20 rounded-md px-1.5 py-0.5 font-mono text-[0.92em]"} key={key}>
           {code}
         </code>,
       );
@@ -414,47 +439,69 @@ function renderInline(text: string, katex: KaTeX | null): ReactNode[] {
 function MarkdownCodeBlock({
   html,
   lang,
+  text,
   compact,
+  article = false,
 }: {
   html: string;
   lang: string;
+  text: string;
   compact: boolean;
+  article?: boolean;
 }) {
   const [wrap, setWrap] = useState(false);
-  const codePad = compact ? "px-3 py-2" : "px-4 py-3";
-  const codeRadius = compact ? "rounded-lg" : "rounded-xl";
-  const corner = compact ? "right-2 top-2" : "right-3 top-3";
+  const [copied, setCopied] = useState(false);
+  const label = lang.trim() || "代码块";
+
+  const handleCopy = async () => {
+    const ok = await copyText(text);
+    if (!ok) return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="group relative">
-      <div className={`absolute z-10 flex items-center gap-1.5 ${corner}`}>
-        {lang ? (
-          <span className="select-none font-mono text-xs text-muted-foreground/50 transition-opacity group-hover:text-muted-foreground/70">
-            {lang}
-          </span>
-        ) : null}
-        <button
-          type="button"
-          aria-label={wrap ? "取消自动换行" : "自动换行"}
-          aria-pressed={wrap}
-          title={wrap ? "取消自动换行" : "自动换行"}
-          onClick={() => setWrap((on) => !on)}
-          className={`rounded p-0.5 transition-colors hover:bg-foreground/10 ${
-            wrap ? "text-foreground/80" : "text-muted-foreground/50 group-hover:text-muted-foreground/70"
-          }`}
-        >
-          <ListDashesIcon size={14} weight={wrap ? "bold" : "regular"} />
-        </button>
+    <div
+      className={`markdown-code-block${article ? " markdown-code-block--article" : ""}${
+        compact ? " markdown-code-block--compact" : ""
+      }`}
+    >
+      <div className="markdown-code-block__header">
+        <span className="markdown-code-block__label">{label}</span>
+        <div className="markdown-code-block__actions">
+          <button
+            type="button"
+            aria-label={wrap ? "取消自动换行" : "自动换行"}
+            aria-pressed={wrap}
+            title={wrap ? "取消自动换行" : "自动换行"}
+            onClick={() => setWrap((on) => !on)}
+            className={`markdown-code-block__action${wrap ? " is-active" : ""}`}
+          >
+            <ListDashesIcon size={15} weight={wrap ? "bold" : "regular"} />
+          </button>
+          <button
+            type="button"
+            aria-label={copied ? "已复制" : "复制代码"}
+            title={copied ? "已复制" : "复制代码"}
+            onClick={() => void handleCopy()}
+            className={`markdown-code-block__action markdown-code-block__copy${copied ? " is-active" : ""}`}
+          >
+            <CopyIcon size={15} weight={copied ? "fill" : "regular"} />
+            <span>{copied ? "已复制" : "复制"}</span>
+          </button>
+        </div>
       </div>
-      <pre
-        className={`bg-muted font-mono text-sm leading-6 text-foreground ${codePad} ${codeRadius} ${
-          wrap ? "overflow-x-hidden whitespace-pre-wrap break-all" : "overflow-x-auto"
-        }`}
-      >
+      <pre className={`markdown-code-block-pre${wrap ? " markdown-code-block--wrap" : ""}`}>
         <code
           className="hljs"
           dangerouslySetInnerHTML={{ __html: html }}
-          style={{ background: "transparent", padding: 0 }}
+          style={{
+            background: "transparent",
+            padding: 0,
+            ...(wrap
+              ? { whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "anywhere" }
+              : {}),
+          }}
         />
       </pre>
     </div>
@@ -466,6 +513,7 @@ export function MarkdownView({
   emptyText = "暂无内容",
   breaks = false,
   compact = false,
+  article = false,
   underlineH1 = false,
   onChecklistToggle,
 }: {
@@ -475,7 +523,9 @@ export function MarkdownView({
   breaks?: boolean;
   /** 笔记等紧凑场景：缩小列表间距 */
   compact?: boolean;
-  /** 文章查看：一级标题全宽下划线 */
+  /** 博客文章正文：少数派式排版（字号、间距、引用与代码块样式） */
+  article?: boolean;
+  /** 文章查看：一级标题全宽下划线（非 article 模式时生效） */
   underlineH1?: boolean;
   /** 点击任务列表复选框时回调，参数为切换后的全文 */
   onChecklistToggle?: (nextContent: string) => void;
@@ -507,16 +557,21 @@ export function MarkdownView({
 
   return (
     <div
-      className={`markdown-content grid *:min-w-0 text-base ${
-        compact ? "gap-2 leading-7" : "gap-3 leading-8"
-      }`}
+      className={
+        article
+          ? "markdown-content markdown-content--article min-w-0"
+          : `markdown-content grid *:min-w-0 text-base ${
+              compact ? "gap-2 leading-7" : "gap-3 leading-8"
+            }`
+      }
     >
       {blocks.map((block, idx) => {
         const key = `${block.type}-${idx}`;
 
         if (block.type === "heading") {
-          const className =
-            block.level === 1
+          const className = article
+            ? undefined
+            : block.level === 1
               ? `mt-6 font-display text-3xl leading-tight tracking-tight ${
                   underlineH1 ? "w-full border-b border-foreground/20 pb-2" : ""
                 }`
@@ -527,7 +582,7 @@ export function MarkdownView({
           const id = slugify(block.text);
           return (
             <Heading className={className} id={id} key={key}>
-              {renderInline(block.text, katex)}
+              {renderInline(block.text, katex, article)}
             </Heading>
           );
         }
@@ -535,13 +590,29 @@ export function MarkdownView({
         if (block.type === "code") {
           const html = highlightCode(block.text, block.lang);
           return (
-            <MarkdownCodeBlock key={key} compact={compact} html={html} lang={block.lang} />
+            <MarkdownCodeBlock
+              key={key}
+              article={article}
+              compact={compact}
+              html={html}
+              lang={block.lang}
+              text={block.text}
+            />
+          );
+        }
+
+        if (block.type === "hr") {
+          return (
+            <hr
+              className={article ? "markdown-article-hr" : "my-2 border-0 border-t border-foreground/15"}
+              key={key}
+            />
           );
         }
 
         if (block.type === "math") {
           return (
-            <div className="my-2 overflow-x-auto py-2 text-center" key={key}>
+            <div className={article ? "overflow-x-auto text-center" : "my-2 overflow-x-auto py-2 text-center"} key={key}>
               <KaTeXRenderer katex={katex} tex={block.text} displayMode={true} />
             </div>
           );
@@ -549,7 +620,7 @@ export function MarkdownView({
 
         if (block.type === "table") {
           return (
-            <div className="my-2 overflow-x-auto" key={key}>
+            <div className={article ? "overflow-x-auto" : "my-2 overflow-x-auto"} key={key}>
               <table className="w-full border-collapse text-[0.94em]">
                 <thead>
                   <tr className="border-b-2 border-foreground/15">
@@ -559,7 +630,7 @@ export function MarkdownView({
                         key={hi}
                         style={{ textAlign: block.alignments[hi] ?? "left" }}
                       >
-                        {renderInline(header, katex)}
+                        {renderInline(header, katex, article)}
                       </th>
                     ))}
                   </tr>
@@ -573,7 +644,7 @@ export function MarkdownView({
                           key={ci}
                           style={{ textAlign: block.alignments[ci] ?? "left" }}
                         >
-                          {renderInline(cell, katex)}
+                          {renderInline(cell, katex, article)}
                         </td>
                       ))}
                     </tr>
@@ -589,9 +660,15 @@ export function MarkdownView({
           const hasTasks = block.items.some((item) => item.checked !== null);
           return (
             <List
-              className={`grid ${compact ? "gap-0.5 leading-6" : "gap-2 leading-8"} pl-6 ${
-                hasTasks ? "list-none pl-0" : block.ordered ? "list-decimal" : "list-disc"
-              }`}
+              className={
+                article
+                  ? hasTasks
+                    ? "list-none pl-0"
+                    : undefined
+                  : `grid ${compact ? "gap-0.5 leading-6" : "gap-2 leading-8"} pl-6 ${
+                      hasTasks ? "list-none pl-0" : block.ordered ? "list-decimal" : "list-disc"
+                    }`
+              }
               key={key}
             >
               {block.items.map((item, ii) => {
@@ -599,9 +676,17 @@ export function MarkdownView({
                   return (
                     <li
                       key={`${key}-${ii}`}
-                      className={hasTasks ? (block.ordered ? "list-decimal ml-6" : "list-disc ml-6") : undefined}
+                      className={
+                        article
+                          ? undefined
+                          : hasTasks
+                            ? block.ordered
+                              ? "list-decimal ml-6"
+                              : "list-disc ml-6"
+                            : undefined
+                      }
                     >
-                      {renderInline(item.text, katex)}
+                      {renderInline(item.text, katex, article)}
                     </li>
                   );
                 }
@@ -621,7 +706,7 @@ export function MarkdownView({
                       className="mt-[0.35em] size-4 shrink-0 cursor-pointer accent-foreground disabled:cursor-default"
                     />
                     <span className={item.checked ? "text-muted-foreground line-through decoration-foreground/30" : ""}>
-                      {renderInline(item.text, katex)}
+                      {renderInline(item.text, katex, article)}
                     </span>
                   </li>
                 );
@@ -634,17 +719,32 @@ export function MarkdownView({
           const quotePad = compact ? "px-3 py-2" : "px-4 py-3";
           return (
             <blockquote
-              className={`rounded-lg border-l-4 border-foreground/20 bg-trinary ${quotePad} ${breaks ? "whitespace-pre-wrap" : ""}`}
+              className={
+                article
+                  ? breaks
+                    ? "whitespace-pre-wrap"
+                    : undefined
+                  : `rounded-lg border-l-4 border-foreground/20 bg-trinary ${quotePad} ${breaks ? "whitespace-pre-wrap" : ""}`
+              }
               key={key}
             >
-              {renderInline(block.text, katex)}
+              {renderInline(block.text, katex, article)}
             </blockquote>
           );
         }
 
         return (
-          <p className={`m-0 leading-8 break-all ${breaks ? "whitespace-pre-wrap" : ""}`} key={key}>
-            {renderInline(block.text, katex)}
+          <p
+            className={
+              article
+                ? breaks
+                  ? "whitespace-pre-wrap"
+                  : undefined
+                : `m-0 leading-8 break-all ${breaks ? "whitespace-pre-wrap" : ""}`
+            }
+            key={key}
+          >
+            {renderInline(block.text, katex, article)}
           </p>
         );
       })}

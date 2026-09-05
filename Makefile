@@ -45,9 +45,9 @@ env: ## Create .env from .env.example if missing
 	cp -n .env.example .env
 
 data-dirs: ## Create local service data directories
-	mkdir -p $(BLOGUS_DATA_DIR)/postgres $(BLOGUS_DATA_DIR)/redis $(BLOGUS_DATA_DIR)/minio
+	mkdir -p $(BLOGUS_DATA_DIR)/postgres $(BLOGUS_DATA_DIR)/minio
 
-services-up: data-dirs ## Start Postgres, Redis, and MinIO with Docker Compose
+services-up: data-dirs ## Start Postgres and MinIO with Docker Compose
 	$(COMPOSE) up -d
 
 services-down: ## Stop Docker Compose services

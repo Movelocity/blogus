@@ -71,56 +71,63 @@ export function PostPage() {
     );
   }
 
+  const readingMinutes = estimateReadingMinutes(post.content);
+
   return (
-    <article className="mx-auto w-full min-w-0 max-w-3xl">
-      <header className="grid gap-8 border-b border-foreground/10 pb-6">
-        <div className="grid w-full gap-5 px-4 sm:px-0">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-muted-foreground">
-              <span>{formatPostDate(post.publishedAt)}</span>
-              <span className="h-px w-4 bg-foreground/20" />
-              <span>{estimateReadingMinutes(post.content)} 分钟阅读</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleCopyMarkdown()}
-              title="复制 Markdown 原文"
-              className="inline-flex items-center justify-center rounded-full p-2 text-muted-foreground transition hover:bg-foreground/10 hover:text-foreground active:translate-y-px"
-            >
-              <CopyIcon className="h-4 w-4" weight="bold" />
-            </button>
+    <article className="mx-auto w-full min-w-0 max-w-[728px] px-6">
+      <header className="pt-8 mb-8">
+        <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+            <span>{formatPostDate(post.publishedAt)}</span>
+            <span className="hidden md:inline">·</span>
+            <span>{readingMinutes} 分钟阅读</span>
           </div>
-          <h1 className="m-0 break-words font-display text-3xl leading-[1.05] tracking-tight text-foreground md:text-4xl lg:text-4xl">
-            {post.title}
-          </h1>
-          {post.coverImageUrl ? (
+          <button
+            type="button"
+            onClick={() => void handleCopyMarkdown()}
+            title="复制 Markdown 原文"
+            aria-label="复制 Markdown 原文"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <CopyIcon className="h-4 w-4" />
+          </button>
+        </div>
+
+        <h1 className="m-0 break-words text-[28px] font-medium leading-[1.3] text-foreground md:text-[38px] md:font-semibold md:leading-[1.25]">
+          {post.title}
+        </h1>
+
+        {post.coverImageUrl ? (
+          <div className="mt-8">
             <img
               alt=""
-              className="mx-auto aspect-video w-full rounded-xl border border-foreground/10 object-cover"
+              className="block w-full object-cover max-[679px]:rounded-none min-[680px]:rounded-lg"
               src={post.coverImageUrl}
             />
-          ) : null}
-          {post.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  className="border border-foreground/10 bg-trinary px-2.5 py-1 font-mono text-xs text-muted-foreground rounded-md"
-                  key={tag}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {post.excerpt ? (
-            <p className="m-0 text-xl leading-relaxed text-muted-foreground">{post.excerpt}</p>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
+
+        {post.excerpt ? (
+          <p className="m-0 mt-5 text-base leading-relaxed text-muted-foreground">{post.excerpt}</p>
+        ) : null}
       </header>
 
-      <div className="mt-6 mx-auto w-full min-w-0 min-h-[60vh]">
-        <MarkdownView content={post.content} underlineH1 />
+      <div className="min-h-[60vh]">
+        <MarkdownView content={post.content} article />
       </div>
+
+      {post.tags.length > 0 ? (
+        <footer className="mt-6 text-[13px] text-muted-foreground md:text-[15px]">
+          <div className="flex flex-wrap gap-4 md:gap-6">
+            {post.tags.map((tag) => (
+              <span className="inline-flex items-center gap-1.5" key={tag}>
+                <span aria-hidden="true">#</span>
+                <span>{tag}</span>
+              </span>
+            ))}
+          </div>
+        </footer>
+      ) : null}
       <ToastView toasts={toasts} onDismiss={dismiss} />
     </article>
   );
@@ -128,19 +135,16 @@ export function PostPage() {
 
 function PostSkeleton() {
   return (
-    <article className="mx-auto w-full min-w-0 max-w-3xl" aria-label="文章正在加载">
-      <header className="grid gap-8 border-b border-foreground/10 pb-10">
-        <div className="px-4 sm:px-0">
-          <div className="h-4 w-20 animate-pulse rounded bg-muted/50" />
+    <article className="mx-auto w-full min-w-0 max-w-[728px] px-6" aria-label="文章正在加载">
+      <header className="pt-8 mb-8">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="h-3 w-40 animate-pulse rounded bg-muted/50" />
+          <div className="h-8 w-8 animate-pulse rounded-full bg-muted/50" />
         </div>
-        <div className="mx-auto aspect-video w-full animate-pulse rounded-xl bg-muted/50" />
-        <div className="grid w-full gap-5 px-4 sm:px-0">
-          <div className="h-4 w-44 animate-pulse rounded bg-muted/50" />
-          <div className="h-16 w-5/6 animate-pulse rounded bg-muted/50" />
-          <div className="h-20 w-full animate-pulse rounded bg-muted/50" />
-        </div>
+        <div className="h-10 w-5/6 animate-pulse rounded bg-muted/50" />
+        <div className="mt-8 aspect-video w-full animate-pulse bg-muted/50 max-[679px]:rounded-none min-[680px]:rounded-lg" />
       </header>
-      <div className="mt-6 mx-auto grid w-full max-w-3xl gap-4">
+      <div className="grid gap-6">
         {[0, 1, 2, 3].map((item) => (
           <div className="grid gap-2" key={item}>
             <div className="h-4 w-full animate-pulse rounded bg-muted/50" />

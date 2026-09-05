@@ -4,12 +4,12 @@ Blogus 是一个自托管 Node.js 博客系统，基于 React、Vite、Fastify�
 
 ## 快速上手
 
-前置要求：Node.js 22+、pnpm 9.15.4、Docker / Docker Compose（用于 PostgreSQL 和 Redis）。
+前置要求：Node.js 22+、pnpm 9.15.4、Docker / Docker Compose（用于 PostgreSQL）。
 
 ```bash
 pnpm install
 cp .env.example .env
-make services-up   # 启动 PostgreSQL 和 Redis
+make services-up   # 启动 PostgreSQL
 pnpm dev           # 同时启动前端和后端
 ```
 

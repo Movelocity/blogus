@@ -61,9 +61,6 @@ export const config = {
       process.env.DATABASE_URL ??
       "postgres://vault:vault_dev@localhost:5633/vault_page?sslmode=disable"
   },
-  redis: {
-    url: process.env.REDIS_URL ?? "redis://localhost:6379"
-  },
   jwt: {
     secret: readJwtSecret(),
     expiry: process.env.JWT_EXPIRY && parseDurationSeconds(process.env.JWT_EXPIRY) !== undefined ? process.env.JWT_EXPIRY : "12h",

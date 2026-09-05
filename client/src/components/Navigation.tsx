@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { useTheme } from "../hooks/useTheme";
 import { siteConfig } from "../config/site";
@@ -27,6 +27,54 @@ function useScrollHide(threshold = 80) {
   return hidden;
 }
 
+const navLinks = [
+  { name: "文章", to: "/posts" },
+  { name: "时间线", to: "/timeline" },
+  { name: "笔记", to: "/notes" },
+  { name: "管理", to: "/admin" },
+] as const;
+
+function HeaderIconButton({
+  label,
+  onClick,
+  className = "",
+  children,
+}: {
+  label: string;
+  onClick?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ThemeIcon({ theme }: { theme: "light" | "dark" }) {
+  if (theme === "dark") {
+    return (
+      <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <circle cx="12" cy="12" r="4" />
+        <path strokeLinecap="round" d="M12 2v2m0 18v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m18 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 export function Navigation() {
   const hidden = useScrollHide();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,122 +82,81 @@ export function Navigation() {
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-50 border-b border-foreground/6 bg-background/88 backdrop-blur-xl backdrop-saturate-[1.8] transition-transform duration-500"
+      className="fixed inset-x-0 top-0 z-50 h-14 border-b border-border bg-background transition-transform duration-500"
       style={{
         transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
         transform: hidden && !isMobileMenuOpen ? "translateY(-100%)" : "translateY(0)",
       }}
     >
-      <nav className="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between px-6 lg:px-8">
-        <Link className="flex items-center gap-2 text-lg font-bold text-foreground" to="/">
+      <div className="relative mx-auto flex h-full max-w-[1180px] items-center px-6">
+        <Link className="flex shrink-0 items-center text-[17px] font-medium text-foreground gap-2" to="/">
           <span className="h-2.5 w-2.5 rounded-full bg-accent" />
           {siteConfig.name}
         </Link>
 
-        <div className="hidden items-center gap-10 md:flex">
-          {[
-            { name: "文章", to: "/posts" },
-            { name: "时间线", to: "/timeline" },
-            { name: "笔记", to: "/notes" },
-            { name: "管理", to: "/admin" },
-          ].map((link) => (
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 min-[900px]:flex">
+          {navLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `group relative text-[0.85rem] transition-colors duration-300 ${
-                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                `rounded-lg px-3.5 py-2 text-[15px] font-normal transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  {link.name}
-                  <span
-                    className={`absolute -bottom-1 left-1/2 h-[2px] -translate-x-1/2 rounded-full bg-foreground transition-all duration-400 ${
-                      isActive ? "w-full" : "w-0 group-hover:w-full"
-                    }`}
-                    style={{ transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
-                  />
-                </>
-              )}
+              {link.name}
             </NavLink>
           ))}
-        </div>
+        </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
-          <button
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <HeaderIconButton
+            label={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
             onClick={toggle}
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
           >
-            {theme === "dark" ? (
-              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <circle cx="12" cy="12" r="5" />
-                <path strokeLinecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            <ThemeIcon theme={theme} />
+          </HeaderIconButton>
+
+          <HeaderIconButton
+            label={isMobileMenuOpen ? "关闭菜单" : "打开菜单"}
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            className="min-[900px]:hidden"
+          >
+            {isMobileMenuOpen ? (
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             ) : (
-              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+              <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
-          </button>
+          </HeaderIconButton>
         </div>
-
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-foreground transition-colors md:hidden"
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </button>
-      </nav>
+      </div>
 
       <div
-        className={`fixed inset-0 z-40 bg-background transition-all duration-500 md:hidden ${
+        className={`fixed inset-x-0 top-14 bottom-0 z-40 border-t border-border bg-background transition-opacity min-[900px]:hidden ${
           isMobileMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="flex h-full flex-col  pt-28">
-          <div className="flex flex-1 flex-col justify-center gap-8 bg-background px-6 pb-8">
-            {[
-              { name: "文章", to: "/posts" },
-              { name: "时间线", to: "/timeline" },
-              { name: "笔记", to: "/notes" },
-              { name: "管理", to: "/admin" },
-            ].map((link, i) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`font-display text-5xl text-foreground transition-all duration-500 hover:text-muted-foreground ${
-                  isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-                }`}
-                style={{ transitionDelay: isMobileMenuOpen ? `${i * 75}ms` : "0ms" }}
-              >
-                {link.name}
-              </NavLink>
-            ))}
-            <button
-              onClick={toggle}
-              className={`self-start font-display text-5xl text-foreground transition-all duration-500 hover:text-muted-foreground ${
-                isMobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-              }`}
-              style={{ transitionDelay: isMobileMenuOpen ? `${3 * 75}ms` : "0ms" }}
-              aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
+        <nav className="flex flex-col gap-1 px-4 py-3">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `rounded-lg px-3.5 py-3 text-[15px] transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`
+              }
             >
-              {theme === "dark" ? "切换到浅色" : "切换到深色"}
-            </button>
-          </div>
-        </div>
+              {link.name}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </header>
   );

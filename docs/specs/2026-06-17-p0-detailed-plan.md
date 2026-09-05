@@ -515,7 +515,7 @@ app.register(fastifyStatic, {
 
 2. 环境变量配置
    - 必填项：DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET
-   - 可选项：STORAGE_DRIVER, UPLOAD_DIR, REDIS_URL, MINIO_*
+   - 可选项：STORAGE_DRIVER, UPLOAD_DIR, MINIO_*
    - 安全：JWT_SECRET 必须随机生成（openssl rand -hex 32）
    - 完整列表参考 .env.example
 

@@ -12,7 +12,7 @@ make build           # 构建所有包
 make start           # 启动生产服务（需先 build）
 make typecheck       # 类型检查
 make install-cli     # 构建并全局安装 blogus-cli（改动 CLI 源码后重新执行）
-make services-up     # 启动 PostgreSQL、Redis、MinIO
+make services-up     # 启动 PostgreSQL、MinIO
 make services-down   # 停止容器
 make services-logs   # 查看容器日志
 ```
@@ -54,7 +54,6 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 | Web 开发服务 | `http://127.0.0.1:5177` | Vite dev server；`/api` 代理到 API 服务；启动时会同时输出局域网地址（`Network`） |
 | API 服务 | `http://127.0.0.1:3009` | Fastify；由 `HOST`、`PORT` 配置；开发模式下仅本机访问即可（浏览器经 Vite 代理） |
 | PostgreSQL | `localhost:5633` | Docker Compose 暴露；`DATABASE_URL` 默认连接这里 |
-| Redis | `localhost:6379` | 当前只记录配置，后续阶段接入更多会话/队列能力 |
 | MinIO API | `localhost:9010` | 可选；仅 `STORAGE_DRIVER=minio` 且启用 `minio` profile 时使用 |
 | MinIO Console | `localhost:9011` | 可选管理控制台 |
 
@@ -64,7 +63,7 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 
 - `HOST`、`PORT`、`CLIENT_ORIGIN`：API 监听地址和 CORS 来源。
 - `SERVE_CLIENT`：设为 `true` 时后端托管 `client/dist/`，生产单进程部署用。
-- `DATABASE_URL`、`REDIS_URL`：后端依赖服务连接地址。
+- `DATABASE_URL`：后端数据库连接地址。
 - `JWT_SECRET`、`JWT_EXPIRY`、`JWT_REFRESH_EXPIRY`：JWT 和 cookie 会话配置。
 - `BLOGUS_DEFAULT_INVITE_CODE`：默认测试邀请码；非生产环境不配置时默认使用 `blogus-dev-invite`，生产环境仅显式配置时生效。
 - `BLOGUS_ENABLE_DEV_LOGIN`：开发便捷登录开关；生产环境强制关闭。
@@ -77,7 +76,7 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 ## 配置说明
 
 - API 服务通过 `DATABASE_URL` 连接 PostgreSQL。
-- 开发默认使用 `localhost:5633` 上的 PostgreSQL、`localhost:6379` 上的 Redis，以及 `UPLOAD_DIR` 指向的本地磁盘上传目录。
+- 开发默认使用 `localhost:5633` 上的 PostgreSQL，以及 `UPLOAD_DIR` 指向的本地磁盘上传目录。
 - MinIO 是可选存储后端。需要 S3 兼容存储时，设置 `STORAGE_DRIVER=minio`，并启动 Docker Compose 的 `minio` profile，例如 `docker-compose --profile minio up -d`。
 - Docker Compose 使用 `pull_policy: never` 复用本地镜像；只有在明确拉取过镜像后，才建议修改镜像标签。
 - 服务数据默认保存在 `BLOGUS_DATA_DIR` 指向的目录，默认值为 `./.data`。可以在 `.env` 中改到其它位置，例如 `BLOGUS_DATA_DIR=/Volumes/dev/blogus-data`。

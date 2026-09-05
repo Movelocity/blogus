@@ -613,7 +613,7 @@ export function AdminPage() {
             className="flex items-center rounded-md px-2 py-1.5 transition-colors mr-auto"
             aria-label="回到首页"
           >
-            <span className="font-display text-lg font-semibold tracking-tight text-foreground">{siteConfig.name}</span>
+            <span className="font-display text-lg font-semibold tracking-tight text-foreground">Home</span>
           </Link>
 
           <button
@@ -1072,7 +1072,7 @@ export function AdminPage() {
                 {/* Markdown body：flex-1 自动填满剩余屏幕高度，内容超长时内部滚动，仍保留右下角手动拖拽 */}
                 <div className="relative flex min-h-[120px] w-full flex-1 flex-col">
                   <textarea
-                    className="min-h-[120px] w-full flex-1 resize-y overflow-y-auto border-b border-border bg-transparent pb-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
+                    className="min-h-[120px] w-full flex-1 resize-y overflow-y-auto border-b border-border bg-transparent py-2 pr-2 font-mono text-base leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/40"
                     ref={textareaRef}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
@@ -1106,7 +1106,7 @@ export function AdminPage() {
                   </div>
                 ) : null}
                 {excerpt ? <p className="mb-6 text-base leading-relaxed text-muted-foreground">{excerpt}</p> : null}
-                <MarkdownView content={content} />
+                <MarkdownView content={content} article />
               </article>
             )}
           </div>

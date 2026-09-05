@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Claude Agent Skill 实践-创建个人月度复盘 Skill - 少数派</title>
+<meta name="description" content="【导语】每到月末，我都要把四周的周复盘文档、番茄钟数据（Pomodoro）、年度目标拉在一起做一次“月度复盘”。过去这件事很耗时：文档散落、脚本分散、信息提炼费脑。于是我用 Anthropic 的 Agent Skills 做了一套“月度复盘 Skill”。">
+<meta name="keywords" content="Workflow">
+<link rel="icon" href="https://cdn-static.sspai.com/favicon/sspai.ico">
+<meta property="og:site_name" content="少数派 - 高品质数字消费指南">
+<meta property="og:title" content="Claude Agent Skill 实践-创建个人月度复盘 Skill - 少数派">
+<style>
+:root{
+  color-scheme:light;
+  --B0-t:#fff; --B1-t:#f7f7f9; --B2-t:#f0f0f3; --B3-t:#e4e4e5; --B4-t:#cdcdce;
+  --B5-t:#acaeb3; --B6-t:#6f7174; --B7-t:#48494c; --B8-t:#000;
+  --brand:#da282a; --red-t:#ff492b; --blue-t:#0097ff; --prime-t:#0355e3;
+  --orange-t:#ff8f00; --orange-50:#fff4e6;
+  --color-imageBorder:rgba(0,0,0,.051);
+  --space-ArticleElement:24px;
+  --size-ArticleBody:15px; --size-ArticleTitle:28px; --size-ArticleH1:28px;
+  --size-ArticleH2:24px; --line-height-ArticleH2:1.4; --size-ArticleH3:20px;
+  --line-height-ArticleH3:1.4; --size-ArticleH4:15px; --size-ArticleCaption:17px;
+  --line-height-ArticleBody:1.8; --radius-ArticleImg:4px; --radius-ArticleCard:12px;
+  --font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+  --font-mono:"Source Code Pro",Consolas,"Liberation Mono",Menlo,Courier,monospace;
+}
+@media (min-width:768px){
+  :root{
+    --size-ArticleBody:17px; --size-ArticleTitle:38px; --size-ArticleH1:38px;
+    --size-ArticleH2:32px; --size-ArticleH3:24px; --size-ArticleH4:17px;
+    --size-ArticleCaption:20px; --space-ArticleElement:32px;
+  }
+}
+.theme-dark:root{
+  color-scheme:dark;
+  --B0-t:#1f1f22; --B1-t:#28282a; --B2-t:#39393c; --B3-t:#424245; --B4-t:#5e5e61;
+  --B5-t:#77777a; --B6-t:#ababae; --B7-t:#c6c6ca; --B8-t:#e2e2e6;
+  --brand:#da282a; --red-t:#ff6d55; --blue-t:#33acff; --prime-t:#3577e8;
+  --orange-t:#ffa533; --orange-50:#6b4515;
+  --color-imageBorder:hsla(0,0%,100%,.051);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--B0-t);color:var(--B8-t);
+  font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+img{border:0}
+
+/* ---------- fixed top nav ---------- */
+.site-header{
+  position:fixed;top:0;left:0;right:0;height:56px;z-index:100;
+  background:var(--B0-t);border-bottom:1px solid var(--B2-t);
+}
+.site-header__inner{
+  display:flex;align-items:center;gap:32px;height:100%;
+  margin:0 auto;padding:0 24px;max-width:1180px;
+}
+.brand{display:flex;align-items:center;flex:none}
+.brand svg{display:block;width:104px;height:32px;color:var(--B8-t);fill:currentColor}
+.brand svg .text path{fill:currentColor}
+.nav{display:none;align-items:center;gap:4px;flex:1}
+@media (min-width:900px){.nav{display:flex}}
+.nav a{
+  padding:8px 14px;border-radius:8px;font-size:15px;color:var(--B7-t);
+  transition:color .2s ease,background .2s ease;font-weight:400;
+}
+.nav a:hover{color:var(--B8-t)}
+.nav a.is-brand{color:var(--brand)}
+.header__actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+  background:transparent;color:var(--B6-t);transition:background .2s ease,color .2s ease;
+}
+.icon-btn:hover{background:var(--B1-t);color:var(--B8-t)}
+.btn-auth{
+  display:inline-flex;align-items:center;justify-content:center;height:36px;
+  padding:0 18px;border-radius:18px;background:var(--B1-t);color:var(--B8-t);
+  font-size:14px;cursor:pointer;transition:background .2s ease;border:none;
+}
+.btn-auth:hover{background:var(--B2-t)}
+#theme-toggle .ic-sun{display:none}
+html.theme-dark #theme-toggle .ic-moon{display:none}
+html.theme-dark #theme-toggle .ic-sun{display:block}
+
+/* ---------- page scaffold ---------- */
+.app{padding-top:56px}
+.article__section__wrapper{
+  box-sizing:border-box;margin:0 auto;max-width:728px;padding:0 24px;
+}
+
+/* ---------- article header ---------- */
+.article__header{padding-top:32px;margin-bottom:56px}
+@media (min-width:768px){.article__header{margin-bottom:80px}}
+.article__header__meta{margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--B6-t);font-size:11px}
+@media (min-width:768px){.article__header__meta{gap:16px}}
+.article__header__meta .sep{display:none}
+@media (min-width:768px){
+  .article__header__meta .sep{display:none}
+  .article__header__meta .mobile-read{display:none}
+}
+.article__header__title{
+  color:var(--B8-t);font-size:var(--size-ArticleTitle);font-weight:500;
+  line-height:1.3;letter-spacing:0;
+}
+@media (min-width:768px){.article__header__title{font-weight:600;line-height:1.25}}
+.article__header__footer{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:32px;
+}
+.article__header__author{display:flex;align-items:center;overflow:hidden}
+.article__header__avatar{position:relative;flex:none}
+.article__header__avatar img{
+  width:36px;height:36px;border-radius:50%;object-fit:cover;
+  border:1px solid var(--color-imageBorder);
+}
+.author__info{
+  margin-left:12px;display:flex;flex-direction:column;justify-content:center;
+  min-width:0;gap:2px;
+}
+.nickname{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--B8-t);font-weight:500;white-space:nowrap}
+.role-chip{
+  display:inline-flex;align-items:center;height:15px;padding:0 5px;border-radius:3px;
+  font-size:10px;font-weight:500;color:var(--brand);border:1px solid currentColor;line-height:1;
+  flex:none;
+}
+.author__bio{color:var(--B6-t);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.article__header__actions{display:none;align-items:center;gap:8px;flex:none}
+@media (min-width:768px){.article__header__actions{display:flex}}
+.reading-time{color:var(--B6-t);font-size:12px;white-space:nowrap;margin-right:4px}
+
+/* ---------- banner ---------- */
+.article__banner{margin-top:32px}
+.article__banner img{
+  display:block;width:100%;object-fit:cover;border-radius:0;
+}
+@media (min-width:680px){.article__banner img{border-radius:8px}}
+
+/* ---------- body typography ---------- */
+.article-body{overflow:visible}
+.article-body-inner{
+  box-sizing:border-box;margin:0 auto;max-width:728px;padding:0 24px;
+}
+.wangEditor-txt{
+  color:var(--B8-t);
+  font-family:var(--font-sans);
+  font-size:var(--size-ArticleBody);line-height:var(--line-height-ArticleBody);
+  text-align:left;word-break:break-word;
+}
+.wangEditor-txt>*{margin-bottom:var(--space-ArticleElement);margin-top:0}
+.wangEditor-txt>:last-child{margin-bottom:0}
+.wangEditor-txt h2{
+  font-size:var(--size-ArticleH2);font-weight:600;line-height:var(--line-height-ArticleH2);padding-top:24px;
+}
+.wangEditor-txt h3{
+  font-size:var(--size-ArticleH3);font-weight:600;line-height:var(--line-height-ArticleH3);padding-top:16px;
+}
+.wangEditor-txt h4{font-size:var(--size-ArticleH4);font-weight:600;line-height:1.4}
+.wangEditor-txt h2 .titleNumber,.wangEditor-txt h3 .titleNumber{color:var(--brand);margin-right:8px}
+.wangEditor-txt p{margin-top:0;letter-spacing:.01em}
+.wangEditor-txt img{
+  max-width:100%;height:auto;display:block;margin:0 auto;
+  border:1px solid var(--color-imageBorder);border-radius:var(--radius-ArticleImg);
+}
+.wangEditor-txt a{color:var(--blue-t)}
+.wangEditor-txt a:hover{color:var(--blue-t)}
+.wangEditor-txt a img{display:block}
+.wangEditor-txt ol,.wangEditor-txt ul{
+  line-height:var(--line-height-ArticleBody);
+  margin-bottom:var(--space-ArticleElement);margin-top:var(--space-ArticleElement);
+  padding-left:1.4em;
+}
+.wangEditor-txt ul{list-style-type:disc}
+.wangEditor-txt ol{list-style-type:decimal}
+.wangEditor-txt ol li,.wangEditor-txt ul li{line-height:inherit;margin:6px 0;padding-left:4px}
+.wangEditor-txt ol li>*, .wangEditor-txt ul li>*{margin:0}
+.wangEditor-txt ol li::marker,.wangEditor-txt ul li::marker{color:var(--B6-t)}
+.wangEditor-txt b,.wangEditor-txt strong{font-weight:700}
+.wangEditor-txt em,.wangEditor-txt i{font-style:italic}
+.wangEditor-txt blockquote{
+  color:var(--B8-t);display:block;font-size:var(--size-ArticleCaption);
+  font-weight:600;line-height:var(--line-height-ArticleCaption);
+  padding:44px 0 16px 16px;position:relative;text-align:left;
+}
+@media (min-width:768px){.wangEditor-txt blockquote{padding:52px 0 24px 24px}}
+.wangEditor-txt blockquote::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--B4-t);background-clip:content-box;box-sizing:border-box;
+}
+.wangEditor-txt blockquote p:last-child{margin-bottom:0}
+.wangEditor-txt code{
+  font-family:var(--font-mono);
+}
+.wangEditor-txt p code,.wangEditor-txt h1 code,.wangEditor-txt h2 code,.wangEditor-txt h3 code,.wangEditor-txt h4 code,.wangEditor-txt li code{
+  background:var(--B1-t);border-radius:3px;padding:.15em .4em;font-size:.9em;
+}
+.wangEditor-txt pre{
+  background:var(--B0-t);border:1px solid var(--B2-t);border-radius:var(--radius-ArticleCard);
+  padding:16px;overflow:auto;line-height:1.6;
+}
+.wangEditor-txt pre code{
+  font-family:var(--font-mono);font-size:13px;line-height:1.7;color:var(--B8-t);white-space:pre;
+}
+
+/* ---------- article footer / tag ---------- */
+.article__footer{color:var(--B6-t);font-size:13px;margin-top:var(--space-ArticleElement)}
+@media (min-width:768px){.article__footer{font-size:15px}}
+.article__footer__tags{display:flex;flex-wrap:wrap;gap:16px}
+@media (min-width:768px){.article__footer__tags{gap:24px}}
+.article__footer__tag{
+  display:inline-flex;align-items:center;gap:6px;color:var(--B6-t);
+  transition:color .2s ease;cursor:pointer;
+}
+.article__footer__tag:hover{color:var(--brand)}
+
+/* ---------- charge card ---------- */
+.charge__card{margin:32px 0}
+.charge__hr{border:none;background:var(--B2-t);height:1px;background-clip:content-box;padding:0 24px}
+.charge__card__inner{
+  display:flex;flex-direction:column;align-items:center;gap:16px;padding:28px 24px 24px;
+}
+.charge__btn{
+  width:72px;height:72px;border-radius:50%;border:2px solid var(--orange-50);
+  background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:transform .2s ease,border-color .2s ease;padding:0;
+}
+.charge__btn:hover{transform:scale(1.03)}
+.charge__btn__core{
+  width:48px;height:48px;border-radius:50%;background:var(--orange-50);
+  display:flex;align-items:center;justify-content:center;color:var(--orange-t);
+}
+@media (min-width:768px){
+  .charge__btn{width:88px;height:88px}
+  .charge__btn__core{width:64px;height:64px}
+}
+.charge__title{font-size:15px;font-weight:500;color:var(--B8-t)}
+.charge__desc{font-size:13px;color:var(--B6-t);margin-top:4px;text-align:center}
+@media (min-width:768px){.charge__desc{font-size:15px}}
+
+.site-footer{
+  border-top:1px solid var(--B2-t);margin-top:48px;padding:24px 0 40px;
+  color:var(--B5-t);font-size:12px;text-align:center;
+}
+
+@media (max-width:767px){
+  .btn-auth{display:none}
+}
+</style>
+<script>
+(function(){
+  var KEY='sspai-theme-mode';
+  var root=document.documentElement;
+  var stored=null;
+  try{stored=localStorage.getItem(KEY);}catch(e){}
+  function apply(dark){
+    root.classList.toggle('theme-dark',!!dark);
+  }
+  apply(stored==='dark');
+  function isDark(){return root.classList.contains('theme-dark');}
+  function syncBtn(){
+    var b=document.getElementById('theme-toggle');
+    if(!b)return;
+    var dark=isDark();
+    var label=dark?'切换到浅色模式':'切换到深色模式';
+    b.setAttribute('aria-label',label);
+    b.setAttribute('title',label);
+  }
+  function setDark(dark,persist){
+    apply(dark);
+    if(persist!==false){
+      try{localStorage.setItem(KEY,dark?'dark':'light');}catch(e){}
+    }
+    syncBtn();
+  }
+  function ready(fn){
+    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);}
+    else{fn();}
+  }
+  ready(function(){
+    syncBtn();
+    var b=document.getElementById('theme-toggle');
+    if(b){
+      b.addEventListener('click',function(){
+        setDark(!isDark());
+      });
+    }
+  });
+  window.__setTheme=setDark;
+})();
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="https://sspai.com/" aria-label="少数派 首页">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" viewbox="0 0 117 36" class="ss__custom__header__logo--desktop"><g class="text"><path d="M66.8,18.5C66.8,18.5,66.8,18.5,66.8,18.5c-0.1-0.1-0.1-0.1-0.2-0.1c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0
+      c-5.6,4.9-11.2,7.4-18.3,8c0,0-0.1,0-0.1,0c0,0-0.1,0.1-0.1,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1l1,1.4c0,0,0,0.1,0.1,0.1
+      c0,0,0.1,0,0.1,0l0,0c7.3-0.9,12.7-3.3,18.5-8.3c0,0,0.1-0.1,0.1-0.2c0-0.1,0-0.1,0-0.2L66.8,18.5z"></path> <path d="M57.7,21.3h1.6c0.1,0,0.2-0.1,0.2-0.2V7.7c0-0.1-0.1-0.2-0.2-0.2h-1.6c-0.1,0-0.2,0.1-0.2,0.2v13.3
+      C57.4,21.2,57.5,21.3,57.7,21.3z"></path> <path d="M48.3,19.6c0,0,0.1,0,0.1,0h1.8c0,0,0.1,0,0.1,0c0,0,0.1-0.1,0.1-0.1l3.9-8.5c0,0,0-0.1,0-0.1s0-0.1,0-0.1
+      c0,0-0.1-0.1-0.1-0.1c0,0-0.1,0-0.1,0h-1.8c0,0-0.1,0-0.1,0c0,0-0.1,0.1-0.1,0.1l-3.8,8.5c0,0,0,0.1,0,0.1S48.2,19.5,48.3,19.6
+      C48.2,19.5,48.3,19.5,48.3,19.6z"></path> <path d="M65,10.8C64.9,10.7,64.9,10.7,65,10.8c-0.1-0.1-0.2-0.1-0.2-0.1h-1.9c0,0-0.1,0-0.1,0c0,0-0.1,0.1-0.1,0.1c0,0,0,0.1,0,0.1
+      s0,0.1,0,0.1l3.3,5.8c0,0,0,0.1,0.1,0.1c0,0,0.1,0,0.1,0h0h1.9c0,0,0.1,0,0.1,0c0,0,0.1-0.1,0.1-0.1c0,0,0-0.1,0-0.1
+      c0,0,0-0.1,0-0.1L65,10.8z"></path> <path d="M115.2,9.3C115.2,9.3,115.3,9.2,115.2,9.3c0.1-0.1,0.1-0.1,0.2-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1l-0.9-1.3
+      c0,0-0.1-0.1-0.1-0.1c0,0-0.1,0-0.1,0l-0.7,0.2c-3,0.8-5.4,1.5-11.1,1.4c-0.1,0-0.1,0-0.2,0.1c0,0.1-0.1,0.1-0.1,0.2v9.2
+      c0,1.4-0.2,2.8-0.5,4.1c-0.2,0.9-0.5,1.8-0.8,2.7l-0.8,2.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0.1,0.1,0.1,0.1,0.1l1.4,0.5
+      c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0c0.1,0,0.1-0.1,0.1-0.1l0.8-2.1c0.3-0.9,0.6-1.8,0.8-2.7l0.1-0.3c0.3-1.4,0.5-2.9,0.5-4.4v-7.4
+      c0-0.1,0-0.1,0.1-0.2c0,0,0.1-0.1,0.2-0.1c5.2-0.1,7.5-0.7,10.6-1.7L115.2,9.3z"></path> <path d="M98.3,17.9C98.3,17.9,98.3,18,98.3,17.9c0.1,0.1,0.2,0.1,0.2,0.1c0,0,0.1,0,0.1,0l1.4-0.9c0.1,0,0.1-0.1,0.1-0.1
+      c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1l-1.5-2.4c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0.1-0.1l1.9-1.2
+      c0,0,0,0,0.1-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1l-0.6-1c0,0,0,0,0-0.1l-2.5-3.8c0-0.1-0.1-0.1-0.1-0.1
+      c-0.1,0-0.1,0-0.2,0l-1.4,0.9c0,0,0,0-0.1,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1l2,3.1c0,0,0,0.1,0,0.1
+      c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1-0.1,0.1l-1.9,1.2c0,0,0,0-0.1,0.1c0,0,0,0.1,0,0.1s0,0.1,0,0.1c0,0,0,0.1,0,0.1
+      L98.3,17.9z"></path> <path d="M101,19.3C101,19.3,101,19.3,101,19.3c0-0.1,0-0.1-0.1-0.2c0,0,0,0-0.1,0l-1.5-0.6c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0
+      c0,0-0.1,0-0.1,0.1c0,0,0,0,0,0.1l-3.5,8.9c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0.1,0.1c0,0,0,0,0.1,0l1.5,0.6
+      c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1-0.1c0,0,0,0,0-0.1L101,19.3C101,19.4,101,19.4,101,19.3z"></path> <path d="M116.5,27.5l-2.1-2.9c-0.3-0.4-0.5-0.8-0.8-1.3l-0.7-1.4c-0.3-0.6-0.5-1.1-0.7-1.7c0,0,0-0.1,0-0.1c0,0,0.1-0.1,0.1-0.1
+      l3.4-1.4c0.1,0,0.1-0.1,0.1-0.1c0-0.1,0-0.1,0-0.2l-0.6-1.4c0,0,0-0.1-0.1-0.1c0,0,0,0-0.1,0c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0
+      l-3.1,1.3c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0c0,0,0,0-0.1-0.1c0,0,0,0,0-0.1l-1-3.7c0,0,0,0,0-0.1c0,0,0,0,0-0.1c0,0,0,0,0.1-0.1
+      c0,0,0,0,0.1,0c1.1-0.2,2.1-0.4,3.1-0.6l1-0.2c0,0,0.1,0,0.1,0c0,0,0.1-0.1,0.1-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1l-0.8-1.4
+      c0,0-0.1-0.1-0.1-0.1c0,0-0.1,0-0.1,0l-1,0.2c-2.5,0.6-5,0.9-7.6,0.9c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0c0,0-0.1,0.1-0.1,0.2v0.6
+      c0,0,0,0,0,0.1v14.8c0,0.1,0,0.1,0.1,0.2c0,0,0.1,0.1,0.2,0.1h4.7c0.1,0,0.1,0,0.2-0.1c0,0,0.1-0.1,0.1-0.2v-1.5
+      c0-0.1,0-0.1-0.1-0.2c0,0-0.1-0.1-0.2-0.1h-2.8c-0.1,0-0.1,0-0.1-0.1c0,0-0.1-0.1-0.1-0.1V14.4c0,0,0-0.1,0-0.1
+      c0,0,0.1-0.1,0.1-0.1c0.4,0,0.7,0,1.1-0.1c0,0,0.1,0,0.1,0c0,0,0.1,0.1,0.1,0.1l1.6,6.2c0.2,0.8,0.5,1.5,0.8,2.2l0.9,1.7
+      c0.2,0.5,0.5,1,0.9,1.4l1.8,2.5c0,0,0,0.1,0.1,0.1c0,0,0.1,0,0.1,0c0,0,0,0,0.1,0l1.5-0.5c0,0,0.1,0,0.1-0.1c0,0,0-0.1,0.1-0.1
+      C116.6,27.7,116.6,27.7,116.5,27.5C116.6,27.6,116.5,27.6,116.5,27.5z"></path> <path d="M71.9,13.6h4.3c0.1,0,0.1,0,0.1,0.1c0,0,0.1,0.1,0.1,0.1v4.3c0,0.1,0,0.1,0.1,0.2s0.1,0.1,0.2,0.1h1.6c0.1,0,0.1,0,0.2-0.1
+      s0.1-0.1,0.1-0.2v-4.3c0,0,0-0.1,0-0.1c0,0,0,0,0-0.1c0,0,0,0,0.1,0c0,0,0,0,0.1,0h4.4c0.1,0,0.1,0,0.2-0.1c0,0,0.1-0.1,0.1-0.2
+      v-1.5c0-0.1,0-0.1-0.1-0.2s-0.1-0.1-0.2-0.1h-2.3c0,0,0,0,0,0L83.1,9c0,0,0.1-0.1,0.1-0.2s0-0.1-0.1-0.2l-1.3-1.1
+      c0,0-0.1-0.1-0.2-0.1c-0.1,0-0.1,0-0.2,0.1l-2.3,2.7c0,0-0.1,0.1-0.1,0.2c0,0.1,0,0.1,0.1,0.2l1.2,1.1h-1.8c-0.1,0-0.1,0-0.1-0.1
+      c0,0-0.1-0.1-0.1-0.1V7.7c0-0.1,0-0.1-0.1-0.2c0,0-0.1-0.1-0.2-0.1h-1.6c-0.1,0-0.1,0-0.2,0.1c0,0-0.1,0.1-0.1,0.2v3.8
+      c0,0.1,0,0.1-0.1,0.1c0,0-0.1,0.1-0.1,0.1h-2l1.4-0.7c0.1,0,0.1-0.1,0.1-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1l-1.6-3.1
+      c0-0.1-0.1-0.1-0.1-0.1c-0.1,0-0.1,0-0.2,0l-1.5,0.7c-0.1,0-0.1,0.1-0.1,0.1c0,0.1,0,0.1,0,0.2l1.6,3.1c0,0,0,0.1,0.1,0.1h-2.1
+      c-0.1,0-0.1,0-0.2,0.1c0,0-0.1,0.1-0.1,0.2v1.5c0,0.1,0,0.1,0.1,0.2C71.8,13.6,71.8,13.6,71.9,13.6z"></path> <path d="M74.6,13.7C74.6,13.7,74.5,13.7,74.6,13.7c-0.1-0.1-0.1-0.1-0.2-0.1c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0.1l-2.4,2.8
+      c0,0-0.1,0.1-0.1,0.2c0,0,0,0.1,0,0.1c0,0,0,0.1,0.1,0.1l1.3,1.1c0,0,0.1,0.1,0.1,0.1c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1-0.1l2.4-2.8
+      c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1-0.1-0.1L74.6,13.7z"></path> <path d="M80.8,13.7C80.8,13.7,80.8,13.7,80.8,13.7c-0.1,0-0.1,0-0.2,0c0,0-0.1,0-0.1,0l-1.3,1c0,0,0,0-0.1,0.1c0,0,0,0.1,0,0.1
+      c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1l2,2.8c0,0,0.1,0.1,0.1,0.1c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0l1.3-1c0,0,0.1-0.1,0.1-0.2
+      c0-0.1,0-0.1,0-0.2L80.8,13.7C80.9,13.7,80.9,13.7,80.8,13.7z"></path> <path d="M83.4,26.8l-3.5-1.6c0.8-0.6,1.6-1.2,2.3-2l1.1-1.1c0.1-0.1,0.1-0.1,0.2-0.2c0-0.1,0.1-0.2,0.1-0.3v-1.7
+      c0-0.1-0.1-0.3-0.1-0.3c-0.1-0.1-0.2-0.1-0.3-0.1h-5.6l0.2-0.3c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0,0,0-0.1-0.1-0.1c0,0-0.1,0-0.1,0
+      h-2.1c0,0-0.1,0-0.1,0c0,0-0.1,0.1-0.1,0.1l-0.3,0.6h-2.7c-0.1,0-0.3,0.1-0.3,0.1c-0.1,0.1-0.1,0.2-0.1,0.3v1
+      c0,0.1,0.1,0.3,0.1,0.3c0.1,0.1,0.2,0.1,0.3,0.1h1.2c0,0,0.1,0,0.1,0c0,0,0.1,0.1,0.1,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1l-1.1,2
+      c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0,0.1,0.1l1.9,0.9l0.9,0.4L75,25.5c-0.4,0.2-0.7,0.3-1.1,0.4l-2,0.6
+      c-0.1,0-0.1,0-0.2,0.1c0,0-0.1,0.1-0.1,0.1c0,0.1,0,0.1-0.1,0.2c0,0.1,0,0.1,0,0.2l0.4,1.2c0,0.1,0.1,0.1,0.1,0.1
+      c0.1,0,0.1,0,0.2,0l1.8-0.6c0.7-0.2,1.4-0.5,2-0.8l1.5-0.6c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0l3.8,1.8c0.1,0,0.2,0.1,0.3,0
+      c0.1,0,0.2-0.1,0.3-0.1l1.3-1.1c0,0,0.1-0.1,0.1-0.1c0,0,0-0.1,0-0.1C83.6,26.9,83.5,26.9,83.4,26.8C83.5,26.8,83.5,26.8,83.4,26.8
+      z M77.9,24.2c0,0-0.1,0-0.1,0c0,0-0.1,0-0.1,0l-2-0.9c-0.1,0-0.1-0.1-0.1-0.1c0,0-0.1-0.1-0.1-0.1c0-0.1,0-0.1,0-0.2
+      c0-0.1,0-0.1,0.1-0.2l0.7-1.1c0-0.1,0.1-0.1,0.2-0.2c0.1,0,0.2-0.1,0.3-0.1h4.7L80.6,22c-0.5,0.5-1.1,1-1.8,1.5L77.9,24.2z"></path> <path d="M90.3,24.5l-0.7-0.8c0,0-0.1-0.1-0.1-0.2c0-0.1,0-0.1,0.1-0.2l0.3-0.4c0.8-1.1,1.4-2.3,1.7-3.6l0.2-0.8
+      c0.2-0.8,0.3-1.5,0.3-2.3v-5.3V9.4c0-0.1,0-0.1-0.1-0.2c0,0-0.1-0.1-0.2-0.1h-5.4V7.7c0-0.1,0-0.1-0.1-0.2c0,0-0.1-0.1-0.2-0.1
+      h-1.6c-0.1,0-0.1,0-0.2,0.1c0,0-0.1,0.1-0.1,0.2v3.1c0,0.1,0,0.1,0.1,0.2s0.1,0.1,0.2,0.1h5.3c0,0,0.1,0,0.1,0c0,0,0,0.1,0,0.1V16
+      c0,0.7-0.1,1.5-0.3,2.2l0,0.1c-0.3,1.1-0.7,2.2-1.4,3.2c0,0,0,0-0.1,0.1c0,0,0,0-0.1,0c0,0-0.1,0-0.1,0c0,0,0,0-0.1-0.1
+      c-0.6-1-1.1-2-1.3-3.2l-0.1-0.3c-0.1-0.7-0.2-1.4-0.2-2.1V12c0-0.1,0-0.1-0.1-0.2c0,0-0.1-0.1-0.2-0.1h-1.6c0,0-0.1,0-0.1,0
+      c0,0-0.1,0-0.1,0.1c0,0-0.1,0.1-0.1,0.2v4.3c0,0.7,0.1,1.4,0.2,2.2l0.2,0.8c0.3,1.4,0.9,2.6,1.7,3.8l0.3,0.4c0,0,0.1,0.1,0.1,0.2
+      c0,0.1,0,0.1-0.1,0.2l-0.8,1l-2.1,2.3c0,0,0,0,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0,0.1c0,0,0,0.1,0.1,0.1l1.2,1.1
+      c0,0,0.1,0.1,0.2,0.1c0.1,0,0.1,0,0.2-0.1l2.7-2.9c0,0,0.1-0.1,0.1-0.1s0.1,0,0.1,0c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0.1l2.6,2.9
+      c0,0,0.1,0.1,0.2,0.1c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0l1.2-1.1c0,0,0.1-0.1,0.1-0.2c0-0.1,0-0.1-0.1-0.2L90.3,24.5z"></path></g> <path d="M18,0C8.1,0,0,8.1,0,18s8.1,18,18,18s18-8.1,18-18S27.9,0,18,0z M26.9,11.6c0,0.2-0.1,0.3-0.2,0.5
+    c-0.1,0.1-0.3,0.2-0.4,0.2l-3.3,0.6v8.3c0,0.5,0.1,1,0.3,1.4l2.1,4c0.1,0.1,0.1,0.2,0.1,0.3c0,0.1,0,0.2-0.1,0.3
+    c-0.1,0.1-0.1,0.2-0.3,0.2c-0.1,0.1-0.2,0.1-0.3,0.1H23c-0.1,0-0.3,0-0.4-0.1c-0.1-0.1-0.2-0.2-0.3-0.3l-2.1-3.9
+    c-0.2-0.5-0.4-1-0.4-1.5v-8.4l-4.6,0.8v11.4c0,0.2,0,0.4-0.1,0.5c-0.1,0.2-0.2,0.3-0.4,0.4l-1.3,0.8c-0.1,0.1-0.3,0.1-0.4,0.1
+    s-0.3,0-0.4-0.1c-0.1-0.1-0.2-0.2-0.3-0.3c-0.1-0.1-0.1-0.3-0.1-0.4v-12l-3.4,0.6c-0.1,0-0.2,0-0.4,0c-0.1,0-0.2-0.1-0.3-0.2
+    C8.1,14.9,8,14.8,8,14.6c0-0.1-0.1-0.2,0-0.4l0.2-1.4c0-0.2,0.1-0.3,0.2-0.5c0.1-0.1,0.3-0.2,0.5-0.2l17.4-2.9c0.1,0,0.3,0,0.4,0
+    c0.1,0,0.2,0.1,0.3,0.2C26.9,9.5,27,9.6,27,9.7c0,0.1,0.1,0.2,0,0.4L26.9,11.6z" class="logo"></path> <path d="M26.1466 9.2187L8.77828 12.1304C8.60648 12.1584 8.44843 12.2415 8.32786 12.3671C8.2073 12.4926 8.13074 12.6539 8.10967 12.8267L7.93096 14.2748C7.91556 14.3986 7.92914 14.5242 7.97064 14.6418C8.01214 14.7594 8.08041 14.8657 8.17006 14.9524C8.25971 15.039 8.36829 15.1037 8.48722 15.1412C8.60615 15.1786 8.73216 15.188 8.8553 15.1684L12.2446 14.6014V26.6179C12.2447 26.7638 12.2844 26.907 12.3594 27.0322C12.4344 27.1574 12.542 27.2599 12.6707 27.3288C12.7993 27.3977 12.9443 27.4305 13.09 27.4236C13.2358 27.4166 13.377 27.3703 13.4986 27.2896L14.7896 26.4546C14.9421 26.3532 15.0674 26.2158 15.1544 26.0547C15.2415 25.8935 15.2876 25.7134 15.2887 25.5302V14.0931L19.9289 13.3166V21.7651C19.9285 22.282 20.0555 22.791 20.2986 23.2471L22.3599 27.1139C22.4182 27.2262 22.5069 27.3198 22.6159 27.3841C22.7248 27.4484 22.8497 27.4808 22.9762 27.4775H24.7355C24.8533 27.4781 24.9693 27.4485 25.0723 27.3913C25.1753 27.3342 25.2619 27.2516 25.3238 27.1513C25.3857 27.0511 25.4207 26.9366 25.4256 26.8189C25.4305 26.7012 25.4051 26.5842 25.3517 26.4792L23.2812 22.5076C23.0527 22.0602 22.9334 21.565 22.933 21.0626V12.8113L26.236 12.2567C26.4072 12.228 26.5646 12.1447 26.6845 12.0192C26.8045 11.8937 26.8806 11.7327 26.9015 11.5604L27.0802 10.1122C27.096 9.98758 27.0823 9.86098 27.0403 9.74257C26.9984 9.62416 26.9292 9.51723 26.8384 9.43036C26.7477 9.3435 26.6378 9.2791 26.5177 9.24234C26.3976 9.20558 26.2705 9.19749 26.1466 9.2187Z" class="pai"></path></svg>
+      </a>
+      <nav class="nav">
+        <a href="#" class="is-brand">共创</a>
+        <a href="#">PRIME</a>
+        <a href="#">Matrix</a>
+        <a href="#">栏目</a>
+        <a href="#">Pi Store</a>
+      </nav>
+      <div class="header__actions">
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换到深色模式" title="切换到深色模式">
+          <svg class="ic-moon" width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <svg class="ic-sun" width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+        </button>
+        <button class="icon-btn" type="button" aria-label="搜索">
+          <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        </button>
+        <button class="btn-auth" type="button">登录</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <article class="normal-article">
+      <header class="article__header article__section__wrapper">
+        <div class="article__header__meta">
+          <span class="article__header__date">2025年12月18日</span>
+          <span class="sep"></span>
+          <span class="mobile-read reading-time">19 分钟阅读</span>
+        </div>
+        <h1 class="article__header__title" id="article-title">Claude Agent Skill 实践-创建个人月度复盘 Skill</h1>
+        <div class="article__header__footer">
+          <div class="article__header__author">
+            <span class="article__header__avatar">
+              <img src="data:image/jpeg;base64,[base64-removed]" alt="小胡小胡0009">
+            </span>
+            <div class="author__info">
+              <span class="nickname">
+                小胡小胡0009
+                <span class="role-chip">作者</span>
+              </span>
+              <span class="author__bio">B端产品，有两猫一狗</span>
+            </div>
+          </div>
+          <div class="article__header__actions">
+            <span class="reading-time">19 分钟阅读</span>
+            <button class="icon-btn" type="button" aria-label="更多操作">
+              <svg width="18" height="18" viewbox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg>
+            </button>
+          </div>
+        </div>
+        <div class="article__banner">
+          <img src="data:image/jpeg;base64,[base64-removed]" alt="Claude Agent Skill 实践-创建个人月度复盘 Skill">
+        </div>
+      </header>
+
+      <div class="article-body">
+        <div class="article-body-inner">
+          <div class="wangEditor-txt">
+<p>【导语】</p><p>每到月末，我都要把四周的周复盘文档、番茄钟数据（Pomodoro）、年度目标拉在一起做一次“月度复盘”。过去这件事很耗时：文档散落、脚本分散、信息提炼费脑。<strong>于是我用 Anthropic 的 Agent Skills 做了一套“月度复盘 Skill”，现在只用一句指令，就能稳定产出结构化的复盘报告。</strong></p><p>【你能从这篇文章收获什么】</p><ul><li>在 Claude Code 中创建自定义 Skill 的完整实践过程</li><li>一套可复用的月度复盘工作流思路</li><li>如何用 Skill 把“找文档—跑脚本—提炼内容—生成报告”串成自动化</li><li>几个主流模型在复盘场景的差异观察与成本对比</li></ul><h2 id="sec-1">前情提要</h2><p>正如我之前文章中提到的，我会在每周一复盘上周的 Logseq Dailylog 笔记，形成周复盘笔记文档。对于每月四周的周复盘笔记，我希望能从月维度再做一次复盘。</p><p>然而四周的复盘笔记汇总在一起内容较多，涉及到独立开发、内容创作、学习、阅读等不同项目的内容，纯靠人工整理费时费力，我期望借助 AI 构建一套自动化的复盘工作流。</p><p><strong>月度复盘是一个相对复杂的流程：</strong></p><ol><li>需要从我的 Obsidian 仓库中准确提取指定月份的相关上下文，包括：<ol><li>该月的周复盘文档。我的周复盘文档命名格式是 2025 年第几周的形式 <code>YYYY-ww</code> ，比如“2025-51”，需要先根据月份确定周数，再找到对应文件名的文档；</li><li>上月的月复盘文档。复盘是连续的过程，应当使用上月复盘文档作为参考；</li><li>该年的年度目标文档。除了关注月和月之间的变化，还要使用年度目标衡量全年的进度。</li></ol></li><li>抓取月度番茄钟数据。我会严格使用自制的番茄钟来记录时间投入的方向，比如学习、创作、探索、编程等，并将番茄钟数据插入到本地的 sqlite 数据库中。需要使用 Python 脚本来查询数据库数据；</li><li>我的个人信息文档。让 AI 了解我是谁，我想做什么，我当前进行中的项目；</li><li>复盘原则和要求。提供信息提炼的指导性要求，以及内容输出的格式。</li></ol><p>上述流程涉及到包含复杂逻辑的文档查找、Python 脚本调用、大量的上下文输入，并且要能形成稳定、可复用的工作流，显然不仅仅是在网页上上传几个文件就能完成的。</p><p>Anthropic 推出的  <a href="https://www.anthropic.com/news/skills"><strong>Agent Skills</strong></a> 恰是实现这一流程的最佳工具，借助 Claude Code 和 DeepSeek-V3.2 模型，我成功创建了“月度复盘 Skill”，并验证了执行过程。</p><h2 id="sec-2">Skill 创建</h2><p>我将“月度复盘 Skill” 的创建要求单独编写成文档，将复盘工作流中涉及到的关键信息直接在文档阐述清楚。这样既能保证 AI 一次性获取充分的上下文信息，还能在 Claude Code 中直接引用文档作为输入，免去粘贴复制的过程。<i>为了不影响阅读体验，创建要求文档的完整内容作为附录放在文末。</i></p><p><strong>一个 Skill 的创建需要包含以下的关键信息：</strong></p><ol><li>Skill Description：包含 Skill 的名称和描述，要说清楚这个 Skill 是干什么用的，以及在什么情况下应当被调用；</li><li>除了 Skill Description，其他的信息实际上不是必须的。但是为了让 AI 按照我的想法执行和输出，我还提供了以下的信息：<ol><li>复盘的上下文材料。说明有哪些上下文以及如何获取；</li><li>复盘的工作流次序。说明工作流的执行步骤，以及脚本路径和生成要求；</li><li>我的个人信息、月度复盘原则和月度复盘文件格式，这些信息在 Obsidian 仓库中没有，单独编写在文档中。</li></ol></li></ol><p>完成创建要求文档后，接下来就是正式的创建过程。首先在 Claude Code 中询问“你能帮助我创建 Skill 吗？”，引导 AI 调用 <code>skill-creator</code> Skill 进入创建流程。再将预先写好的创建要求文档提供给 AI，之后等待整个过程完成就可以了。<code><i>skill-creator</i></code><i> 是 Anthropic 提供的原生 Skill，专门用于 Skill 的创建。</i></p><figure class="image ss-img-wrapper"><img src="data:image/jpeg;base64,[base64-removed]" alt="image.png|500" data-original="https://cdnfile.sspai.com/2025/12/18/article/0bd6dfd16b47ee9b783274b1ef659662.png"></figure><h3 id="sec-3">创建结果分析</h3><p>整个过程历经 10 多分钟，token 使用情况：输入 69.0k，输出 44.8k，缓存 1.9m。AI 在仓库根目录创建了 <code>skills</code> 文件夹，并在文件夹中生成了如下文件：</p><pre class="language-"><code>.
+├── SKILL.md
+├── assets
+├── references
+│   ├── monthly_principles.md
+│   ├── personal_info.md
+│   └── template.md
+└── scripts
+└── find_documents.py</code></pre><p> </p><ol><li><code>SKILL.md</code> 是 Skill 的核心文件，文件中将我的要求转换成了具体的工作流步骤，引用并说明了 <code>references</code> 文件夹中每个文件以及脚本文件 <code>scripts/find_documents.py</code> 的作用；</li><li>我在创建要求文档中列举的“我的个人信息、月度复盘原则和月度复盘文件格式”信息，被分别转换成了 <code>personal_info.md</code> <code>monthly_principles.md</code> 和 <code>template.md</code> 文档，保存在 <code>references</code> 文件夹中；</li><li>AI 还生成了一个专门的 Python 脚本 <code>find_documents.py</code> 用于查找周复盘文档、月度复盘文档和年度目标文档。</li></ol><p>经过检查，<code>SKILL.md</code> 和 <code>references</code> 文件夹中的文件，精准地反映了我的要求，但是生成的查找文档脚本文件，存在两个问题：</p><ol><li>目录拼写错误：将 monthly-review 中的 “n” 写成了“u”。这实际上是我自己的问题，因我手动创建的文件夹名称拼写有误，导致 AI 沿用了错误名称；</li><li>周数到月份映射不准确：估算月份的逻辑 <code>（（周数-1）/ 4 + 1）</code> 过于简单，并不能正确获取周复盘文档。这或许受限于模型推理能力的上限，或是由于上下文信息过载导致的注意力偏移。</li></ol><p>最终我修改了脚本逻辑，确保脚本能够根据月份正确获取周复盘文档。另外，整个 <code>skills</code> 文件夹被保存在项目根目录下也有问题，应当保存在项目根目录的 <code>.claude</code> 文件夹中。</p><p><strong>总体来说，最终的生成结果是非常令人满意的。应当归功于 Anthropic 的高质量 </strong><code><strong>skill-creator</strong></code><strong> Skill 和我提供的充分的上下文信息。</strong></p><h2 id="sec-4">Skill 执行</h2><p>为了验证新创建的“月度复盘 Skill”是否稳定可靠，以及对比不同模型执行同一个 Skill 的差异，我在 Claude Code 和 Vscode 中分别使用多个顶尖模型完成了 2025-07 和 2025-08 的月度复盘：</p><ol><li>在 Claude Code 中使用 DeepSeek-V3.2 模型以及在 Vscode 中使用 Claude Sonnet 4.5 模型执行了 2025-07 的月度复盘。2025 年 7 月是我刚刚启动周复盘的月份，因此这个月份的月度复盘没有上月复盘内容作为参考。</li><li>在 Claude Code 中使用 DeepSeek-V3.2 模型以及在 Vscode 中使用 Claude Sonnet 4.5、Gemini 3 Pro、GPT 5.2 模型执行了 2025-08 的月度复盘。此次复盘的上下文中，包含了 DeepSeek-V3.2 生成的 2025-m07 月度复盘文档。</li></ol><p><i>是的，在 Vscode 的 GitHub Copilot Chat 插件中也可以直接使用 Skill。只要打开 </i><code><i>Use Claude Skills</i></code><i> 设置项，copilot 中的模型就和 Claude Code 中一样，会优先查找并使用 Skill。</i></p><h3 id="sec-5">执行情况分析</h3><p>下面以 Claude Code 中使用 DeepSeek-V3.2 执行 2025-07 的月度复盘过程为例。</p><p><strong>在我输入“为我复盘 2025-07”指令后，AI 正确选择了 </strong><code><strong>monthly-review</strong></code><strong> Skill，准确执行了全部要求，并在指定路径下生成了文件名格式正确的月度复盘文档，文档中的内容格式，也与我要求的模板一致。</strong></p><p>以下是 AI 的依次执行步骤：</p><ol><li>正确识别 monthly-review Skill</li><li>读取查找文档 Python 脚本</li><li>执行查找文档脚本获得上下文文件</li><li>执行番茄钟数据统计 Python 脚本，获得当月番茄钟数据</li><li>读取个人信息文档</li><li>读取月度复盘原则文档</li><li>读取月度复盘文件格式文档</li><li>读取 2025 年度目标文档</li><li>搜索 2025 年 7 月周复盘文档</li><li>读取 2025-28 到 31 周的周复盘文档</li><li>因为 6 月的周复盘文档不存在，AI 还主动查询了仓库文件</li><li>汇总全部上下文信息，创建并生成</li></ol><figure class="image ss-img-wrapper"><img src="data:image/jpeg;base64,[base64-removed]" data-original="https://cdnfile.sspai.com/2025/12/18/6b178f0e51bda2f85f73733aa76efbc8.png"></figure><h3 id="sec-6">执行结果对比</h3><p>在本次“月度复盘 Skill”验证过程中，几个模型都完成了基本的要求：正确获取全部相关的上下文信息，按照格式要求输出文档，使用正确的文件名保存在指定路径下，没有出现幻觉杜撰的现象。</p><p>从完成质量上，Claude Sonnet 4.5 最佳， GPT 5.2 其次， Gemini 3 Pro 和 DeepSeek-V3.2 各自存在一些问题。</p><p>Gemini 3 Pro 生成的内容偏短，在总结月度成果时漏掉了不少内容，语言相对生硬。实际上这与我个人使用 Gemini 3 Pro 的经验差异较大，网页版本的 Gemini 3 Pro 生成的文本内容非常优异，留待后续再次验证。</p><p>DeepSeek-V3.2 生成的内容缺乏提炼，很多地方仅仅将周复盘文档中的内容堆砌在一起。</p><p>GPT 5.2 生成的内容流畅通顺，堪比专业的复盘汇报演讲稿。但是只有 GPT 5.2 在生成过程中中断了一次，有可能是 Copilot 插件对于该模型的适配工作不完善。</p><p>Claude Sonnet 4.5 对于上下文的记忆是最好的，甚至明确提到本月的创作内容与个人资料中设定的账号定位不符。并且给出了明确的目标以及下个月的番茄钟时间分配。</p><p><strong>总体而言，我认为不同模型对于同一个 Skill 的应用程度有差异，同一模型在结果输出的稳定性上也有差异。如果想要获得最佳的月度复盘结果，还需要针对模型调整 </strong><code><strong>SKILL.md</strong></code><strong> 文档中的 prompt，并且多次生成以取得最佳结果。</strong></p><h3 id="sec-7">费用对比</h3><p>Claude Code 中单次复盘的 token 使用情况如下：输入 47.1k，输出 21.9k，缓存 793.8k，总耗时 10 分 13 秒。</p><pre class="language-"><code>Total cost:             $0.71 (costs may be inaccurate due to usage of unknown models)
+⎿  Total duration (API):  13m 44s
+⎿  Total duration (wall): 10m 13s
+⎿  Total code changes:    205 lines added, 0 lines removed
+⎿  Usage by model:
+⎿     deepseek-reasoner:  47.1k input, 21.9k output, 793.8k cache read, 0 cache write ($0.71)</code></pre><p>DeepSeek 官网上，则显示我输入输出合计约 1000k token，单次执行“月度复盘 Skill”调用 API 的花费约 0.4 元。相比之下，Github Copilot 月度套餐是 10 美元，提供每月 300 次高级模型调用，每次调用约合 0.23 元，还要略微便宜一些。</p><h2 id="sec-8">小结</h2><p>利用 Claude Code + DeepSeek-V3.2 的组合，通过提供信息充分的创建要求文档作为 prompt，AI 可以使用 <code>skill-creator</code> 帮助我一次性创建高质量的自定义 Skill。</p><p>本次创建的“月度复盘 Skill”，完整实现了我对于月度复盘工作流的要求。只需要输入一条指令，AI 就可以稳定抓取准确的上下文信息，按照预设要求生成月度复盘文档。</p><p>但是当前的“月度复盘 Skill” 还有很大的优化空间：</p><ol><li>目标链条：在创建 Skill 前我并没有清晰的个人年度目标，年度目标文档是临时编写的，也未能将年度目标拆解至每个月，导致复盘过程中的月度目标缺少连续性与约束；</li><li>信息提炼：对于信息提炼的指导要求不够充分，这导致当前生成的月复盘内容更像是周复盘的堆砌。应当为不同项目设置差异化的提炼准则，比如独立开发应当关注项目进度和目标连续性，内容创作应当关注内容方向和内容质量，学习和月度应预设指导方向帮助我纠偏；</li><li>人味与洞见：复盘内容缺乏“人情味”，略显机械。时光如隙，人会在不知不觉中发生改变。我希望 AI 能够关注到这部分的变化，一语点醒我，避免“当局者迷”的情况；</li><li>引入专业参照：引入项目管理框架、内容创作标准、学习方法论等专业性知识，让 AI 遵循这些专业知识帮助我复盘，让复盘更加具有指导性。</li></ol><p>借助 Skill，我可以确定性地引入这些优化，并让 AI 严格遵循指令，稳定输出高质量的结果，避免 AI 的生成过程像抽奖一样充满不确定性。</p><p><strong>就像 Anthropic 工程团队在 </strong><a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills"><strong>Equipping agents for the real world with Agent Skills</strong></a><strong> 文中提到的：Skill 可组合、可扩展、可移植，适合用来完成跨领域的复杂任务。目前 Vscode Github Copilot 和 GPT 都已经支持了 Skill，相信未来 Skill 也会像 MCP 一样，成为 AI Agent 的通用标准工具。</strong></p><h2 id="sec-9">附录</h2><p>以下是我在 Claude Code 中要求 AI 帮助我创建 Skill 时提供的 prompt：</p><pre class="language-"><code># Skill description
+Skill Name：monthly-review
+Skill description：这个 Skill 用来帮助我完成月度复盘工作。当我要求月度复盘并提供具体的月份时，比如 2025-12，应当使用此工作流。
+# 复盘的上下文材料
+1. 我的个人信息
+2. 月度复盘要求
+3. 原始素材：本月的周复盘文档，保存在 /Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/projects/weekly-review 文件夹中，文件的命名规则为 YYYY-ww，文档中会包含本周复盘内容和下周目标
+4. 参照系：上月的月复盘文档，保存在 /Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/projects/monthly-review 文件夹中，文件命名规则为 YYYY-MM，文档中会包含上月度复盘内容和下月度目标
+5. 北极星：年度目标文档，保存在 /Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/projects/yearly-review 文件夹中，文件命名规则为 YYYY，文档中会包含年度复盘内容和下年度目标
+# 复盘的工作流次序
+1. 接收格式为 YYYY-MM 的参数作为复盘的指定月份
+2. 根据接收的月份参数，查找相应的年度目标文档，上月份复盘文档，和该月每周的周复盘文档（注意，年度目标文档，和上月份复盘文档可能为空）
+3. 根据接收的月份参数，调用脚本查询本月番茄钟数据。脚本文件路径为：/Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/pomodoro_dashboard/monthly_report.py，脚本执行命令参考：cd "/Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/pomodoro_dashboard" &amp;&amp; python3 monthly_report.py 2024-12 --compare
+4. 结合“我的个人信息”和“月度复盘要求”，分析查找到的资料内容
+5. 生成指定月份的月度复盘文档
+6. 生成的月度复盘文件内容格式，需严格遵守下方的“月度复盘文件格式”
+7. 月度复盘文件命名规则为 YYYY-MM
+8. 生成的月度复盘文件应当保存在 /Users/mr.h/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault4life/projects/monthly-review 文件夹中
+# 我的个人信息
+"""
+# My Context Profile
+## 身份
+- 独立开发者 (macOS/SwiftUI)
+- 内容创作者 (公众号：高效人生指北 / 小红书：Mac效率周刊)
+- 职场人 (产品经理）
+## 核心项目
+### 流量日记(mpdata): 
+- 目标: 为个人自媒体创作者提供各个平台导出数据的持久化存储和数据分析。
+- 阶段: MVP 版本开发阶段，已完成基础的登录、订阅、数据导入、明细查看及导出、数据概览功能，目前在优化阶段，计划尽快发布第一个版本。
+- 平台：macOS
+- 技术栈: Swift，SwiftUI, AppKit.
+### 高效人生指北
+- 账号定位：个人博客，提供生活和工作上的个人心得
+- 目标：不追求流量，以文会友，希望写作的内容接地气，能真正帮助到有需要的人
+### Mac 效率周刊
+- 账号定位：提供 iOS、iPadOS 和 macOS 的使用技巧，以及热点信息
+- 目标：作为自己内容输出的渠道之一；用输出来倒逼自己学习新的内容；作为 AI 工具、figma 等软件的练习场
+"""
+# 月度复盘原则
+1. Outcome &gt; Output: 区分“忙碌”和“产出”。重构代码不算核心产出，功能上线/修复阻塞性 Bug 才算；
+2. 连续性检查：对比上月目标和本月产出，明确目标完成情况；
+3. 系统审计: 检查我引入的新工具/新流程是否真的带来了效率提升，还是只是增加了维护成本（熵增）；
+4. 数据诚实: 用番茄钟数据说话。如果我觉得没时间编程，但数据通过显示我花了很多时间在“探索”，请指出这种感知偏差。
+# 月度复盘文件格式
+"""
+# 本月复盘
+## 投入产出比
+（展示脚本获得的月度番茄钟数据，并总结）
+## 阻碍与反思
+(此处不做流水账，只记录痛点)
+### 独立开发（流量日记项目）
+### 高效人生指北
+### Mac效率周刊
+## 认知升级
+（总结当月的阅读和学习内容）
+### 阅读
+### 学习
+## 效率优化
+（总结当月的工作流优化和 AI 实践内容）
+### 工作流优化
+### AI实践
+# 下月目标
+(目标设置应当准确、适当，结合上月完成情况和年度目标)
+## 独立开发
+### 流量日记项目
+## 内容创作
+### 高效人生指北
+### Mac效率周刊
+## 认知升级
+### 学习
+### 阅读
+"""</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <footer class="article__footer article__section__wrapper">
+        <div class="article__footer__tags">
+          <a class="article__footer__tag" href="#">
+            <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"></path></svg>
+            <span>Workflow</span>
+          </a>
+        </div>
+      </footer>
+
+      <div class="charge__card article__section__wrapper">
+        <hr class="charge__hr">
+        <div class="charge__card__inner">
+          <button class="charge__btn" type="button" aria-label="充电鼓励">
+            <span class="charge__btn__core">
+              <svg width="26" height="26" viewbox="0 0 24 24" fill="currentColor"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5L13 2z"></path></svg>
+            </span>
+          </button>
+          <div style="text-align:center">
+            <h3 class="charge__title">充电鼓励</h3>
+            <p class="charge__desc">你的鼓励是创作者最好的动力</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">© 少数派 · 高品质数字消费指南 · 本页面为静态复刻预览</footer>
+</div>
+</body>
+</html>

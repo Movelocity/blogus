@@ -73,11 +73,11 @@ export function PostLayout() {
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-[1400px] flex-1 pb-20 pt-28">
+        <div className="mx-auto w-full max-w-[1400px] flex-1 pb-20 pt-14">
           <div className="relative flex gap-8 xl:gap-10">
             {hasToc && (
-              <aside className="max-xl:hidden w-[220px] shrink-0">
-                <div className="sticky top-28 flex max-h-[calc(100dvh-7rem-1.5rem)] min-h-0 min-w-0 flex-col overflow-hidden pr-2">
+              <aside className="max-xl:hidden w-[220px] shrink-0 pl-3">
+                <div className="sticky top-24 flex max-h-[calc(100dvh-3.5rem-1.5rem)] min-h-0 min-w-0 flex-col overflow-hidden pr-2">
                   {tocContent}
                 </div>
               </aside>

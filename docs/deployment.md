@@ -145,5 +145,4 @@ curl http://127.0.0.1:3009/api/health
 | `PORT` | 否 | 监听端口，默认 `3009` |
 | `STORAGE_DRIVER` | 否 | `local`（默认）或 `minio` |
 | `UPLOAD_DIR` | 否 | 本地上传目录，默认 `./uploads` |
-| `REDIS_URL` | 否 | Redis 连接地址（当前未实际使用） |
 | `MINIO_*` | 否 | MinIO 配置，仅 `STORAGE_DRIVER=minio` 时需要 |

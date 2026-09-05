@@ -16,14 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    pull_policy: never
-    ports:
-      - "6379:6379"
-    volumes:
-      - ${BLOGUS_DATA_DIR:-./.data}/redis:/data
-
   minio:
     profiles:
       - minio

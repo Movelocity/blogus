@@ -76,6 +76,13 @@ export const siteConfig = {
     blurb: "自托管写作平台，面向长期阅读。",
     copyright: "伟康技术小站 · 技术记录与生活随笔",
   },
+
+  /** 文章页作者信息（展示在标题下方） */
+  author: {
+    name: "伟康",
+    bio: "程序员，技术记录与生活随笔",
+    avatarUrl: undefined as string | undefined,
+  },
 } as const;
 
 export type SiteConfig = typeof siteConfig;
