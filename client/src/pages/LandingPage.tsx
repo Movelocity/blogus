@@ -3,23 +3,6 @@ import { Footer } from "../components/Footer";
 import { Navigation } from "../components/Navigation";
 import { siteConfig } from "../config/site";
 
-// const marqueeItems = ["技术记录", "产品开发", "工具实践", "长期记录", "读书笔记", "复盘"];
-
-const noteCards = [
-  {
-    title: "最近文章",
-    tags: ["Blog", "Notes"],
-    description: "从最新发布开始读。",
-    to: "/posts",
-  },
-  {
-    title: "时间线",
-    tags: ["Archive", "History"],
-    description: "按月份回看所有公开文章。",
-    to: "/timeline",
-  },
-];
-
 export function LandingPage() {
   return (
     <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">
@@ -36,7 +19,7 @@ export function LandingPage() {
           </h1>
           <div className="mt-10 flex flex-wrap items-end justify-between gap-8">
             <p className="m-0 max-w-md text-lg leading-8 text-muted-foreground">
-              {siteConfig.hero.tagline}
+              {siteConfig.hero.lead}
             </p>
             <Link
               className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-bold text-primary-foreground shadow-[0_16px_44px_rgba(26,20,8,0.18)] transition-transform hover:-translate-y-1 hover:bg-primary/90 active:scale-[0.98]"

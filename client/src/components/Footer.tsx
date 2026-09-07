@@ -17,27 +17,27 @@ export function Footer({ compact = false }: { compact?: boolean }) {
     { name: "编辑文章", to: "/admin" }
   ];
 
-  if (compact)
-    return (
-      <footer className="border-t border-foreground/10 px-6 py-10 lg:px-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <span>
-            &copy; {new Date().getFullYear()} {siteConfig.footer.copyright}
-          </span>
-          <IcpLink />
-          <div className="flex flex-wrap gap-6">
-            <Link className="hover:text-foreground" to="/posts">
-              文章
-            </Link>
-            {toolLinks.map((link) => (
-              <Link key={link.to} className="hover:text-foreground" to={link.to}>
-                {link.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </footer>
-    );
+  // if (compact)
+  //   return (
+  //     <footer className="border-t border-foreground/10 px-6 py-10 lg:px-10">
+  //       <div className="mx-auto flex max-w-6xl flex-col gap-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+  //         <span>
+  //           &copy; {new Date().getFullYear()} {siteConfig.footer.copyright}
+  //         </span>
+  //         <IcpLink />
+  //         <div className="flex flex-wrap gap-6">
+  //           <Link className="hover:text-foreground" to="/posts">
+  //             文章
+  //           </Link>
+  //           {toolLinks.map((link) => (
+  //             <Link key={link.to} className="hover:text-foreground" to={link.to}>
+  //               {link.name}
+  //             </Link>
+  //           ))}
+  //         </div>
+  //       </div>
+  //     </footer>
+  //   );
 
   return (
     <footer className="border-t border-foreground/10 bg-background text-muted-foreground">
@@ -46,7 +46,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
           <div>
             <Link to="/" className="mb-6 inline-flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-              <span className="font-display text-2xl text-foreground">{siteConfig.name}</span>
+              <span className="font-display text-2xl text-foreground">Site</span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">{siteConfig.footer.blurb}</p>
           </div>
