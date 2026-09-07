@@ -8,7 +8,7 @@ BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server build start serve typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli
+.PHONY: help install dev dev-client dev-server build start serve typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli release release-next release-patch release-minor
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -73,3 +73,41 @@ minio-logs: ## Tail MinIO logs
 install-cli: ## Build and install blogus-cli globally (run again to update)
 	$(PNPM) --filter @blogus/cli build
 	cd client/cli && npm link
+
+# ── Release ───────────────────────────────────────────────────
+
+LATEST_TAG := $(shell git tag --sort=-v:refname 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$$' | head -1)
+
+release-next: ## Show next patch version (based on latest tag)
+	@set -e; \
+	LATEST='$(LATEST_TAG)'; \
+	if [ -z "$$LATEST" ]; then echo "error: no existing vX.Y.Z tag found" >&2; exit 1; fi; \
+	NEXT=$$(echo "$$LATEST" | sed 's/^v//' | awk -F. '{printf "v%d.%d.%d\n", $$1, $$2, $$3+1}'); \
+	echo "$$LATEST -> $$NEXT"
+
+release: ## Push main and deploy tag (make release VERSION=v0.3.12)
+	@set -e; \
+	if [ -z "$(VERSION)" ]; then echo "error: VERSION required, e.g. make release VERSION=v0.3.12" >&2; exit 1; fi; \
+	echo "$(VERSION)" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "error: VERSION must match vX.Y.Z" >&2; exit 1; }; \
+	if [ -n "$$(git status --porcelain)" ]; then echo "error: working tree not clean" >&2; exit 1; fi; \
+	if [ "$$(git branch --show-current)" != "main" ]; then echo "error: must be on main branch" >&2; exit 1; fi; \
+	if git rev-parse "$(VERSION)" >/dev/null 2>&1; then echo "error: tag $(VERSION) already exists" >&2; exit 1; fi; \
+	echo "Releasing $(VERSION)..."; \
+	git push origin main; \
+	git tag "$(VERSION)"; \
+	git push origin "$(VERSION)"; \
+	echo "Released $(VERSION). Deploy triggered via webhook."
+
+release-patch: ## Bump patch version and deploy (v0.3.11 -> v0.3.12)
+	@set -e; \
+	LATEST='$(LATEST_TAG)'; \
+	if [ -z "$$LATEST" ]; then echo "error: no existing vX.Y.Z tag found" >&2; exit 1; fi; \
+	VERSION=$$(echo "$$LATEST" | sed 's/^v//' | awk -F. '{printf "v%d.%d.%d\n", $$1, $$2, $$3+1}'); \
+	$(MAKE) release VERSION=$$VERSION
+
+release-minor: ## Bump minor version and deploy (v0.3.11 -> v0.4.0)
+	@set -e; \
+	LATEST='$(LATEST_TAG)'; \
+	if [ -z "$$LATEST" ]; then echo "error: no existing vX.Y.Z tag found" >&2; exit 1; fi; \
+	VERSION=$$(echo "$$LATEST" | sed 's/^v//' | awk -F. '{printf "v%d.%d.%d\n", $$1, $$2+1, 0}'); \
+	$(MAKE) release VERSION=$$VERSION

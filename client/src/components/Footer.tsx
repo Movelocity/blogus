@@ -40,7 +40,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
   //   );
 
   return (
-    <footer className="border-t border-foreground/10 bg-background text-muted-foreground">
+    <footer className="border-t border-foreground/10 text-muted-foreground">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-12">
         <div className="grid gap-12 py-16 md:grid-cols-3 lg:py-20">
           <div>

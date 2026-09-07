@@ -91,8 +91,9 @@ blogus-cli register -e writer@example.com -p blogus-dev-password -i team-code
 打 tag 自动部署到生产，push main 不触发：
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+make release-patch              # v0.3.11 -> v0.3.12，推送 main + tag
+make release VERSION=v1.0.0     # 指定版本
+make release-next               # 仅预览下一 patch 版本号
 ```
 
 流程：GitHub webhook → 服务器验签 → `deploy.sh v1.0.0` → checkout tag → build → pm2 restart。

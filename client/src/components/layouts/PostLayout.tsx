@@ -1,27 +1,41 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Outlet } from "react-router";
 import { ListBulletsIcon, XIcon } from "@phosphor-icons/react";
 import { Navigation } from "../Navigation";
 import { Footer } from "../Footer";
 import { TableOfContents } from "../TableOfContents";
+import { PostTocContext } from "../../contexts/post-toc";
 import type { HeadingItem } from "../../lib/markdown";
 
-interface TocContextValue {
-  setHeadings: (headings: HeadingItem[]) => void;
-}
+const TOC_COLLAPSED_KEY = "post-toc-collapsed";
 
-const TocContext = createContext<TocContextValue>({ setHeadings: () => {} });
-
-export function useToc() {
-  return useContext(TocContext);
+function readTocCollapsed(): boolean {
+  try {
+    return localStorage.getItem(TOC_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 export function PostLayout() {
   const [headings, setHeadingsState] = useState<HeadingItem[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [desktopTocCollapsed, setDesktopTocCollapsed] = useState(readTocCollapsed);
 
   const setHeadings = useCallback((h: HeadingItem[]) => {
     setHeadingsState(h);
+  }, []);
+
+  const toggleDesktopToc = useCallback(() => {
+    setDesktopTocCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(TOC_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -31,12 +45,19 @@ export function PostLayout() {
   }, [headings]);
 
   const hasToc = headings.length > 0;
-  const tocContent = hasToc ? (
+  const drawerToc = hasToc ? (
     <TableOfContents headings={headings} onNavigate={() => setDrawerOpen(false)} />
+  ) : null;
+  const desktopToc = hasToc ? (
+    <TableOfContents
+      headings={headings}
+      collapsed={desktopTocCollapsed}
+      onToggleCollapsed={toggleDesktopToc}
+    />
   ) : null;
 
   return (
-    <TocContext.Provider value={{ setHeadings }}>
+    <PostTocContext.Provider value={{ setHeadings }}>
       <div className="flex min-h-dvh flex-col bg-background text-foreground">
         <Navigation />
 
@@ -68,7 +89,7 @@ export function PostLayout() {
                   <XIcon className="h-4 w-4" weight="bold" />
                 </button>
               </div>
-              <div className="min-w-0 px-3 py-4">{tocContent}</div>
+              <div className="min-w-0 px-3 py-4">{drawerToc}</div>
             </aside>
           </div>
         )}
@@ -78,7 +99,7 @@ export function PostLayout() {
             {hasToc && (
               <aside className="max-xl:hidden w-[220px] shrink-0 pl-3">
                 <div className="sticky top-24 flex max-h-[calc(100dvh-3.5rem-1.5rem)] min-h-0 min-w-0 flex-col overflow-hidden pr-2">
-                  {tocContent}
+                  {desktopToc}
                 </div>
               </aside>
             )}
@@ -93,6 +114,6 @@ export function PostLayout() {
 
         <Footer />
       </div>
-    </TocContext.Provider>
+    </PostTocContext.Provider>
   );
 }

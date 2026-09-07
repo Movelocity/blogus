@@ -7,7 +7,7 @@ import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
 import { copyText } from "../lib/clipboard";
 import { CopyIcon } from "@phosphor-icons/react";
 import { ToastView, useToast } from "../lib/toast";
-import { useToc } from "../components/layouts/PostLayout";
+import { useToc } from "../contexts/post-toc";
 
 export function PostPage() {
   const { slug } = useParams();

@@ -124,7 +124,7 @@ export function NoteSidebar({
   const totalNotes = Object.values(tagStats).reduce((s, n) => s + n, 0);
 
   return (
-    <aside className="w-full space-y-3 lg:sticky lg:top-28 lg:max-h-[calc(100vh-9rem)] lg:w-64 lg:shrink-0 lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+    <aside className="space-y-3 lg:sticky lg:top-28 lg:max-h-[calc(100vh-9rem)] w-64 lg:shrink-0 lg:self-start lg:overflow-y-auto lg:overscroll-contain">
       {/* 日历 */}
       <section className="rounded-lg border border-foreground/10 p-2">
         <div className="mb-2 flex items-center justify-between">

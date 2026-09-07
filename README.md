@@ -36,8 +36,8 @@ make start        # 启动生产服务
 Push `main` 不触发部署。打 tag 后自动部署到生产：
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+make release-patch              # 自动递增 patch 并发布
+make release VERSION=v1.0.0     # 或指定版本
 ```
 
 GitHub webhook → 服务器验证签名 → checkout tag → build → pm2 restart。

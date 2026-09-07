@@ -11,6 +11,7 @@
   --foreground: black;
   --card: #fafafa;
   --card-foreground: oklch(0.18 0.01 260);
+  --card-2: #fff;
   --primary: oklch(0.34 0.035 28);
   --primary-foreground: oklch(0.99 0.002 90);
   --secondary: #a1a1a1;
@@ -34,11 +35,12 @@
 /* 深色主题 - 系统偏好回退 */
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not(.dark) {
-    --bg-primary: #1F1F22;
+    --bg-primary: #111;
     --background: rgb(31, 31, 34);
     --foreground: rgb(226, 226, 230);
     --card: oklch(0.18 0.008 255);
     --card-foreground: rgb(226, 226, 230);
+    --card-2: #1f2937;
     --primary: rgb(226, 226, 230);
     --primary-foreground: rgb(31, 31, 34);
     --secondary: #6A7282;
@@ -66,6 +68,7 @@
   --foreground: black;
   --card: #fafafa;
   --card-foreground: oklch(0.18 0.01 260);
+  --card-2: #fff;
   --primary: #d7272d;
   --primary-foreground: oklch(0.99 0.002 90);
   --secondary: #a1a1a1;
@@ -86,11 +89,12 @@
 
 /* 深色主题 - 显式 .dark class（优先级高于 media query） */
 .dark:root {
-  --bg-primary: #1F1F22;
+  --bg-primary: #111;
   --background: rgb(31, 31, 34);
   --foreground: rgb(226, 226, 230);
   --card: oklch(0.18 0.008 255);
   --card-foreground: rgb(226, 226, 230);
+  --card-2: #1f2937;
   --primary: rgb(226, 226, 230);
   --primary-foreground: rgb(31, 31, 34);
   --secondary: #6A7282;
@@ -118,6 +122,7 @@
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
+  --color-card-2: var(--card-2);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);

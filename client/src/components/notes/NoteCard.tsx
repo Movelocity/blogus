@@ -150,7 +150,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   };
 
   return (
-    <article className="rounded-lg bg-background shadow-[0_1px_4px_rgba(0,0,0,0.06)] ring-1 ring-foreground/[0.07]">
+    <article className="rounded-lg bg-card-2 shadow-[0_1px_4px_rgba(0,0,0,0.06)] ring-1 ring-foreground/[0.07]">
       <div className="px-4 py-3">
         {/* 头部：日期 + 更多菜单（编辑时隐藏菜单） */}
         <div className="mb-1 flex items-center justify-between gap-2">

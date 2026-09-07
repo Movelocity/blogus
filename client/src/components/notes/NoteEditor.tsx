@@ -72,7 +72,7 @@ export function NoteEditor({ onSubmit, loading = false }: NoteEditorProps) {
   const showTagInput = tagEditing || tags.length > 0;
 
   return (
-    <section className="rounded-lg border border-foreground/10 bg-background">
+    <section className="rounded-lg border border-foreground/10 bg-card-2">
       <textarea
         ref={textareaRef}
         value={content}
