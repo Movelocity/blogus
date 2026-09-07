@@ -1,7 +1,7 @@
 import { ArrowLeft, Moon, Plus, Sun } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { HlMode, TextCardPane } from "@blogus/shared";
+import type { HlMode, TextCardPane, UpdateTextCardPaneInput } from "@blogus/shared";
 import { Canvas, type CanvasHandle } from "../components/text-cards/Canvas";
 import { HlModePortal } from "../components/text-cards/HlModePortal";
 import { PaneIndex } from "../components/text-cards/PaneIndex";
@@ -13,7 +13,7 @@ import { usePaneSave } from "../features/text-cards/hooks/usePaneSave";
 import { useWorkspaces } from "../features/text-cards/hooks/useWorkspaces";
 import "../features/text-cards/text-cards.css";
 import { useTheme } from "../hooks/useTheme";
-import { importPanes, updatePane } from "../lib/text-cards";
+import { importPanes } from "../lib/text-cards";
 import { refreshSession } from "../lib/api";
 
 export function TextCardsPage() {
@@ -39,7 +39,27 @@ export function TextCardsPage() {
   } = useWorkspaces();
 
   const { panes, loading: panesLoading, addPane, removePane, replacePanes, patchPaneLocal } = usePanes(activeWorkspaceId);
-  const { status, error: saveError, queueSave, saveNow, flush } = usePaneSave((id, pane) => patchPaneLocal(id, pane));
+
+  const handleServerPatched = useCallback(
+    (id: string, serverPane: TextCardPane, saved: UpdateTextCardPaneInput) => {
+      const isTextOnly = Object.keys(saved).every((key) => key === "title" || key === "content");
+      if (isTextOnly) return;
+
+      const layoutPatch: Partial<TextCardPane> = { updatedAt: serverPane.updatedAt };
+      if (saved.x !== undefined) layoutPatch.x = serverPane.x;
+      if (saved.y !== undefined) layoutPatch.y = serverPane.y;
+      if (saved.width !== undefined) layoutPatch.width = serverPane.width;
+      if (saved.height !== undefined) layoutPatch.height = serverPane.height;
+      if (saved.zIndex !== undefined) layoutPatch.zIndex = serverPane.zIndex;
+      if (saved.hlMode !== undefined) layoutPatch.hlMode = serverPane.hlMode;
+      if (saved.minimized !== undefined) layoutPatch.minimized = serverPane.minimized;
+      if (saved.wordWrap !== undefined) layoutPatch.wordWrap = serverPane.wordWrap;
+      patchPaneLocal(id, layoutPatch);
+    },
+    [patchPaneLocal]
+  );
+
+  const { status, error: saveError, queueSave, saveNow, flush } = usePaneSave(handleServerPatched);
 
   useEffect(() => {
     void (async () => {
@@ -153,15 +173,13 @@ export function TextCardsPage() {
   );
 
   const handleCreatePane = useCallback(async () => {
-    const pane = await addPane();
-    if (!pane) return;
     const position = nextPosition(panes);
-    const { pane: positioned } = await updatePane(pane.id, position);
-    patchPaneLocal(pane.id, positioned);
+    const pane = await addPane(position);
+    if (!pane) return;
     bringToFront(pane.id);
-    canvasRef.current?.scrollToPane(positioned);
+    canvasRef.current?.scrollToPane(pane);
     void refreshWorkspaces();
-  }, [addPane, bringToFront, panes, patchPaneLocal, refreshWorkspaces]);
+  }, [addPane, bringToFront, panes, refreshWorkspaces]);
 
   const handleDeletePane = useCallback(
     async (id: string, hasContent: boolean) => {

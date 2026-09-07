@@ -145,6 +145,11 @@ export interface UpdateTextCardWorkspaceInput {
   name: string;
 }
 
+export interface CreateTextCardPaneInput {
+  x?: number;
+  y?: number;
+}
+
 export interface UpdateTextCardPaneInput {
   title?: string;
   content?: string;

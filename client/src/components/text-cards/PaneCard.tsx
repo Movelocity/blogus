@@ -1,5 +1,5 @@
 import { ListDashesIcon, ArrowsOutIcon, MinusIcon, XIcon } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import type { TextCardPane } from "@blogus/shared";
 import { MIN_PANE_HEIGHT, MIN_PANE_WIDTH, TOP_BAR_HEIGHT } from "../../features/text-cards/constants";
 import { highlightContent, hlModeLabel } from "../../features/text-cards/highlight";
@@ -36,16 +36,8 @@ export function PaneCard({
   onDelete
 }: PaneCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
-  const [titleEditing, setTitleEditing] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeRef = useRef<{ startY: number; originHeight: number } | null>(null);
-
-  useEffect(() => {
-    if (!titleEditing) return;
-    titleRef.current?.focus();
-    titleRef.current?.select();
-  }, [titleEditing]);
 
   const startDrag = (event: React.MouseEvent) => {
     if (shadow || maximized) return;
@@ -160,22 +152,14 @@ export function PaneCard({
     >
       <div className="tc-titlebar" onMouseDown={startDrag}>
         <input
-          ref={titleRef}
-          readOnly={!titleEditing}
+          data-no-drag
           className="tc-title-input"
           placeholder="标题…"
           value={pane.title}
-          onBlur={() => {
-            setTitleEditing(false);
-          }}
           onChange={(event) => onTitleChange(event.target.value)}
-          onDoubleClick={(event) => {
-            if (shadow) return;
-            event.stopPropagation();
-            setTitleEditing(true);
-          }}
+          onMouseDown={(event) => event.stopPropagation()}
           onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === "Escape") setTitleEditing(false);
+            if (event.key === "Escape") event.currentTarget.blur();
           }}
         />
 
@@ -230,9 +214,10 @@ export function PaneCard({
           />
         ) : null}
         <textarea
+          key={pane.id}
           className="tc-textarea"
           placeholder="在此粘贴文本 / JSON …"
-          value={pane.content}
+          defaultValue={pane.content}
           onChange={(event) => onContentChange(event.target.value)}
         />
       </div>

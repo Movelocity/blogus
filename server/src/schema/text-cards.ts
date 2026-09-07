@@ -14,6 +14,11 @@ export const updateWorkspaceSchema = z.object({
   name: z.string().trim().min(1).max(120)
 });
 
+export const createPaneSchema = z.object({
+  x: coordSchema.optional(),
+  y: coordSchema.optional()
+});
+
 export const updatePaneSchema = z
   .object({
     title: z.string().max(500).optional(),

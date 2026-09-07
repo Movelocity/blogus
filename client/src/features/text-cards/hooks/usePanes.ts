@@ -28,9 +28,9 @@ export function usePanes(workspaceId: string | null) {
     void refresh();
   }, [refresh]);
 
-  const addPane = useCallback(async () => {
+  const addPane = useCallback(async (position?: { x: number; y: number }) => {
     if (!workspaceId) return null;
-    const { pane } = await api.createPane(workspaceId);
+    const { pane } = await api.createPane(workspaceId, position);
     setPanes((items) => [...items, pane]);
     return pane;
   }, [workspaceId]);

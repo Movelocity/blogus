@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type {
+  CreateTextCardPaneInput,
   CurrentUser,
   ImportTextCardPaneInput,
   TextCardPane,
@@ -80,7 +81,7 @@ class InMemoryTextCardRepository implements TextCardRepository {
       .sort((a, b) => a.zIndex - b.zIndex || a.createdAt.localeCompare(b.createdAt));
   }
 
-  async createPane(workspaceId: string, userId: string) {
+  async createPane(workspaceId: string, userId: string, input?: CreateTextCardPaneInput) {
     const workspace = this.workspaces.get(workspaceId);
     if (!workspace || workspace.userId !== userId) return null;
     const maxZ = Math.max(0, ...Array.from(this.panes.values()).filter((p) => p.workspaceId === workspaceId).map((p) => p.zIndex));
@@ -90,8 +91,8 @@ class InMemoryTextCardRepository implements TextCardRepository {
       workspaceId,
       title: "",
       content: "",
-      x: 0,
-      y: 0,
+      x: input?.x ?? 0,
+      y: input?.y ?? 0,
       width: 560,
       height: 280,
       zIndex: maxZ + 1,
@@ -184,6 +185,24 @@ test("GET workspaces is read-only for new users", async (t) => {
 
   const second = await app.inject({ method: "GET", url: "/api/text-cards/workspaces" });
   assert.deepEqual(second.json(), { workspaces: [] });
+});
+
+test("creates pane with initial position", async (t) => {
+  const { app } = await buildTestApp();
+  t.after(async () => app.close());
+
+  const createWorkspace = await app.inject({ method: "POST", url: "/api/text-cards/workspaces" });
+  const workspace = createWorkspace.json<{ workspace: TextCardWorkspace }>().workspace;
+
+  const createPane = await app.inject({
+    method: "POST",
+    url: `/api/text-cards/workspaces/${workspace.id}/panes`,
+    payload: { x: 120, y: 160 }
+  });
+  assert.equal(createPane.statusCode, 201);
+  const pane = createPane.json<{ pane: TextCardPane }>().pane;
+  assert.equal(pane.x, 120);
+  assert.equal(pane.y, 160);
 });
 
 test("creates workspace and pane lifecycle", async (t) => {

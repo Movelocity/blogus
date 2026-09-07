@@ -1,4 +1,5 @@
 import type {
+  CreateTextCardPaneInput,
   ImportTextCardPaneInput,
   ImportTextCardPanesInput,
   TextCardPane,
@@ -32,9 +33,10 @@ export function listPanes(workspaceId: string) {
   return request<{ panes: TextCardPane[] }>(`/text-cards/workspaces/${encodeURIComponent(workspaceId)}/panes`);
 }
 
-export function createPane(workspaceId: string) {
+export function createPane(workspaceId: string, input?: CreateTextCardPaneInput) {
   return request<{ pane: TextCardPane }>(`/text-cards/workspaces/${encodeURIComponent(workspaceId)}/panes`, {
-    method: "POST"
+    method: "POST",
+    body: JSON.stringify(input ?? {})
   });
 }
 

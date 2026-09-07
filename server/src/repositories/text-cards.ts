@@ -1,4 +1,5 @@
 import type {
+  CreateTextCardPaneInput,
   ImportTextCardPaneInput,
   TextCardPane,
   TextCardWorkspace,
@@ -22,7 +23,7 @@ export interface TextCardRepository {
   updateWorkspace(id: string, userId: string, name: string): Promise<TextCardWorkspace | null>;
   deleteWorkspace(id: string, userId: string): Promise<"deleted" | "not_found" | "last_workspace">;
   listPanes(workspaceId: string, userId: string): Promise<TextCardPane[] | null>;
-  createPane(workspaceId: string, userId: string): Promise<TextCardPane | null>;
+  createPane(workspaceId: string, userId: string, input?: CreateTextCardPaneInput): Promise<TextCardPane | null>;
   updatePane(id: string, userId: string, input: UpdateTextCardPaneInput): Promise<TextCardPane | null>;
   deletePane(id: string, userId: string): Promise<boolean>;
   importPanes(
@@ -191,7 +192,7 @@ export class DrizzleTextCardRepository implements TextCardRepository {
     return rows.map(toTextCardPane);
   }
 
-  async createPane(workspaceId: string, userId: string) {
+  async createPane(workspaceId: string, userId: string, input?: CreateTextCardPaneInput) {
     const workspace = await this.findOwnedWorkspaceRow(workspaceId, userId);
     if (!workspace) {
       return null;
@@ -206,7 +207,9 @@ export class DrizzleTextCardRepository implements TextCardRepository {
       .insert(textCardPanes)
       .values({
         workspaceId,
-        zIndex: Number(maxZ) + 1
+        zIndex: Number(maxZ) + 1,
+        ...(input?.x !== undefined ? { x: input.x } : {}),
+        ...(input?.y !== undefined ? { y: input.y } : {})
       })
       .returning();
 

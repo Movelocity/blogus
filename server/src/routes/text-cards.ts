@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import type { UpdateTextCardPaneInput } from "@blogus/shared";
 import { sendApiError } from "../http/errors.js";
 import { DrizzleTextCardRepository, type TextCardRepository } from "../repositories/text-cards.js";
-import { importPanesSchema, updatePaneSchema, updateWorkspaceSchema } from "../schema/text-cards.js";
+import { importPanesSchema, createPaneSchema, updatePaneSchema, updateWorkspaceSchema } from "../schema/text-cards.js";
 
 type TextCardRepositoryFactory = (app: FastifyInstance) => TextCardRepository;
 
@@ -57,8 +57,9 @@ export function createTextCardRoutes(
       return { panes };
     });
 
-    app.post<{ Params: { id: string } }>("/workspaces/:id/panes", auth, async (request, reply) => {
-      const pane = await repository.createPane(request.params.id, request.currentUser!.id);
+    app.post<{ Body: unknown; Params: { id: string } }>("/workspaces/:id/panes", auth, async (request, reply) => {
+      const input = createPaneSchema.parse(request.body ?? {});
+      const pane = await repository.createPane(request.params.id, request.currentUser!.id, input);
 
       if (!pane) {
         return sendApiError(reply, 404, "workspace_not_found", "Workspace not found");

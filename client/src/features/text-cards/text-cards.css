@@ -520,21 +520,11 @@ html.dark .tc-workspace-item[data-active] {
   font-weight: 500;
   color: var(--tc-ink);
   outline: none;
-}
-
-.tc-title-input[readonly] {
-  pointer-events: none;
-  cursor: grab;
-  opacity: 0.85;
-}
-
-.tc-title-input:not([readonly]) {
-  background: var(--tc-panel);
   cursor: text;
-  pointer-events: auto;
 }
 
 .tc-title-input:focus {
+  background: var(--tc-panel);
   box-shadow: 0 0 0 1px var(--tc-accent-ring);
 }
 

@@ -9,7 +9,7 @@ type TextPatch = Pick<UpdateTextCardPaneInput, "title" | "content">;
 type LayoutPatch = Omit<UpdateTextCardPaneInput, "title" | "content">;
 type PendingEdit = UpdateTextCardPaneInput;
 
-export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void) {
+export function usePaneSave(onPatched?: (id: string, pane: TextCardPane, saved: PendingEdit) => void) {
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const pending = useRef(new Map<string, TextPatch>());
   const inflight = useRef(new Map<string, Promise<void>>());
@@ -28,7 +28,7 @@ export function usePaneSave(onPatched?: (id: string, pane: TextCardPane) => void
         setError(null);
         try {
           const { pane } = await api.updatePane(id, patch);
-          onPatched?.(id, pane);
+          onPatched?.(id, pane, patch);
           setStatus("saved");
         } catch (cause) {
           setStatus("error");
