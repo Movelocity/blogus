@@ -151,8 +151,7 @@ Done in 1.8s
 - deploy.log 中 `WEBHOOK_SECRET` 明文出现在 `blogus-webhook.sh`，**勿外传此文件**；排查日志如涉及密钥注意脱敏。
 - 手动补跑命令（应急用）：
   ```bash
-  export PATH=$HOME/.local/node/bin:$PATH
-  cd ~/projects/blogus && pnpm install --frozen-lockfile && pnpm build && pm2 restart blogus
+  cd ~/projects/blogus && make deploy TAG=v0.3.12
   ```
 
 ## 十、相关背景（历史问题参考）

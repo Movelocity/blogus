@@ -8,7 +8,7 @@ BLOGUS_DATA_DIR ?= ./.data
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-client dev-server build start serve typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli release release-next release-patch release-minor
+.PHONY: help install dev dev-client dev-server build start serve typecheck check clean env data-dirs services-up services-down services-restart services-ps services-logs db-logs minio-logs install-cli release release-next release-patch release-minor deploy
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Blogus commands:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -111,3 +111,11 @@ release-minor: ## Bump minor version and deploy (v0.3.11 -> v0.4.0)
 	if [ -z "$$LATEST" ]; then echo "error: no existing vX.Y.Z tag found" >&2; exit 1; fi; \
 	VERSION=$$(echo "$$LATEST" | sed 's/^v//' | awk -F. '{printf "v%d.%d.%d\n", $$1, $$2+1, 0}'); \
 	$(MAKE) release VERSION=$$VERSION
+
+# ── Deploy (server) ───────────────────────────────────────────
+
+deploy: ## Server: redeploy a tag (make deploy TAG=v0.3.12)
+	@set -e; \
+	if [ -z "$(TAG)" ]; then echo "error: TAG required, e.g. make deploy TAG=v0.3.12" >&2; exit 1; fi; \
+	echo "$(TAG)" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "error: TAG must match vX.Y.Z" >&2; exit 1; }; \
+	bash scripts/deploy.sh "$(TAG)"

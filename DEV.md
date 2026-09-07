@@ -103,6 +103,13 @@ make release-next               # 仅预览下一 patch 版本号
 - `scripts/deploy.sh`：带 flock 防并发，日志写入 `deploy.log`；install 失败自动重试一次，禁用 pnpm 升级提示（防无 TTY 下 update-notifier 致退出码异常）
 - GitHub Webhook Secret 存在服务器 wrapper 脚本中，不入库
 
+webhook 自动部署失败时，SSH 到服务器补跑：
+
+```bash
+cd ~/projects/blogus
+make deploy TAG=v0.3.12
+```
+
 ## 质量门禁
 
 每个阶段完成前必须至少通过：

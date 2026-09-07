@@ -33,4 +33,5 @@
 - 底层等价于：`git push origin main && git tag v<版本号> && git push origin v<版本号>`
 - 服务器 webhook 在 9000 端口，由 pm2 管理（`blogus-webhook`）
 - 部署日志在服务器 `~/projects/blogus/deploy.log`
-- 不要手动 SSH 到服务器部署，用 tag 触发即可
+- webhook 部署失败时，SSH 到服务器补跑：`make deploy TAG=v<版本号>`（等价于 `bash scripts/deploy.sh`）
+- 日常发版优先用 tag 触发 webhook，仅在自动部署失败时手动补跑

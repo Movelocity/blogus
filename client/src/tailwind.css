@@ -439,10 +439,10 @@
   --markdown-text: rgb(255, 255, 255);
 }
 
-/* 文章正文排版（对齐少数派式阅读体验） */
+/* 文章正文排版 */
 .markdown-content--article {
-  --article-body-size: 15px;
-  --article-body-leading: 1.8;
+  --article-body-size: 16px;
+  --article-body-leading: 1.5;
   --article-element-space: 24px;
   --article-h2-size: 24px;
   --article-h3-size: 20px;
@@ -461,8 +461,8 @@
 
 @media (min-width: 768px) {
   .markdown-content--article {
-    --article-body-size: 17px;
-    --article-element-space: 32px;
+    --article-body-size: 16px;
+    --article-element-space: 24px;
     --article-h2-size: 32px;
     --article-h3-size: 24px;
     --article-caption-size: 20px;
