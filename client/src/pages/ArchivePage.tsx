@@ -58,7 +58,7 @@ export function ArchivePage() {
                 </div>
                 <div className="grid gap-4">
                   {group.posts.map((post) => (
-                      <article key={post.id} className="hover-lift grid gap-3 border border-foreground/5 bg-background p-6 transition-all duration-300 rounded-lg">
+                      <article key={post.id} className="hover-lift grid gap-3 border border-foreground/5 bg-card-2 p-6 transition-all duration-300 rounded-lg">
                         <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
                           <time dateTime={getPostDate(post)}>{formatPostDate(getPostDate(post))}</time>
                           <span className="h-px w-4 bg-foreground/20" />

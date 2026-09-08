@@ -520,11 +520,19 @@ html.dark .tc-workspace-item[data-active] {
   font-weight: 500;
   color: var(--tc-ink);
   outline: none;
+}
+
+.tc-title-input[readonly] {
+  cursor: grab;
+  opacity: 0.85;
+}
+
+.tc-title-input:not([readonly]) {
   cursor: text;
+  background: var(--tc-panel);
 }
 
 .tc-title-input:focus {
-  background: var(--tc-panel);
   box-shadow: 0 0 0 1px var(--tc-accent-ring);
 }
 
@@ -695,7 +703,7 @@ html.light .tc-pane.tc-maximized {
   color: var(--tc-ink);
 }
 
-html.light .tc-chip:hover {
+html.light .tc-chip:hover:not([data-active]) {
   background: #e2e8f0;
   border-color: #94a3b8;
 }

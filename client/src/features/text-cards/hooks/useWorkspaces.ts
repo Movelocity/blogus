@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TextCardWorkspaceWithCount } from "@blogus/shared";
 import { ACTIVE_WORKSPACE_KEY } from "../constants";
 import * as api from "../../../lib/text-cards";
@@ -24,6 +24,7 @@ export function useWorkspaces() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const pickActive = useCallback((items: TextCardWorkspaceWithCount[]) => {
     if (items.length === 0) return null;
@@ -33,7 +34,7 @@ export function useWorkspaces() {
   }, []);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
+    if (!hasLoadedRef.current) setLoading(true);
     setError(null);
     try {
       let { workspaces: items } = await api.listWorkspaces();
@@ -49,6 +50,7 @@ export function useWorkspaces() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "加载工作区失败");
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [pickActive]);
@@ -93,6 +95,18 @@ export function useWorkspaces() {
     [pickActive]
   );
 
+  const adjustPaneCount = useCallback((workspaceId: string, delta: number) => {
+    setWorkspaces((items) =>
+      items.map((item) =>
+        item.id === workspaceId ? { ...item, paneCount: Math.max(0, item.paneCount + delta) } : item
+      )
+    );
+  }, []);
+
+  const setPaneCount = useCallback((workspaceId: string, count: number) => {
+    setWorkspaces((items) => items.map((item) => (item.id === workspaceId ? { ...item, paneCount: count } : item)));
+  }, []);
+
   const activeWorkspace = workspaces.find((item) => item.id === activeWorkspaceId) ?? null;
 
   return {
@@ -105,6 +119,8 @@ export function useWorkspaces() {
     selectWorkspace,
     createWorkspace,
     renameWorkspace,
-    removeWorkspace
+    removeWorkspace,
+    adjustPaneCount,
+    setPaneCount
   };
 }

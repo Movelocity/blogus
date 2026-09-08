@@ -35,7 +35,8 @@ export function TextCardsPage() {
     createWorkspace,
     renameWorkspace,
     removeWorkspace,
-    refresh: refreshWorkspaces
+    adjustPaneCount,
+    setPaneCount
   } = useWorkspaces();
 
   const { panes, loading: panesLoading, addPane, removePane, replacePanes, patchPaneLocal } = usePanes(activeWorkspaceId);
@@ -173,24 +174,25 @@ export function TextCardsPage() {
   );
 
   const handleCreatePane = useCallback(async () => {
+    if (!activeWorkspaceId) return;
     const position = nextPosition(panes);
     const pane = await addPane(position);
     if (!pane) return;
     bringToFront(pane.id);
     canvasRef.current?.scrollToPane(pane);
-    void refreshWorkspaces();
-  }, [addPane, bringToFront, panes, refreshWorkspaces]);
+    adjustPaneCount(activeWorkspaceId, 1);
+  }, [activeWorkspaceId, addPane, adjustPaneCount, bringToFront, panes]);
 
   const handleDeletePane = useCallback(
     async (id: string, hasContent: boolean) => {
       if (hasContent && !window.confirm("确定删除这张卡片？")) return;
       await flush();
       await removePane(id);
+      if (activeWorkspaceId) adjustPaneCount(activeWorkspaceId, -1);
       if (activePaneId === id) setActivePaneId(null);
       if (maximizedPaneId === id) setMaximizedPaneId(null);
-      void refreshWorkspaces();
     },
-    [activePaneId, flush, maximizedPaneId, removePane, refreshWorkspaces]
+    [activePaneId, activeWorkspaceId, adjustPaneCount, flush, maximizedPaneId, removePane]
   );
 
   const handleImport = useCallback(
@@ -199,10 +201,10 @@ export function TextCardsPage() {
       await flush();
       const { panes: imported } = await importPanes(activeWorkspaceId, { panes: items });
       replacePanes(imported);
+      setPaneCount(activeWorkspaceId, imported.length);
       setMaximizedPaneId(null);
-      void refreshWorkspaces();
     },
-    [activeWorkspaceId, flush, replacePanes, refreshWorkspaces]
+    [activeWorkspaceId, flush, replacePanes, setPaneCount]
   );
 
   if (!authReady || workspacesLoading) {

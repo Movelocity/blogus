@@ -1,8 +1,9 @@
 import { ListDashesIcon, ArrowsOutIcon, MinusIcon, XIcon } from "@phosphor-icons/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TextCardPane } from "@blogus/shared";
 import { MIN_PANE_HEIGHT, MIN_PANE_WIDTH, TOP_BAR_HEIGHT } from "../../features/text-cards/constants";
 import { highlightContent, hlModeLabel } from "../../features/text-cards/highlight";
+import { duplicateLines, moveLines } from "../../features/text-cards/lineEdit";
 
 interface PaneCardProps {
   pane: TextCardPane;
@@ -36,11 +37,24 @@ export function PaneCard({
   onDelete
 }: PaneCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const [titleEditing, setTitleEditing] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeRef = useRef<{ startY: number; originHeight: number } | null>(null);
 
+  useEffect(() => {
+    if (!titleEditing) return;
+    titleRef.current?.focus();
+    titleRef.current?.select();
+  }, [titleEditing]);
+
+  const exitTitleEditing = () => {
+    setTitleEditing(false);
+  };
+
   const startDrag = (event: React.MouseEvent) => {
     if (shadow || maximized) return;
+    if (titleEditing) return;
     if ((event.target as HTMLElement).closest("button,[data-no-drag]")) return;
     event.preventDefault();
     onBringToFront();
@@ -123,6 +137,24 @@ export function PaneCard({
   };
 
   const previewMode = Boolean(pane.hlMode);
+
+  const handleContentKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!event.altKey || event.metaKey || event.ctrlKey) return;
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+
+    event.preventDefault();
+    const textarea = event.currentTarget;
+    const direction = event.key === "ArrowUp" ? "up" : "down";
+    const result = event.shiftKey
+      ? duplicateLines(textarea.value, textarea.selectionStart, textarea.selectionEnd, direction)
+      : moveLines(textarea.value, textarea.selectionStart, textarea.selectionEnd, direction);
+    if (!result) return;
+
+    textarea.value = result.text;
+    textarea.setSelectionRange(result.selStart, result.selEnd);
+    onContentChange(result.text);
+  };
+
   const cardStyle = shadow
     ? {
         left: pane.x,
@@ -152,14 +184,28 @@ export function PaneCard({
     >
       <div className="tc-titlebar" onMouseDown={startDrag}>
         <input
-          data-no-drag
+          ref={titleRef}
+          readOnly={!titleEditing}
           className="tc-title-input"
           placeholder="标题…"
           value={pane.title}
+          onBlur={exitTitleEditing}
           onChange={(event) => onTitleChange(event.target.value)}
-          onMouseDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => {
+            if (shadow) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setTitleEditing(true);
+          }}
+          onMouseDown={(event) => {
+            if (titleEditing) event.stopPropagation();
+          }}
+          {...(titleEditing ? { "data-no-drag": true } : {})}
           onKeyDown={(event) => {
-            if (event.key === "Escape") event.currentTarget.blur();
+            if (event.key === "Enter" || event.key === "Escape") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
           }}
         />
 
@@ -219,6 +265,7 @@ export function PaneCard({
           placeholder="在此粘贴文本 / JSON …"
           defaultValue={pane.content}
           onChange={(event) => onContentChange(event.target.value)}
+          onKeyDown={handleContentKeyDown}
         />
       </div>
 
