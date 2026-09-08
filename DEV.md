@@ -128,6 +128,8 @@ pnpm build
 
 图片编辑器开发时直接访问 `http://127.0.0.1:5177/tools/image-editor`。该页面为独立懒加载 chunk，构建后应检查 `client/dist/assets/ImageEditorPage-*.js` 未合并进首屏入口包。
 
+富文本编辑器开发时访问 `http://127.0.0.1:5177/tools/rich-editor`（无需登录）。构建后应有独立 `RichEditorPage-*.js` chunk。POC 边界：localStorage 草稿、JSON 导入导出、登录后上传；无服务端文档 API。
+
 卡片笔记开发时访问 `http://127.0.0.1:5177/tools/text-cards`（需先登录；访客会重定向到 `/login?redirect=/tools/text-cards`）。构建后应有独立 `TextCardsPage-*.js` chunk。画布支持拖拽、resize、最小化/最大化、语法高亮预览与 v1 JSON 备份。
 
 ## 生产部署

@@ -13,6 +13,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
 
   const toolLinks = [
     { name: "图片编辑器", to: "/tools/image-editor" },
+    { name: "富文本编辑器", to: "/tools/rich-editor" },
     ...(loggedIn ? [{ name: "卡片笔记", to: "/tools/text-cards" }] : []),
     { name: "编辑文章", to: "/admin" }
   ];

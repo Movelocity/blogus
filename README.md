@@ -75,6 +75,7 @@ scripts/      部署相关脚本
 | `/admin` | 登录后管理文章：创建、编辑、预览、发布、撤回、删除 |
 | `/login` | 邮箱密码登录 |
 | `/tools/image-editor` | 浏览器本地图片编辑器；图片不会上传服务器 |
+| `/tools/rich-editor` | Lexical 富文本编辑器 POC；无需登录，草稿存浏览器 localStorage，登录后可上传图片/附件 |
 | `/tools/text-cards` | 登录专属卡片笔记（无限画布）；数据存 PostgreSQL，支持多工作区、语法高亮与 v1 JSON 备份 |
 
 ### CLI
