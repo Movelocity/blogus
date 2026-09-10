@@ -8,6 +8,8 @@ import { copyText } from "../lib/clipboard";
 import { CopyIcon } from "@phosphor-icons/react";
 import { ToastView, useToast } from "../lib/toast";
 import { useToc } from "../contexts/post-toc";
+import { formatPostPageTitle } from "../lib/documentTitle";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export function PostPage() {
   const { slug } = useParams();
@@ -16,6 +18,8 @@ export function PostPage() {
   const [loading, setLoading] = useState(true);
   const { setHeadings } = useToc();
   const { toasts, dismiss, notify } = useToast();
+
+  useDocumentTitle(!loading && post ? formatPostPageTitle(post.title) : undefined);
 
   useEffect(() => {
     if (!slug) {
