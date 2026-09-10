@@ -8,6 +8,7 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { AutoLinkPlugin, createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { editorScrollInset } from "../../features/rich-editor/chrome";
 import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { RichEditorContext, type SaveStatus } from "./context";
 import { EditorContent } from "./EditorContent";
@@ -97,6 +98,9 @@ export function RichEditor({
   editorRef,
   onLinkCardRequest,
   initialFingerprint,
+  scrollRef,
+  chromeHidden = false,
+  className = "",
 }: {
   initialEditorState?: SerializedEditorState;
   pendingImport: SerializedEditorState | null;
@@ -110,6 +114,9 @@ export function RichEditor({
   editorRef: React.MutableRefObject<LexicalEditor | null>;
   onLinkCardRequest: () => void;
   initialFingerprint: string;
+  scrollRef?: (el: HTMLDivElement | null) => void;
+  chromeHidden?: boolean;
+  className?: string;
 }) {
   const initialConfig = useMemo(
     () => ({
@@ -133,6 +140,7 @@ export function RichEditor({
   );
 
   const handleLinkCard = useCallback(() => onLinkCardRequest(), [onLinkCardRequest]);
+  const pageRootRef = useRef<HTMLDivElement>(null);
 
   return (
     <RichEditorContext.Provider value={contextValue}>
@@ -140,9 +148,21 @@ export function RichEditor({
         <EditorStateBridge onReadyRef={onEditorReadyRef} />
         <EditorRefPlugin editorRef={editorRef} />
         <ImportStatePlugin pendingImport={pendingImport} onApplied={onImportApplied} />
-        <Toolbar onInsertLinkCard={handleLinkCard} />
-        <div className="re-editor-root mx-auto max-w-3xl px-4 py-6 md:px-8">
-          <EditorContent />
+        <div ref={pageRootRef} className={`flex min-h-0 flex-col ${className}`}>
+          <Toolbar
+            chromeHidden={chromeHidden}
+            toolbarHeightRoot={pageRootRef}
+            onInsertLinkCard={handleLinkCard}
+          />
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 overflow-y-auto"
+            style={{ paddingTop: editorScrollInset }}
+          >
+            <div className="re-editor-root mx-auto max-w-3xl px-4 py-6 md:px-8">
+              <EditorContent />
+            </div>
+          </div>
         </div>
         <HistoryPlugin />
         <ListPlugin />

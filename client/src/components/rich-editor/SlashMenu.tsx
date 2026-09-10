@@ -1,9 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $getSelection,
-  $insertNodes,
   $isRangeSelection,
   $isTextNode,
+  BLUR_COMMAND,
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_UP_COMMAND,
@@ -29,8 +29,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRichEditorContext } from "./context";
 import { insertBlock, type BlockInsertType } from "./insertBlocks";
-import { $createImageNode } from "./nodes/ImageNode";
-import { uploadImageFile, uploadImageOrAttachment } from "../../features/rich-editor/plugins/upload";
+import { insertUploadResult, uploadImageOrAttachment } from "../../features/rich-editor/plugins/upload";
 
 type SlashCommand = {
   id: string;
@@ -67,6 +66,10 @@ function matchCommands(query: string) {
 
 type SlashMatch = { query: string; start: number; end: number };
 
+function matchFingerprint(match: SlashMatch): string {
+  return `${match.start}:${match.end}:${match.query}`;
+}
+
 function detectSlashQuery(): SlashMatch | null {
   const selection = $getSelection();
   if (!$isRangeSelection(selection) || !selection.isCollapsed()) return null;
@@ -79,6 +82,21 @@ function detectSlashQuery(): SlashMatch | null {
   const query = match[1] ?? "";
   const slashIndex = text.lastIndexOf("/");
   return { query, start: slashIndex, end: anchor.offset };
+}
+
+function findScrollParent(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null;
+  while (node) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY === "auto" || overflowY === "scroll") return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+function containsNode(parent: HTMLElement | null, target: EventTarget | null): boolean {
+  if (!parent || !target || !(target instanceof Node)) return false;
+  return parent.contains(target);
 }
 
 export function SlashMenuPlugin({
@@ -96,6 +114,13 @@ export function SlashMenuPlugin({
   const fileRef = useRef<HTMLInputElement>(null);
   const pendingRange = useRef<SlashMatch | null>(null);
   const menuOpenRef = useRef(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const matchRef = useRef<SlashMatch | null>(null);
+  const dismissedMatchRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    matchRef.current = match;
+  }, [match]);
 
   const close = useCallback(() => {
     if (!menuOpenRef.current) return;
@@ -104,6 +129,12 @@ export function SlashMenuPlugin({
     setCommands([]);
     setActive(0);
   }, []);
+
+  const dismiss = useCallback(() => {
+    const current = matchRef.current;
+    dismissedMatchRef.current = current ? matchFingerprint(current) : "any";
+    close();
+  }, [close]);
 
   const removeSlashText = useCallback(
     (range: SlashMatch) => {
@@ -131,6 +162,7 @@ export function SlashMenuPlugin({
     (cmd: SlashCommand) => {
       const range = match;
       if (!range) return;
+      dismissedMatchRef.current = null;
       close();
       removeSlashText(range);
 
@@ -157,14 +189,24 @@ export function SlashMenuPlugin({
     editor.getEditorState().read(() => {
       const found = detectSlashQuery();
       if (!found) {
+        dismissedMatchRef.current = null;
         close();
         return;
       }
+
+      const fp = matchFingerprint(found);
+      if (dismissedMatchRef.current === fp) {
+        close();
+        return;
+      }
+
       const next = matchCommands(found.query);
       if (next.length === 0) {
         close();
         return;
       }
+
+      dismissedMatchRef.current = null;
       menuOpenRef.current = true;
       setMatch(found);
       setCommands(next);
@@ -174,8 +216,8 @@ export function SlashMenuPlugin({
       if (native && native.rangeCount > 0) {
         const rect = native.getRangeAt(0).getBoundingClientRect();
         setPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 4,
+          left: rect.left,
         });
       }
     });
@@ -184,6 +226,91 @@ export function SlashMenuPlugin({
   useEffect(() => {
     return editor.registerUpdateListener(() => sync());
   }, [editor, sync]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      BLUR_COMMAND,
+      () => {
+        dismiss();
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+  }, [editor, dismiss]);
+
+  useEffect(() => {
+    const root = editor.getRootElement();
+    if (!root) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (containsNode(menuRef.current, target)) return;
+      if (containsNode(root, target)) return;
+      dismiss();
+    };
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [editor, dismiss]);
+
+  useEffect(() => {
+    const root = editor.getRootElement();
+    if (!root) return;
+
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target;
+      if (containsNode(root, target) || containsNode(menuRef.current, target)) return;
+      dismiss();
+    };
+
+    document.addEventListener("focusin", onFocusIn, true);
+    return () => document.removeEventListener("focusin", onFocusIn, true);
+  }, [editor, dismiss]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && menuOpenRef.current) dismiss();
+    };
+
+    const onWindowBlur = () => {
+      if (menuOpenRef.current) dismiss();
+    };
+    const onResize = () => {
+      if (menuOpenRef.current) dismiss();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible" && menuOpenRef.current) dismiss();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("blur", onWindowBlur);
+    window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("blur", onWindowBlur);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [dismiss]);
+
+  useEffect(() => {
+    const root = editor.getRootElement();
+    const scrollParent = findScrollParent(root);
+    if (!scrollParent) return;
+
+    const onWheelOrScroll = () => {
+      if (menuOpenRef.current) dismiss();
+    };
+
+    scrollParent.addEventListener("scroll", onWheelOrScroll, { passive: true });
+    scrollParent.addEventListener("wheel", onWheelOrScroll, { passive: true });
+    return () => {
+      scrollParent.removeEventListener("scroll", onWheelOrScroll);
+      scrollParent.removeEventListener("wheel", onWheelOrScroll);
+    };
+  }, [editor, dismiss]);
 
   useEffect(() => {
     const down = editor.registerCommand(
@@ -226,7 +353,7 @@ export function SlashMenuPlugin({
       KEY_ESCAPE_COMMAND,
       () => {
         if (!match) return false;
-        close();
+        dismiss();
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -238,7 +365,7 @@ export function SlashMenuPlugin({
       tab();
       esc();
     };
-  }, [active, close, commands, editor, match, runCommand]);
+  }, [active, commands, dismiss, editor, match, runCommand]);
 
   const visible = match !== null && commands.length > 0;
 
@@ -247,8 +374,9 @@ export function SlashMenuPlugin({
       {visible &&
         createPortal(
           <div
+            ref={menuRef}
             className="re-slash-menu"
-            style={{ position: "absolute", top: position.top, left: position.left }}
+            style={{ position: "fixed", top: position.top, left: position.left }}
           >
             {commands.map((cmd, i) => (
               <button
@@ -275,11 +403,9 @@ export function SlashMenuPlugin({
           const file = e.target.files?.[0];
           e.target.value = "";
           if (!file) return;
-          void uploadImageFile(file, notify, addAsset).then((url) => {
-            if (!url) return;
-            editor.update(() => {
-              $insertNodes([$createImageNode({ src: url, alt: file.name })]);
-            });
+          void uploadImageOrAttachment(file, notify).then((result) => {
+            if (!result) return;
+            insertUploadResult(editor, result, addAsset);
           });
         }}
       />
@@ -291,11 +417,9 @@ export function SlashMenuPlugin({
           const file = e.target.files?.[0];
           e.target.value = "";
           if (!file) return;
-          void uploadImageOrAttachment(file, notify, addAsset).then((result) => {
+          void uploadImageOrAttachment(file, notify).then((result) => {
             if (!result || result.kind !== "attachment") return;
-            editor.update(() => {
-              $insertNodes([result.node]);
-            });
+            insertUploadResult(editor, result, addAsset);
           });
         }}
       />

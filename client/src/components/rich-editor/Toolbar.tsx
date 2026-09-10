@@ -7,11 +7,15 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $getSelection,
-  $insertNodes,
   $isRangeSelection,
   FORMAT_TEXT_COMMAND,
 } from "lexical";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  EDITOR_HEADER_HEIGHT,
+  EDITOR_TOOLBAR_HEIGHT_VAR,
+  chromeMotionStyle,
+} from "../../features/rich-editor/chrome";
 import {
   TextB,
   TextItalic,
@@ -33,8 +37,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRichEditorContext } from "./context";
 import { insertBlock } from "./insertBlocks";
-import { $createImageNode } from "./nodes/ImageNode";
-import { uploadImageFile, uploadImageOrAttachment } from "../../features/rich-editor/plugins/upload";
+import { insertUploadResult, uploadImageOrAttachment } from "../../features/rich-editor/plugins/upload";
 
 type Format = "bold" | "italic" | "underline" | "strikethrough" | "code";
 
@@ -55,10 +58,10 @@ function ToolbarButton({
       title={title}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
         active
-          ? "bg-foreground/10 text-foreground"
-          : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+          ? "bg-muted text-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
       {children}
@@ -67,15 +70,38 @@ function ToolbarButton({
 }
 
 export function Toolbar({
+  chromeHidden = false,
+  toolbarHeightRoot,
   onInsertLinkCard,
 }: {
+  chromeHidden?: boolean;
+  toolbarHeightRoot?: React.RefObject<HTMLElement | null>;
   onInsertLinkCard: () => void;
 }) {
   const [editor] = useLexicalComposerContext();
   const { notify, addAsset } = useRichEditorContext();
   const [formats, setFormats] = useState<Set<Format>>(new Set());
+  const rootRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    const root = toolbarHeightRoot?.current;
+    if (!el || !root) return;
+
+    const report = () => {
+      root.style.setProperty(EDITOR_TOOLBAR_HEIGHT_VAR, `${el.offsetHeight}px`);
+    };
+    report();
+
+    const observer = new ResizeObserver(report);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty(EDITOR_TOOLBAR_HEIGHT_VAR);
+    };
+  }, [toolbarHeightRoot]);
 
   const syncFormats = useCallback(() => {
     editor.getEditorState().read(() => {
@@ -110,23 +136,27 @@ export function Toolbar({
   };
 
   const handleImagePick = async (file: File) => {
-    const url = await uploadImageFile(file, notify, addAsset);
-    if (!url) return;
-    editor.update(() => {
-      $insertNodes([$createImageNode({ src: url, alt: file.name })]);
-    });
+    const result = await uploadImageOrAttachment(file, notify);
+    if (!result) return;
+    insertUploadResult(editor, result, addAsset);
   };
 
   const handleFilePick = async (file: File) => {
-    const result = await uploadImageOrAttachment(file, notify, addAsset);
+    const result = await uploadImageOrAttachment(file, notify);
     if (!result || result.kind !== "attachment") return;
-    editor.update(() => {
-      $insertNodes([result.node]);
-    });
+    insertUploadResult(editor, result, addAsset);
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b px-2 py-1.5 md:px-4">
+    <div
+      ref={rootRef}
+      className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background"
+      style={{
+        ...chromeMotionStyle,
+        transform: chromeHidden ? "translateY(0)" : `translateY(${EDITOR_HEADER_HEIGHT})`,
+      }}
+    >
+      <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-0.5 px-6 py-1.5">
       <ToolbarButton active={formats.has("bold")} title="加粗" onClick={() => toggleFormat("bold")}>
         <TextB size={16} />
       </ToolbarButton>
@@ -209,6 +239,7 @@ export function Toolbar({
           e.target.value = "";
         }}
       />
+      </div>
     </div>
   );
 }

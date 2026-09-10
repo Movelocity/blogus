@@ -1,9 +1,8 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $insertNodes, COMMAND_PRIORITY_LOW, DRAGOVER_COMMAND, DROP_COMMAND } from "lexical";
+import { COMMAND_PRIORITY_LOW, DRAGOVER_COMMAND, DROP_COMMAND } from "lexical";
 import { useEffect } from "react";
 import { useRichEditorContext } from "../../../components/rich-editor/context";
-import { $createImageNode } from "../../../components/rich-editor/nodes/ImageNode";
-import { uploadImageOrAttachment } from "./upload";
+import { insertUploadResult, uploadImageOrAttachment } from "./upload";
 
 function isImageFile(file: File) {
   return file.type.startsWith("image/");
@@ -35,15 +34,9 @@ export function FileDropPlugin() {
 
         void (async () => {
           for (const file of files) {
-            const result = await uploadImageOrAttachment(file, notify, addAsset);
+            const result = await uploadImageOrAttachment(file, notify);
             if (!result) continue;
-            editor.update(() => {
-              if (result.kind === "image") {
-                $insertNodes([$createImageNode({ src: result.url, alt: file.name })]);
-              } else {
-                $insertNodes([result.node]);
-              }
-            });
+            insertUploadResult(editor, result, addAsset);
           }
         })();
         return true;

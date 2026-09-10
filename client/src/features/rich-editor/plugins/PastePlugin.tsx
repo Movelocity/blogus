@@ -9,8 +9,7 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 import { useRichEditorContext } from "../../../components/rich-editor/context";
-import { $createImageNode } from "../../../components/rich-editor/nodes/ImageNode";
-import { uploadImageOrAttachment } from "./upload";
+import { insertUploadResult, uploadImageOrAttachment } from "./upload";
 
 function isImageFile(file: File) {
   return file.type.startsWith("image/");
@@ -35,13 +34,9 @@ export function PastePlugin() {
           event.preventDefault();
           void (async () => {
             for (const file of imageFiles) {
-              const result = await uploadImageOrAttachment(file, notify, addAsset);
-              if (!result) continue;
-              if (result.kind === "image") {
-                editor.update(() => {
-                  $insertNodes([$createImageNode({ src: result.url, alt: file.name })]);
-                });
-              }
+              const result = await uploadImageOrAttachment(file, notify);
+              if (!result || result.kind !== "image") continue;
+              insertUploadResult(editor, result, addAsset);
             }
           })();
           return true;
@@ -51,11 +46,9 @@ export function PastePlugin() {
           event.preventDefault();
           void (async () => {
             for (const file of otherFiles) {
-              const result = await uploadImageOrAttachment(file, notify, addAsset);
+              const result = await uploadImageOrAttachment(file, notify);
               if (!result || result.kind !== "attachment") continue;
-              editor.update(() => {
-                $insertNodes([result.node]);
-              });
+              insertUploadResult(editor, result, addAsset);
             }
           })();
           return true;

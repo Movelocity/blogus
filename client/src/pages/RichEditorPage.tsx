@@ -1,6 +1,9 @@
-import { ArrowLeft, DownloadSimple, Gear } from "@phosphor-icons/react";
+import { ArrowLeft, DownloadSimple, Gear, Moon, Sun } from "@phosphor-icons/react";
 import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router";
+import { useScrollHide } from "../hooks/useScrollHide";
+import { useTheme } from "../hooks/useTheme";
+import { chromeMotionStyle } from "../features/rich-editor/chrome";
 import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { LinkCardDialog } from "../components/rich-editor/LinkCardDialog";
 import { RichEditor } from "../components/rich-editor/RichEditor";
@@ -26,6 +29,7 @@ function formatSaveStatus(status: SaveStatus): string {
 export function RichEditorPage() {
   const draft = loadDraft() ?? createEmptySnapshot();
   const { toasts, dismiss, notify } = useToast();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const [title, setTitle] = useState(draft.title);
   const [assets, setAssets] = useState<AssetRef[]>(draft.assets);
@@ -36,6 +40,7 @@ export function RichEditorPage() {
 
   const getStateRef = useRef<(() => SerializedEditorState) | null>(null);
   const editorRef = useRef<LexicalEditor | null>(null);
+  const { hidden: chromeHidden, scrollRef } = useScrollHide(80);
   const initialFingerprint = draftFingerprint(draft.title, draft.assets, draft.editorState);
 
   const addAsset = useCallback((ref: AssetRef) => {
@@ -88,59 +93,78 @@ export function RichEditorPage() {
   };
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-2 md:gap-3 md:px-5">
-        <Link
-          to="/"
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-          aria-label="返回首页"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <input
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setSaveStatus((prev) => (prev.kind === "dirty" ? prev : { kind: "dirty" }));
-          }}
-          className="min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:text-muted-foreground md:text-lg"
-          placeholder="文档标题"
-        />
-        <span className="hidden text-xs text-muted-foreground md:inline">{formatSaveStatus(saveStatus)}</span>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-          title="设置"
-        >
-          <Gear size={20} />
-        </button>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="flex items-center gap-1.5 rounded-md border border-foreground/10 px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-        >
-          <DownloadSimple size={16} />
-          <span className="hidden sm:inline">导出 JSON</span>
-        </button>
+    <div className="flex h-[100dvh] flex-col bg-background text-foreground">
+      <header
+        className="fixed inset-x-0 top-0 z-50 h-14 border-b border-border bg-background"
+        style={{
+          ...chromeMotionStyle,
+          transform: chromeHidden ? "translateY(-100%)" : "translateY(0)",
+        }}
+      >
+        <div className="mx-auto flex h-full max-w-[1180px] items-center gap-2 px-6 md:gap-3">
+          <Link
+            to="/"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="返回首页"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <input
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setSaveStatus((prev) => (prev.kind === "dirty" ? prev : { kind: "dirty" }));
+            }}
+            className="min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:text-muted-foreground md:text-lg"
+            placeholder="文档标题"
+          />
+          <span className="hidden text-xs text-muted-foreground md:inline">{formatSaveStatus(saveStatus)}</span>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
+            title={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="设置"
+            title="设置"
+          >
+            <Gear size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <DownloadSimple size={16} />
+            <span className="hidden sm:inline">导出 JSON</span>
+          </button>
+        </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        <RichEditor
-          initialEditorState={draft.editorState}
-          pendingImport={pendingImport}
-          onImportApplied={handleImportApplied}
-          assets={assets}
-          addAsset={addAsset}
-          notify={notify}
-          setSaveStatus={setSaveStatus}
-          title={title}
-          onEditorReadyRef={getStateRef}
-          editorRef={editorRef}
-          onLinkCardRequest={handleLinkCardRequest}
-          initialFingerprint={initialFingerprint}
-        />
-      </main>
+      <RichEditor
+        className="min-h-0 flex-1"
+        scrollRef={scrollRef}
+        chromeHidden={chromeHidden}
+        initialEditorState={draft.editorState}
+        pendingImport={pendingImport}
+        onImportApplied={handleImportApplied}
+        assets={assets}
+        addAsset={addAsset}
+        notify={notify}
+        setSaveStatus={setSaveStatus}
+        title={title}
+        onEditorReadyRef={getStateRef}
+        editorRef={editorRef}
+        onLinkCardRequest={handleLinkCardRequest}
+        initialFingerprint={initialFingerprint}
+      />
 
       <p className="shrink-0 border-t px-4 py-1.5 text-center text-xs text-muted-foreground md:hidden">
         {formatSaveStatus(saveStatus)}

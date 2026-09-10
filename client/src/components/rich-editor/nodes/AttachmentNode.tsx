@@ -64,9 +64,9 @@ export class AttachmentNode extends DecoratorNode<JSX.Element> {
   }
 
   createDOM(): HTMLElement {
-    const div = document.createElement("div");
-    div.className = "re-attachment";
-    return div;
+    const span = document.createElement("span");
+    span.className = "re-attachment";
+    return span;
   }
 
   updateDOM(): false {
@@ -101,12 +101,12 @@ export class AttachmentNode extends DecoratorNode<JSX.Element> {
 
   decorate(): JSX.Element {
     return (
-      <div className="re-attachment" contentEditable={false}>
-        <div className="re-attachment-icon">{fileExt(this.__fileName)}</div>
-        <div className="re-attachment-info">
-          <div className="re-attachment-name">{this.__fileName}</div>
-          <div className="re-attachment-meta">{formatBytes(this.__size)}</div>
-        </div>
+      <>
+        <span className="re-attachment-icon" aria-hidden="true">{fileExt(this.__fileName)}</span>
+        <span className="re-attachment-info">
+          <span className="re-attachment-name" title={this.__fileName}>{this.__fileName}</span>
+          <span className="re-attachment-meta">{formatBytes(this.__size)}</span>
+        </span>
         <a
           className="re-attachment-download"
           href={this.__url}
@@ -116,7 +116,7 @@ export class AttachmentNode extends DecoratorNode<JSX.Element> {
         >
           下载
         </a>
-      </div>
+      </>
     );
   }
 }

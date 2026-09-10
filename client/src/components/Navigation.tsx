@@ -1,31 +1,8 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router";
+import { useScrollHide } from "../hooks/useScrollHide";
 import { useTheme } from "../hooks/useTheme";
 import { siteConfig } from "../config/site";
-
-function useScrollHide(threshold = 80) {
-  const [hidden, setHidden] = useState(false);
-  const lastY = useRef(0);
-  const ticking = useRef(false);
-
-  const onScroll = useCallback(() => {
-    if (ticking.current) return;
-    ticking.current = true;
-    requestAnimationFrame(() => {
-      const y = window.scrollY;
-      setHidden(y > threshold && y > lastY.current);
-      lastY.current = y;
-      ticking.current = false;
-    });
-  }, [threshold]);
-
-  useEffect(() => {
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onScroll]);
-
-  return hidden;
-}
 
 const navLinks = [
   { name: "文章", to: "/posts" },
@@ -76,7 +53,7 @@ function ThemeIcon({ theme }: { theme: "light" | "dark" }) {
 }
 
 export function Navigation() {
-  const hidden = useScrollHide();
+  const { hidden } = useScrollHide();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggle } = useTheme();
 

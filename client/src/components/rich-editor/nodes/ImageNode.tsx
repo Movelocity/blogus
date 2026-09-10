@@ -9,6 +9,7 @@ import {
   type Spread,
 } from "lexical";
 import type { JSX } from "react";
+import { ImageBlock } from "./ImageBlock";
 
 export type SerializedImageNode = Spread<
   {
@@ -96,16 +97,27 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return this.__src;
   }
 
+  getWidth(): number | undefined {
+    return this.getLatest().__width;
+  }
+
+  setWidth(width: number): void {
+    const writable = this.getWritable();
+    writable.__width = width;
+  }
+
+  isKeyboardSelectable(): boolean {
+    return true;
+  }
+
   decorate(): JSX.Element {
     return (
-      <figure className="re-image-block" contentEditable={false}>
-        <img
-          src={this.__src}
-          alt={this.__alt ?? ""}
-          width={this.__width}
-          draggable={false}
-        />
-      </figure>
+      <ImageBlock
+        nodeKey={this.getKey()}
+        src={this.__src}
+        alt={this.__alt}
+        width={this.__width}
+      />
     );
   }
 }
