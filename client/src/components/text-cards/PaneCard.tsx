@@ -7,6 +7,7 @@ import { duplicateLines, moveLines } from "../../features/text-cards/lineEdit";
 
 interface PaneCardProps {
   pane: TextCardPane;
+  defaultTitle: string;
   maximized: boolean;
   shadow?: boolean;
   onBringToFront: () => void;
@@ -23,6 +24,7 @@ interface PaneCardProps {
 
 export function PaneCard({
   pane,
+  defaultTitle,
   maximized,
   shadow = false,
   onBringToFront,
@@ -137,6 +139,7 @@ export function PaneCard({
   };
 
   const previewMode = Boolean(pane.hlMode);
+  const displayTitle = pane.title.trim() || defaultTitle;
 
   const handleContentKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!event.altKey || event.metaKey || event.ctrlKey) return;
@@ -187,8 +190,8 @@ export function PaneCard({
           ref={titleRef}
           readOnly={!titleEditing}
           className="tc-title-input"
-          placeholder="标题…"
-          value={pane.title}
+          placeholder={titleEditing ? defaultTitle : undefined}
+          value={titleEditing ? pane.title : displayTitle}
           onBlur={exitTitleEditing}
           onChange={(event) => onTitleChange(event.target.value)}
           onDoubleClick={(event) => {

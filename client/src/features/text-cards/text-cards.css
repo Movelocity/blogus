@@ -30,6 +30,7 @@
 .tc-page {
   height: 100dvh;
   overflow: hidden;
+  overscroll-behavior-x: none;
   background: var(--tc-page);
   color: var(--tc-ink);
   scrollbar-width: thin;
@@ -58,6 +59,19 @@
 
 .tc-page *::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+.tc-page .tc-pane-index {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.tc-page .tc-pane-index::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 html.dark .tc-page,
@@ -124,6 +138,7 @@ html.light .tc-page *::-webkit-scrollbar-thumb:hover {
   height: 3rem;
   align-items: center;
   gap: 0.75rem;
+  overflow: hidden;
   border-bottom: 1px solid var(--tc-topbar-line);
   background: color-mix(in srgb, var(--tc-page) 92%, transparent);
   padding-inline: 1rem;
@@ -458,6 +473,7 @@ html.dark .tc-workspace-item[data-active] {
   bottom: 0;
   top: 3rem;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .tc-canvas {
@@ -714,7 +730,7 @@ html.light .tc-chip:hover:not([data-active]) {
   color: var(--tc-on-accent);
 }
 
-.tc-chip[data-minimized] {
+.tc-chip[data-minimized]:not([data-active]) {
   border-style: dashed;
   color: var(--tc-dim-muted);
 }

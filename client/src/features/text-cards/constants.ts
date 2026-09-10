@@ -12,6 +12,14 @@ export const POSITION_STAGGER = 32;
 export const CANVAS_MIN_WIDTH = 1200;
 export const CANVAS_MIN_HEIGHT = 800;
 
+export function paneDefaultTitle(index: number): string {
+  return `卡片${index + 1}`;
+}
+
+export function paneLabel(title: string, index: number): string {
+  return title.trim() || paneDefaultTitle(index);
+}
+
 export const HL_MODE_OPTIONS: { value: HlMode; label: string }[] = [
   { value: "", label: "Raw" },
   { value: "json", label: "JSON" },

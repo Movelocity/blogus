@@ -1,4 +1,5 @@
 import type { TextCardPane } from "@blogus/shared";
+import { paneLabel } from "../../features/text-cards/constants";
 
 interface PaneIndexProps {
   panes: TextCardPane[];
@@ -11,9 +12,9 @@ export function PaneIndex({ panes, activePaneId, maximizedPaneId, onSelect }: Pa
   if (panes.length === 0) return null;
 
   return (
-    <div className="flex flex-1 items-center gap-1.5 overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="tc-pane-index flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto px-2">
       {panes.map((pane, index) => {
-        const label = pane.title.trim() || `卡片 ${index + 1}`;
+        const label = paneLabel(pane.title, index);
         return (
           <button
             key={pane.id}

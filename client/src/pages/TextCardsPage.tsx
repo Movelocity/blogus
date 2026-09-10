@@ -8,6 +8,7 @@ import { PaneIndex } from "../components/text-cards/PaneIndex";
 import { WorkspaceFab } from "../components/text-cards/WorkspaceFab";
 import { WorkspaceSwitcher } from "../components/text-cards/WorkspaceSwitcher";
 import { nextPosition, nextZIndex } from "../features/text-cards/geometry";
+import { useBlockHorizontalWheel } from "../features/text-cards/hooks/useBlockHorizontalWheel";
 import { usePanes } from "../features/text-cards/hooks/usePanes";
 import { usePaneSave } from "../features/text-cards/hooks/usePaneSave";
 import { useWorkspaces } from "../features/text-cards/hooks/useWorkspaces";
@@ -19,7 +20,9 @@ import { refreshSession } from "../lib/api";
 export function TextCardsPage() {
   const navigate = useNavigate();
   const { theme, toggle: toggleTheme } = useTheme();
+  const pageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<CanvasHandle>(null);
+  useBlockHorizontalWheel(pageRef);
   const [authReady, setAuthReady] = useState(false);
   const [activePaneId, setActivePaneId] = useState<string | null>(null);
   const [maximizedPaneId, setMaximizedPaneId] = useState<string | null>(null);
@@ -218,7 +221,7 @@ export function TextCardsPage() {
   const hlPane = hlMenu ? panes.find((pane) => pane.id === hlMenu.paneId) : null;
 
   return (
-    <div className="tc-page">
+    <div ref={pageRef} className="tc-page">
       <header className="tc-topbar">
         <Link className="flex flex-none items-center gap-1 text-sm text-[var(--tc-dim)] hover:text-[var(--tc-ink)]" to="/">
           <ArrowLeft size={16} />

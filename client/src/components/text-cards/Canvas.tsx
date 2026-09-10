@@ -1,6 +1,7 @@
 import { Plus } from "@phosphor-icons/react";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import type { TextCardPane } from "@blogus/shared";
+import { paneDefaultTitle } from "../../features/text-cards/constants";
 import { canvasBounds } from "../../features/text-cards/geometry";
 import { PaneCard } from "./PaneCard";
 
@@ -48,6 +49,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
   const maximizedPane = maximizedPaneId ? panes.find((pane) => pane.id === maximizedPaneId) ?? null : null;
   const shadowPane = maximizedPane && !maximizedPane.minimized ? maximizedPane : null;
 
+  const defaultTitleFor = (paneId: string) => {
+    const index = panes.findIndex((pane) => pane.id === paneId);
+    return index >= 0 ? paneDefaultTitle(index) : "卡片";
+  };
+
   useImperativeHandle(ref, () => ({
     scrollToPane(pane: TextCardPane) {
       const viewport = viewportRef.current;
@@ -80,6 +86,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
           return (
             <PaneCard
               key={pane.id}
+              defaultTitle={defaultTitleFor(pane.id)}
               maximized={false}
               pane={pane}
               onBringToFront={() => onBringToFront(pane.id)}
@@ -99,6 +106,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
         {shadowPane ? (
           <PaneCard
             key={`${shadowPane.id}-shadow`}
+            defaultTitle={defaultTitleFor(shadowPane.id)}
             maximized={false}
             pane={shadowPane}
             shadow
@@ -118,6 +126,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
         {maximizedPane ? (
           <PaneCard
             key={`${maximizedPane.id}-max`}
+            defaultTitle={defaultTitleFor(maximizedPane.id)}
             maximized
             pane={maximizedPane}
             onBringToFront={() => onBringToFront(maximizedPane.id)}
