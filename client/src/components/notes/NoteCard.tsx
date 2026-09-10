@@ -5,7 +5,7 @@ import {
   CaretUpIcon,
   ClockIcon,
   CopyIcon,
-  DotsThreeVerticalIcon,
+  DotsThreeIcon,
   FloppyDiskIcon,
   HashIcon,
   LockIcon,
@@ -150,7 +150,7 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
   };
 
   return (
-    <article className="rounded-lg bg-card-2 shadow-[0_1px_4px_rgba(0,0,0,0.06)] ring-1 ring-foreground/[0.07]">
+    <article className="note-card rounded-lg bg-card-2 shadow-[0_1px_4px_rgba(0,0,0,0.06)] ring-1 ring-foreground/[0.07]">
       <div className="px-4 py-3">
         {/* 头部：日期 + 更多菜单（编辑时隐藏菜单） */}
         <div className="mb-1 flex items-center justify-between gap-2">
@@ -185,9 +185,9 @@ export function NoteCard({ note, isOwner, onUpdate, onDelete, onArchive, notify 
                 onClick={() => setMenuOpen((open) => !open)}
                 aria-expanded={menuOpen}
                 aria-label="更多操作"
-                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
               >
-                <DotsThreeVerticalIcon className="h-5 w-5" weight="bold" />
+                <DotsThreeIcon className="h-6 w-6" weight="bold" />
               </button>
 
               {menuOpen && (

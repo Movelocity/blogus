@@ -790,6 +790,35 @@
   .btn-secondary {
     @apply inline-flex items-center justify-center rounded-lg bg-muted/60 px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60;
   }
+
+  /* Notes 卡片：中文友好字体；深色模式正文 #E4E2DD */
+  .note-card {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+    color: #15181D;
+  }
+
+  .note-card textarea {
+    color: #15181D;
+  }
+
+  .dark .note-card {
+    color: #E4E2DD;
+  }
+
+  .dark .note-card textarea {
+    color: #E4E2DD;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light):not(.dark) .note-card {
+      color: #E4E2DD;
+    }
+
+    :root:not(.light):not(.dark) .note-card textarea {
+      color: #E4E2DD;
+    }
+  }
+
   /* range：浅色轨道 + 主题色的 muted 滑块，避免 accent-foreground 在浅色模式变成纯黑 */
   .range-muted {
     appearance: none;

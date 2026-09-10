@@ -50,6 +50,7 @@ function parseNoteContent(source: string): Block[] {
     const line = lines[i] ?? "";
 
     if (!line.trim()) {
+      blocks.push({ type: "paragraph", text: "" });
       i += 1;
       continue;
     }
@@ -181,11 +182,7 @@ function renderAutoLinks(text: string, keyPrefix: string): ReactNode[] {
     const [, prefix, url] = match;
     const key = `${keyPrefix}-u-${match.index}`;
     if (prefix) {
-      nodes.push(
-        <span key={`${key}-prefix`} className="whitespace-pre-wrap">
-          {prefix}
-        </span>,
-      );
+      nodes.push(renderPlainText(prefix, `${key}-prefix`));
     }
     nodes.push(
       <a
@@ -208,6 +205,14 @@ function renderAutoLinks(text: string, keyPrefix: string): ReactNode[] {
   return nodes.length > 0 ? nodes : renderInlineFormats(text, keyPrefix);
 }
 
+function renderPlainText(text: string, key: string): ReactNode {
+  return (
+    <span className="whitespace-pre-wrap" key={key}>
+      {text}
+    </span>
+  );
+}
+
 function renderInlineFormats(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   let cursor = 0;
@@ -216,7 +221,7 @@ function renderInlineFormats(text: string, keyPrefix: string): ReactNode[] {
   INLINE_RE.lastIndex = 0;
   while ((match = INLINE_RE.exec(text))) {
     if (match.index > cursor) {
-      nodes.push(text.slice(cursor, match.index));
+      nodes.push(renderPlainText(text.slice(cursor, match.index), `${keyPrefix}-t-${cursor}`));
     }
 
     const [, full, code, bold, italic] = match;
@@ -224,21 +229,32 @@ function renderInlineFormats(text: string, keyPrefix: string): ReactNode[] {
 
     if (code !== undefined) {
       nodes.push(
-        <code className="rounded bg-foreground/8 px-1 py-px font-mono text-[0.92em]" key={key}>
+        <code
+          className="whitespace-pre-wrap rounded bg-foreground/8 px-1 py-px font-mono text-[0.92em]"
+          key={key}
+        >
           {code}
         </code>,
       );
     } else if (bold !== undefined) {
-      nodes.push(<strong key={key}>{bold}</strong>);
+      nodes.push(
+        <strong className="whitespace-pre-wrap" key={key}>
+          {bold}
+        </strong>,
+      );
     } else if (italic !== undefined) {
-      nodes.push(<em key={key}>{italic}</em>);
+      nodes.push(
+        <em className="whitespace-pre-wrap" key={key}>
+          {italic}
+        </em>,
+      );
     }
 
     cursor = match.index + full!.length;
   }
 
   if (cursor < text.length) {
-    nodes.push(text.slice(cursor));
+    nodes.push(renderPlainText(text.slice(cursor), `${keyPrefix}-t-${cursor}`));
   }
 
   return nodes;
@@ -273,7 +289,7 @@ export function NoteContentView({
   let checklistIndex = 0;
 
   return (
-    <div className="note-content grid gap-0.5 text-base leading-normal *:min-w-0">
+    <div className="note-content grid gap-0.5 whitespace-pre-wrap text-base leading-normal *:min-w-0">
       {blocks.map((block, idx) => {
         const key = `${block.type}-${idx}`;
 
@@ -359,8 +375,12 @@ export function NoteContentView({
           );
         }
 
+        if (!block.text) {
+          return <p aria-hidden="true" className="m-0 min-h-[1lh]" key={key} />;
+        }
+
         return (
-          <p className="m-0 whitespace-pre-wrap break-words" key={key}>
+          <p className="m-0 break-words" key={key}>
             {renderInline(block.text)}
           </p>
         );
