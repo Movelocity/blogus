@@ -122,9 +122,10 @@
 }
 
 @theme inline {
-  --font-sans: "Instrument Sans", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-display: "Instrument Sans", "Instrument Sans Fallback", "Instrument Sans", system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-display: var(--font-sans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -791,7 +792,7 @@
     @apply inline-flex items-center justify-center rounded-lg bg-muted/60 px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60;
   }
 
-  /* Notes 卡片：中文友好字体；深色模式正文 #E4E2DD */
+  /* Notes 卡片：中文友好字体；深色模式正文 #dde1e4 */
   .note-card {
     font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
     color: #15181D;
@@ -802,20 +803,20 @@
   }
 
   .dark .note-card {
-    color: #E4E2DD;
+    color: #dde1e4;
   }
 
   .dark .note-card textarea {
-    color: #E4E2DD;
+    color: #dde1e4;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not(.light):not(.dark) .note-card {
-      color: #E4E2DD;
+      color: #dde1e4;
     }
 
     :root:not(.light):not(.dark) .note-card textarea {
-      color: #E4E2DD;
+      color: #dde1e4;
     }
   }
 

@@ -56,3 +56,8 @@ export function getPostSummary(post: BlogPost, maxLength = 120) {
 export function sortPostsByPublishedDate(posts: BlogPost[]) {
   return [...posts].sort((left, right) => new Date(getPostDate(right)).getTime() - new Date(getPostDate(left)).getTime());
 }
+
+/** 文章分享链接：使用原始 slug，避免中文被 percent-encode。 */
+export function getPostShareUrl(slug: string) {
+  return `${window.location.origin}/posts/${slug}`;
+}

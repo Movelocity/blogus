@@ -8,6 +8,12 @@
       content="伟康技术小站：分享系统设计与技术生活理念。架构取舍、工具哲学与工程秩序——光与代码，塑成日常。"
     />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!--
+      公开文章 API（无需登录，返回 JSON）：
+      - GET /api/posts — 已发布文章列表，响应 { "posts": [{ "title", "slug", "excerpt", "tags", "publishedAt", ... }] }
+      - GET /api/posts/:slug — 单篇已发布文章，响应 { "post": { "title", "slug", "content", "excerpt", "tags", "publishedAt", ... } }
+      默认仅返回 status=published 的文章；草稿与归档需登录并使用 ?visibility=all。
+    -->
     <title>伟康技术小站</title>
     <script>
       (function () {
@@ -24,12 +30,6 @@
         } catch (e) {}
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
     <div id="root"></div>

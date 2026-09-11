@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import type { BlogPost } from "@blogus/shared";
 import { getPostBySlug } from "../lib/api";
 import { getHeadings, MarkdownView, preloadMathRendering } from "../lib/markdown";
-import { estimateReadingMinutes, formatPostDate } from "../lib/posts";
+import { estimateReadingMinutes, formatPostDate, getPostShareUrl } from "../lib/posts";
 import { copyText } from "../lib/clipboard";
-import { CopyIcon } from "@phosphor-icons/react";
+import { CopyIcon, ShareNetworkIcon } from "@phosphor-icons/react";
 import { ToastView, useToast } from "../lib/toast";
 import { useToc } from "../contexts/post-toc";
 import { formatPostPageTitle } from "../lib/documentTitle";
@@ -54,6 +54,12 @@ export function PostPage() {
     notify(ok ? "Markdown 原文已复制到剪贴板" : "复制失败，请手动选择", ok ? "success" : "error");
   };
 
+  const handleCopyLink = async () => {
+    if (!post) return;
+    const ok = await copyText(getPostShareUrl(post.slug));
+    notify(ok ? "文章链接已复制到剪贴板" : "复制失败，请手动选择", ok ? "success" : "error");
+  };
+
   if (loading) {
     return <PostSkeleton />;
   }
@@ -86,15 +92,26 @@ export function PostPage() {
             <span className="hidden md:inline">·</span>
             <span>{readingMinutes} 分钟阅读</span>
           </div>
-          <button
-            type="button"
-            onClick={() => void handleCopyMarkdown()}
-            title="复制 Markdown 原文"
-            aria-label="复制 Markdown 原文"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <CopyIcon className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => void handleCopyLink()}
+              title="复制文章链接"
+              aria-label="复制文章链接"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ShareNetworkIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCopyMarkdown()}
+              title="复制 Markdown 原文"
+              aria-label="复制 Markdown 原文"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <CopyIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <h1 className="m-0 break-words text-[28px] font-medium leading-[1.3] text-foreground md:text-[38px] md:font-semibold md:leading-[1.25]">
@@ -143,7 +160,10 @@ function PostSkeleton() {
       <header className="pt-8 mb-8">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="h-3 w-40 animate-pulse rounded bg-muted/50" />
-          <div className="h-8 w-8 animate-pulse rounded-full bg-muted/50" />
+          <div className="flex gap-0.5">
+            <div className="h-8 w-8 animate-pulse rounded-full bg-muted/50" />
+            <div className="h-8 w-8 animate-pulse rounded-full bg-muted/50" />
+          </div>
         </div>
         <div className="h-10 w-5/6 animate-pulse rounded bg-muted/50" />
         <div className="mt-8 aspect-video w-full animate-pulse bg-muted/50 max-[679px]:rounded-none min-[680px]:rounded-lg" />
