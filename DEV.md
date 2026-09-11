@@ -110,7 +110,7 @@ cd ~/projects/blogus
 make deploy TAG=v0.3.12
 ```
 
-## 质量门禁
+## 质量门禁---
 
 每个阶段完成前必须至少通过：
 
