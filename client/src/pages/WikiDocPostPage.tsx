@@ -82,11 +82,11 @@ export function WikiDocPostPage() {
     return (
       <section className="mx-auto grid max-w-2xl gap-6 border border-destructive/30 bg-destructive/5 p-8">
         <div className="grid gap-3">
-          <h1 className="m-0 text-2xl font-semibold text-[#1a1a1a]">无法打开这篇文章</h1>
-          <p className="m-0 leading-relaxed text-[#666]">{error ?? "文章不存在，或尚未发布。"}</p>
+          <h1 className="m-0 text-2xl font-semibold text-foreground">无法打开这篇文章</h1>
+          <p className="m-0 leading-relaxed text-muted-foreground">{error ?? "文章不存在，或尚未发布。"}</p>
         </div>
         <Link
-          className="inline-flex w-fit items-center rounded-full bg-[#136ec2] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0f5da3]"
+          className="inline-flex w-fit items-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           to="/"
         >
           返回首页
@@ -157,7 +157,7 @@ export function WikiDocPostPage() {
       />
 
       {post.tags.length > 0 ? (
-        <footer className="mt-8 border-t border-[#e8e8e8] pt-4 text-[13px] text-[#666]">
+        <footer className="mt-8 border-t border-border pt-4 text-[13px] text-muted-foreground">
           <div className="flex flex-wrap gap-3">
             {post.tags.map((tag) => (
               <span className="inline-flex items-center gap-1" key={tag}>
@@ -183,17 +183,17 @@ export function WikiDocPostPage() {
 function WikiDocSkeleton() {
   return (
     <article className="w-full min-w-0" aria-label="文章正在加载">
-      <div className="mb-4 h-6 w-36 animate-pulse rounded bg-[#eee]" />
-      <header className="border-b border-[#e8e8e8] pb-6 pt-8">
-        <div className="mb-3 h-3 w-40 animate-pulse rounded bg-[#eee]" />
-        <div className="h-9 w-4/5 animate-pulse rounded bg-[#eee]" />
-        <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-[#eee]" />
+      <div className="mb-4 h-6 w-36 animate-pulse rounded bg-muted" />
+      <header className="border-b border-border pb-6 pt-8">
+        <div className="mb-3 h-3 w-40 animate-pulse rounded bg-muted" />
+        <div className="h-9 w-4/5 animate-pulse rounded bg-muted" />
+        <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-muted" />
       </header>
       <div className="mt-6 grid gap-4">
         {[0, 1, 2, 3].map((item) => (
           <div className="grid gap-2" key={item}>
-            <div className="h-4 w-full animate-pulse rounded bg-[#eee]" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-[#eee]" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
           </div>
         ))}
       </div>

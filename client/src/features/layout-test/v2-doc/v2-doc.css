@@ -8,9 +8,23 @@
   --v2-link: #136ec2;
   --v2-rule: #e8e8e8;
   --v2-toc-active: #4e6ef2;
+  --v2-hover-bg: #f8f9fa;
+  --v2-meta-btn-hover-bg: #f5f5f5;
+  --v2-surface-subtle: #fafafa;
   color: var(--v2-text);
-  background: #fff;
+  background: var(--background);
   overflow-x: clip;
+}
+
+.dark .v2-doc {
+  --v2-text: var(--foreground);
+  --v2-muted: var(--muted-foreground);
+  --v2-link: #33acff;
+  --v2-rule: var(--border);
+  --v2-toc-active: #7b93f5;
+  --v2-hover-bg: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --v2-meta-btn-hover-bg: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --v2-surface-subtle: var(--card);
 }
 
 /* index_content__ssh6B */
@@ -113,7 +127,7 @@
 .v2-catalog-item {
   font-size: 14px;
   font-weight: 600;
-  color: #272729;
+  color: var(--v2-text);
   position: relative;
   padding: 6px;
   border-radius: 4px;
@@ -127,7 +141,7 @@
 }
 
 .v2-catalog-item:hover {
-  background: #f8f9fa;
+  background: var(--v2-hover-bg);
 }
 
 .v2-catalog-item--level-2 {
@@ -143,7 +157,7 @@
   border-radius: 50%;
   left: 14px;
   top: 15.5px;
-  background: #272729;
+  background: var(--v2-text);
 }
 
 .v2-catalog-item--active {
@@ -200,7 +214,7 @@
 }
 
 .v2-doc-meta-btn:hover {
-  background: #f5f5f5;
+  background: var(--v2-meta-btn-hover-bg);
   color: var(--v2-text);
 }
 
@@ -251,7 +265,7 @@
   border: 1px solid var(--v2-rule);
   border-radius: 8px;
   object-fit: contain;
-  background: #fafafa;
+  background: var(--v2-surface-subtle);
 }
 
 .v2-doc-body .markdown-content--article .v2-gallery-trigger {
@@ -275,6 +289,14 @@
   --article-pre-border: #ebebeb;
   --article-quote-bar: #ccc;
   color: var(--v2-text);
+}
+
+.dark .v2-doc .v2-doc-body .markdown-content--article {
+  --article-link: var(--v2-link);
+  --article-image-border: hsla(0, 0%, 100%, 0.051);
+  --article-code-bg: #28282a;
+  --article-pre-border: #39393c;
+  --article-quote-bar: #5e5e61;
 }
 
 .v2-doc-body .markdown-content--article h2 {
@@ -305,7 +327,7 @@
   color: var(--v2-muted);
   border: 1px solid var(--v2-rule);
   border-radius: 4px;
-  background: #fafafa;
+  background: var(--v2-surface-subtle);
 }
 
 /* 与 WikiDocLayout 侧栏断点一致（Tailwind xl = 1280px） */

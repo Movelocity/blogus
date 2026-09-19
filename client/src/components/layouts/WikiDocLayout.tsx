@@ -49,14 +49,14 @@ export function WikiDocLayout() {
             onClick={() => setDrawerOpen(false)}
           >
             <aside
-              className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto overflow-x-hidden rounded-r-2xl bg-white shadow-2xl"
+              className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto overflow-x-hidden rounded-r-2xl bg-background shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between bg-white px-4 pt-4">
-                <p className="text-sm font-semibold text-[#272729]">目录</p>
+              <div className="sticky top-0 z-10 flex items-center justify-between bg-background px-4 pt-4">
+                <p className="text-sm font-semibold text-foreground">目录</p>
                 <button
                   aria-label="关闭目录"
-                  className="rounded-full p-1.5 text-[#666] transition-colors hover:bg-[#f5f5f5]"
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted"
                   onClick={() => setDrawerOpen(false)}
                 >
                   <XIcon className="h-4 w-4" weight="bold" />
