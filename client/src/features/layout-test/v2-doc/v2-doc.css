@@ -1,0 +1,330 @@
+/* 对齐 index_content / index_left / index_right / index_main */
+
+.v2-doc {
+  --layout-content-width: 850px;
+  --layout-topbar-height: 3.5rem;
+  --v2-text: #272729;
+  --v2-muted: #666;
+  --v2-link: #136ec2;
+  --v2-rule: #e8e8e8;
+  --v2-toc-active: #4e6ef2;
+  color: var(--v2-text);
+  background: #fff;
+  overflow-x: clip;
+}
+
+/* index_content__ssh6B */
+.v2-index-content {
+  display: flex;
+  width: 100%;
+}
+
+/* index_left__CW1tl */
+.v2-index-left {
+  position: relative;
+  flex: 1;
+  min-width: 196px;
+  max-width: 256px;
+  padding-left: 34px;
+}
+
+/* index_siderWrapper__oS8Ew */
+.v2-sider-wrapper {
+  position: sticky;
+  top: var(--layout-topbar-height);
+}
+
+/* index_right__fntlt */
+.v2-index-right {
+  position: relative;
+  flex: 1;
+  min-width: calc(var(--layout-content-width) + 2 * 40px);
+  padding: 24px 40px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.v2-index-right::before,
+.v2-index-right::after {
+  content: "";
+}
+
+.v2-index-right::before {
+  flex-grow: 1;
+}
+
+.v2-index-right::after {
+  flex-grow: 3;
+}
+
+.v2-index-right--solo {
+  min-width: 0;
+}
+
+.v2-index-right--solo::before {
+  flex-grow: 1;
+}
+
+.v2-index-right--solo::after {
+  flex-grow: 1;
+}
+
+/* index_main__kocBq */
+.v2-index-main {
+  flex: none;
+  width: var(--layout-content-width);
+  max-width: 100%;
+  position: relative;
+}
+
+/* index_sideCatalog__aoj46 + list */
+.v2-side-catalog {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - var(--layout-topbar-height) - 24px);
+  font-size: 14px;
+}
+
+.v2-side-catalog__list-wrapper {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.v2-side-catalog__list-wrapper::-webkit-scrollbar {
+  width: 0;
+}
+
+.v2-side-catalog__list {
+  width: 100%;
+  padding-top: 24px;
+  position: relative;
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+/* index_catalogItem__JLcEb */
+.v2-catalog-item {
+  font-size: 14px;
+  font-weight: 600;
+  color: #272729;
+  position: relative;
+  padding: 6px;
+  border-radius: 4px;
+  display: block;
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.v2-side-catalog__list > li:first-child .v2-catalog-item {
+  margin-top: -6px;
+}
+
+.v2-catalog-item:hover {
+  background: #f8f9fa;
+}
+
+.v2-catalog-item--level-2 {
+  padding-left: 25px;
+  font-weight: 400;
+}
+
+.v2-catalog-item em {
+  position: absolute;
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  left: 14px;
+  top: 15.5px;
+  background: #272729;
+}
+
+.v2-catalog-item--active {
+  color: var(--v2-toc-active);
+}
+
+.v2-catalog-item--active em {
+  background: var(--v2-toc-active);
+}
+
+.v2-doc-header {
+  padding-top: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--v2-rule);
+  margin-bottom: 1.5rem;
+}
+
+.v2-doc-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: var(--v2-text);
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .v2-doc-title {
+    font-size: 2.25rem;
+  }
+}
+
+.v2-doc-subtitle {
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--v2-muted);
+}
+
+.v2-doc-figure {
+  margin: 0 0 1.25rem;
+}
+
+.v2-gallery-trigger {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  text-align: center;
+}
+
+.v2-gallery-img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--v2-rule);
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fafafa;
+}
+
+.v2-doc-body .markdown-content--article .v2-gallery-trigger {
+  width: 100%;
+  margin-top: var(--article-element-space, 20px);
+  margin-bottom: var(--article-element-space, 20px);
+}
+
+.v2-doc-body .markdown-content--article p:has(.v2-gallery-trigger) {
+  margin-bottom: 0;
+}
+
+.v2-doc-body .markdown-content--article {
+  --article-body-size: 17px;
+  --article-body-leading: 1.75;
+  --article-element-space: 20px;
+  --article-h2-size: 1.25rem;
+  --article-h3-size: 1.0625rem;
+  --article-link: var(--v2-link);
+  --article-code-bg: #f5f5f5;
+  --article-pre-border: #ebebeb;
+  --article-quote-bar: #ccc;
+  color: var(--v2-text);
+}
+
+.v2-doc-body .markdown-content--article h2 {
+  font-weight: 700;
+  padding-top: 1rem;
+  border-top: none;
+}
+
+.v2-doc-body .markdown-content--article a {
+  text-decoration: none;
+}
+
+.v2-doc-body .markdown-content--article a:hover {
+  text-decoration: underline;
+}
+
+.v2-doc-body .markdown-content--article table {
+  font-size: 14px;
+}
+
+.v2-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--v2-muted);
+  border: 1px solid var(--v2-rule);
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+/* 与 WikiDocLayout 侧栏断点一致（Tailwind xl = 1280px） */
+@media (max-width: 1279px) {
+  .v2-index-content {
+    min-width: 0;
+  }
+
+  .v2-index-right {
+    min-width: 0;
+    width: 100%;
+    padding: 16px 16px 0;
+    display: block;
+  }
+
+  .v2-index-right::before,
+  .v2-index-right::after {
+    display: none;
+  }
+
+  .v2-index-main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .v2-doc-body {
+    min-width: 0;
+  }
+
+  .v2-doc-body .markdown-content--article {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .v2-doc-body .markdown-content--article .markdown-code-block {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .v2-index-right {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .v2-doc-header {
+    padding-top: 1.25rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .v2-doc-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+  }
+
+  .v2-doc-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .v2-doc-body .markdown-content--article {
+    --article-body-size: 16px;
+    --article-element-space: 16px;
+  }
+}

@@ -361,7 +361,17 @@ function highlightCode(code: string, lang: string): string {
 const INLINE_RE =
   /(!?\[([^\]]*)\]\(([^)]+)\)|`([^`]+)`|\$([^$\n]+?)\$|\*\*([^*]+)\*\*|\*([^*]+)\*|~~([^~]+)~~)/g;
 
-function renderInline(text: string, katex: KaTeX | null, article = false): ReactNode[] {
+type GalleryInlineConfig = {
+  nextIndex: { value: number };
+  onOpen: (index: number) => void;
+};
+
+function renderInline(
+  text: string,
+  katex: KaTeX | null,
+  article = false,
+  gallery?: GalleryInlineConfig,
+): ReactNode[] {
   const nodes: ReactNode[] = [];
   let cursor = 0;
   let match: RegExpExecArray | null;
@@ -376,18 +386,32 @@ function renderInline(text: string, katex: KaTeX | null, article = false): React
     const key = `${match.index}-${full}`;
 
     if (full!.startsWith("![")) {
-      nodes.push(
-        isSafeUrl(url!) ? (
-          <img
-            alt={label}
-            className={article ? undefined : "my-6 max-h-[560px] object-contain rounded-xl shadow-sm"}
-            key={key}
-            src={url}
-          />
-        ) : (
-          label
-        ),
-      );
+      if (isSafeUrl(url!)) {
+        if (gallery) {
+          const galleryIndex = gallery.nextIndex.value++;
+          nodes.push(
+            <button
+              type="button"
+              key={key}
+              className="v2-gallery-trigger"
+              onClick={() => gallery.onOpen(galleryIndex)}
+            >
+              <img alt={label} className="v2-gallery-img" src={url} />
+            </button>,
+          );
+        } else {
+          nodes.push(
+            <img
+              alt={label}
+              className={article ? undefined : "my-6 max-h-[560px] object-contain rounded-xl shadow-sm"}
+              key={key}
+              src={url}
+            />,
+          );
+        }
+      } else {
+        nodes.push(label);
+      }
     } else if (label !== undefined && url !== undefined) {
       nodes.push(
         isSafeUrl(url) ? (
@@ -487,7 +511,6 @@ function MarkdownCodeBlock({
             className={`markdown-code-block__action markdown-code-block__copy${copied ? " is-active" : ""}`}
           >
             <CopyIcon size={15} weight={copied ? "fill" : "regular"} />
-            <span>{copied ? "已复制" : "复制"}</span>
           </button>
         </div>
       </div>
@@ -516,6 +539,8 @@ export function MarkdownView({
   article = false,
   underlineH1 = false,
   onChecklistToggle,
+  onGalleryImageOpen,
+  galleryImageStartIndex = 0,
 }: {
   content: string;
   emptyText?: string;
@@ -529,8 +554,15 @@ export function MarkdownView({
   underlineH1?: boolean;
   /** 点击任务列表复选框时回调，参数为切换后的全文 */
   onChecklistToggle?: (nextContent: string) => void;
+  /** 百科布局等：点击图片进入全屏画廊；索引与 collectGalleryImages 顺序一致 */
+  onGalleryImageOpen?: (index: number) => void;
+  /** 正文 Markdown 图片索引起始值（例如封面占 0 时传 1） */
+  galleryImageStartIndex?: number;
 }) {
   const blocks = parseMarkdown(content, { breaks });
+  const gallery: GalleryInlineConfig | undefined = onGalleryImageOpen
+    ? { nextIndex: { value: galleryImageStartIndex }, onOpen: onGalleryImageOpen }
+    : undefined;
   const hasMath = blocks.some(blockContainsMath);
   const [katex, setKatex] = useState<KaTeX | null>(null);
 
@@ -582,7 +614,7 @@ export function MarkdownView({
           const id = slugify(block.text);
           return (
             <Heading className={className} id={id} key={key}>
-              {renderInline(block.text, katex, article)}
+              {renderInline(block.text, katex, article, gallery)}
             </Heading>
           );
         }
@@ -630,7 +662,7 @@ export function MarkdownView({
                         key={hi}
                         style={{ textAlign: block.alignments[hi] ?? "left" }}
                       >
-                        {renderInline(header, katex, article)}
+                        {renderInline(header, katex, article, gallery)}
                       </th>
                     ))}
                   </tr>
@@ -644,7 +676,7 @@ export function MarkdownView({
                           key={ci}
                           style={{ textAlign: block.alignments[ci] ?? "left" }}
                         >
-                          {renderInline(cell, katex, article)}
+                          {renderInline(cell, katex, article, gallery)}
                         </td>
                       ))}
                     </tr>
@@ -686,7 +718,7 @@ export function MarkdownView({
                             : undefined
                       }
                     >
-                      {renderInline(item.text, katex, article)}
+                      {renderInline(item.text, katex, article, gallery)}
                     </li>
                   );
                 }
@@ -706,7 +738,7 @@ export function MarkdownView({
                       className="mt-[0.35em] size-4 shrink-0 cursor-pointer accent-foreground disabled:cursor-default"
                     />
                     <span className={item.checked ? "text-muted-foreground line-through decoration-foreground/30" : ""}>
-                      {renderInline(item.text, katex, article)}
+                      {renderInline(item.text, katex, article, gallery)}
                     </span>
                   </li>
                 );
@@ -728,7 +760,7 @@ export function MarkdownView({
               }
               key={key}
             >
-              {renderInline(block.text, katex, article)}
+              {renderInline(block.text, katex, article, gallery)}
             </blockquote>
           );
         }
@@ -744,7 +776,7 @@ export function MarkdownView({
             }
             key={key}
           >
-            {renderInline(block.text, katex, article)}
+            {renderInline(block.text, katex, article, gallery)}
           </p>
         );
       })}

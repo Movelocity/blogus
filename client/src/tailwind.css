@@ -653,7 +653,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 4px 12px;
+  padding: 5px 13px;
   border-bottom: 1px solid var(--border);
   background: var(--muted);
 }
@@ -673,16 +673,15 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 2px;
+  gap: 1rem;
 }
 
 .markdown-code-block__action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  padding: 2px;
   border: none;
-  border-radius: 6px;
+  border-radius: 2px;
   background: transparent;
   color: var(--muted-foreground);
   font: inherit;
@@ -700,7 +699,7 @@
 
 .markdown-code-block-pre {
   margin: 0;
-  padding: 16px;
+  padding: 13px;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 14px;

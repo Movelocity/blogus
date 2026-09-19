@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { BlogLayout } from "./components/layouts/BlogLayout";
 import { PostLayout } from "./components/layouts/PostLayout";
+import { WikiDocLayout } from "./components/layouts/WikiDocLayout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { SessionWatcher } from "./components/SessionWatcher";
 import { useTheme } from "./hooks/useTheme";
@@ -38,6 +39,9 @@ const TextCardsPage = lazy(() =>
 );
 const RichEditorPage = lazy(() =>
   import("./pages/RichEditorPage").then((m) => ({ default: m.RichEditorPage })),
+);
+const WikiDocLayoutTestPage = lazy(() =>
+  import("./pages/WikiDocLayoutTestPage").then((m) => ({ default: m.WikiDocLayoutTestPage })),
 );
 
 // 延迟显示加载提示：chunk 在 250ms 内就绪则不显示任何 fallback，
@@ -84,6 +88,9 @@ function App() {
           </Route>
           <Route element={<PostLayout />}>
             <Route element={<PostPage />} path="/posts/:slug" />
+          </Route>
+          <Route element={<WikiDocLayout />}>
+            <Route element={<WikiDocLayoutTestPage />} path="/layout-test/:slug" />
           </Route>
           <Route element={<AdminPage />} path="/admin" />
           <Route element={<ImageEditorPage />} path="/tools/image-editor" />
