@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router";
 import { BlogLayout } from "./components/layouts/BlogLayout";
 import { PostLayout } from "./components/layouts/PostLayout";
 import { WikiDocLayout } from "./components/layouts/WikiDocLayout";
@@ -40,9 +40,17 @@ const TextCardsPage = lazy(() =>
 const RichEditorPage = lazy(() =>
   import("./pages/RichEditorPage").then((m) => ({ default: m.RichEditorPage })),
 );
-const WikiDocLayoutTestPage = lazy(() =>
-  import("./pages/WikiDocLayoutTestPage").then((m) => ({ default: m.WikiDocLayoutTestPage })),
+const WikiDocPostPage = lazy(() =>
+  import("./pages/WikiDocPostPage").then((m) => ({ default: m.WikiDocPostPage })),
 );
+
+function LegacyLayoutTestRedirect() {
+  const { slug } = useParams();
+  if (!slug) {
+    return <Navigate replace to="/" />;
+  }
+  return <Navigate replace to={`/posts/${slug}`} />;
+}
 
 // 延迟显示加载提示：chunk 在 250ms 内就绪则不显示任何 fallback，
 // 避免「加载中」一闪而过造成的视觉跳动（本地开发按需编译时尤其明显）。
@@ -86,12 +94,13 @@ function App() {
             <Route element={<NotesPage />} path="/notes" />
             <Route element={<LoginPage />} path="/login" />
           </Route>
-          <Route element={<PostLayout />}>
-            <Route element={<PostPage />} path="/posts/:slug" />
-          </Route>
           <Route element={<WikiDocLayout />}>
-            <Route element={<WikiDocLayoutTestPage />} path="/layout-test/:slug" />
+            <Route element={<WikiDocPostPage />} path="/posts/:slug" />
           </Route>
+          <Route element={<PostLayout />}>
+            <Route element={<PostPage />} path="/legacy/posts/:slug" />
+          </Route>
+          <Route element={<LegacyLayoutTestRedirect />} path="/layout-test/:slug" />
           <Route element={<AdminPage />} path="/admin" />
           <Route element={<ImageEditorPage />} path="/tools/image-editor" />
           <Route element={<TextCardsPage />} path="/tools/text-cards" />

@@ -643,7 +643,7 @@
 /* 代码块容器：顶栏 + 内容区 */
 .markdown-code-block {
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: .5px solid var(--border);
   border-radius: 12px;
   background: var(--bg-codeblock);
 }

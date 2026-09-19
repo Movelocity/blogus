@@ -52,7 +52,7 @@ export function WikiDocLayout() {
               className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto overflow-x-hidden rounded-r-2xl bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#e8e8e8] bg-white px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between bg-white px-4 pt-4">
                 <p className="text-sm font-semibold text-[#272729]">目录</p>
                 <button
                   aria-label="关闭目录"

@@ -3,20 +3,29 @@ import { useEffect, useMemo, useState } from "react";
 import type { BlogPost } from "@blogus/shared";
 import { getPostBySlug } from "../lib/api";
 import { getHeadings, MarkdownView, preloadMathRendering } from "../lib/markdown";
+import { estimateReadingMinutes, formatPostDate, getPostShareUrl } from "../lib/posts";
+import { copyText } from "../lib/clipboard";
+import { CopyIcon, ShareNetworkIcon } from "@phosphor-icons/react";
+import { ToastView, useToast } from "../lib/toast";
 import { useToc } from "../contexts/post-toc";
 import { formatPostPageTitle } from "../lib/documentTitle";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { V2DocImageLightbox } from "../features/layout-test/v2-doc/V2DocImageLightbox";
 import { collectGalleryImages } from "../features/layout-test/v2-doc/collectGalleryImages";
 
-/** 布局测试页：数据与 PostPage 相同，仅壳层与排版不同 */
-export function WikiDocLayoutTestPage() {
+const PUBLIC_POST_API_HINT = `公开文章 API（无需登录，返回 JSON）：
+- GET /api/posts — 已发布文章列表，响应 { "posts": [{ "title", "slug", "excerpt", "tags", "publishedAt", ... }] }
+- GET /api/posts/:slug — 单篇已发布文章，响应 { "post": { "title", "slug", "content", "excerpt", "tags", "publishedAt", ... } }
+默认仅返回 status=published 的文章；草稿与归档需登录并使用 ?visibility=all。`;
+
+export function WikiDocPostPage() {
   const { slug } = useParams();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const { setHeadings } = useToc();
+  const { toasts, dismiss, notify } = useToast();
 
   useDocumentTitle(!loading && post ? formatPostPageTitle(post.title) : undefined);
 
@@ -53,6 +62,18 @@ export function WikiDocLayoutTestPage() {
   );
   const markdownGalleryStart = post?.coverImageUrl ? 1 : 0;
 
+  const handleCopyMarkdown = async () => {
+    if (!post) return;
+    const ok = await copyText(post.content);
+    notify(ok ? "Markdown 原文已复制到剪贴板" : "复制失败，请手动选择", ok ? "success" : "error");
+  };
+
+  const handleCopyLink = async () => {
+    if (!post) return;
+    const ok = await copyText(getPostShareUrl(post.slug));
+    notify(ok ? "文章链接已复制到剪贴板" : "复制失败，请手动选择", ok ? "success" : "error");
+  };
+
   if (loading) {
     return <WikiDocSkeleton />;
   }
@@ -74,10 +95,40 @@ export function WikiDocLayoutTestPage() {
     );
   }
 
+  const readingMinutes = estimateReadingMinutes(post.content);
+
   return (
     <article className="w-full min-w-0">
+      <div hidden>{PUBLIC_POST_API_HINT}</div>
 
       <header className="v2-doc-header">
+        <div className="v2-doc-meta">
+          <div className="v2-doc-meta-text">
+            <span>{formatPostDate(post.createdAt)}</span>
+            <span className="hidden sm:inline" aria-hidden="true">·</span>
+            <span>{readingMinutes} 分钟阅读</span>
+          </div>
+          <div className="v2-doc-meta-actions">
+            <button
+              type="button"
+              onClick={() => void handleCopyLink()}
+              title="复制文章链接"
+              aria-label="复制文章链接"
+              className="v2-doc-meta-btn"
+            >
+              <ShareNetworkIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCopyMarkdown()}
+              title="复制 Markdown 原文"
+              aria-label="复制 Markdown 原文"
+              className="v2-doc-meta-btn"
+            >
+              <CopyIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
         <h1 className="v2-doc-title">{post.title}</h1>
         {post.excerpt ? <p className="v2-doc-subtitle">{post.excerpt}</p> : null}
       </header>
@@ -118,12 +169,13 @@ export function WikiDocLayoutTestPage() {
         </footer>
       ) : null}
 
-      <p className="mt-6 text-xs text-[#999]">
-        标准文章页：
-        <Link className="ml-1 text-[#136ec2] hover:underline" to={`/posts/${post.slug}`}>
-          /posts/{post.slug}
+      {/* <p className="mt-6 text-xs text-[#999]">
+        旧版文章页：
+        <Link className="ml-1 text-[#136ec2] hover:underline" to={`/legacy/posts/${post.slug}`}>
+          /legacy/posts/{post.slug}
         </Link>
-      </p>
+      </p> */}
+      <ToastView toasts={toasts} onDismiss={dismiss} />
     </article>
   );
 }
@@ -133,6 +185,7 @@ function WikiDocSkeleton() {
     <article className="w-full min-w-0" aria-label="文章正在加载">
       <div className="mb-4 h-6 w-36 animate-pulse rounded bg-[#eee]" />
       <header className="border-b border-[#e8e8e8] pb-6 pt-8">
+        <div className="mb-3 h-3 w-40 animate-pulse rounded bg-[#eee]" />
         <div className="h-9 w-4/5 animate-pulse rounded bg-[#eee]" />
         <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-[#eee]" />
       </header>
