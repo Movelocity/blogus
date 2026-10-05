@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ArrowLeft, ArrowRight, ArrowUpRight, X } from "@phosphor-icons/react";
 import type { CalendarDay } from "../lib/calendar";
 import { formatDateKey, generateMonthGrid } from "../lib/calendar";
@@ -8,6 +8,18 @@ import { getCalendarPosts } from "../lib/api";
 
 const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
+const YEAR_PARAM = "year";
+const MONTH_PARAM = "month";
+
+function parseMonthParams(yearParam: string | null, monthParam: string | null): Date | null {
+  if (!yearParam || !monthParam) return null;
+  const year = Number(yearParam);
+  const month = Number(monthParam);
+  if (!Number.isInteger(year) || year < 1) return null;
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+  return new Date(year, month - 1, 1);
+}
+
 interface MonthIndex {
   index: Record<string, CalendarPostSummary[]>;
 }
@@ -15,7 +27,13 @@ interface MonthIndex {
 /* ─────────────────── 主页面 ─────────────────── */
 
 export function CalendarPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(() => {
+    const fromUrl = parseMonthParams(
+      searchParams.get(YEAR_PARAM),
+      searchParams.get(MONTH_PARAM),
+    );
+    if (fromUrl) return fromUrl;
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
@@ -27,6 +45,27 @@ export function CalendarPage() {
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
+
+  // 将当前浏览的年月同步到 URL，刷新后仍停留在相同月份
+  useEffect(() => {
+    const nextYear = String(year);
+    const nextMonth = String(month);
+    if (
+      searchParams.get(YEAR_PARAM) === nextYear &&
+      searchParams.get(MONTH_PARAM) === nextMonth
+    ) {
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(YEAR_PARAM, nextYear);
+        next.set(MONTH_PARAM, nextMonth);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [year, month, searchParams, setSearchParams]);
 
   useEffect(() => {
     setLoading(true);
